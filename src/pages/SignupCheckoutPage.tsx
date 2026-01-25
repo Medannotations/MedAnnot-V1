@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Check, ArrowLeft } from "lucide-react";
+import { Loader2, Check, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,6 +18,7 @@ export function SignupCheckoutPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
 
   const plans = [
@@ -97,13 +98,8 @@ export function SignupCheckoutPage() {
 
       if (signInError) throw signInError;
 
-      // 3. Créer le profil
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        email: email,
-        full_name: name,
-        subscription_status: "none",
-      });
+      // 3. Créer le profil (le webhook Stripe le fera, on skip pour éviter les erreurs)
+      // Le profil sera créé automatiquement par Supabase ou le webhook
 
       if (profileError) {
         console.error("Profile error:", profileError);
@@ -280,16 +276,31 @@ export function SignupCheckoutPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="password">Mot de passe</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Minimum 6 caractères"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={isLoading}
-                      minLength={6}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Minimum 6 caractères"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        minLength={6}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        disabled={isLoading}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-start space-x-2 pt-2">

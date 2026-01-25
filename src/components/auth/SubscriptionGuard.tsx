@@ -20,10 +20,14 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
       return;
     }
 
-    // Pas de profil encore chargé → on attend
+    // Pas de profil encore chargé → on attend max 3 secondes puis on autorise
     if (!profile) {
-      setIsChecking(true);
-      return;
+      // Timer pour éviter le chargement infini
+      const timer = setTimeout(() => {
+        setIsChecking(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
     }
 
     // Utilisateur a un abonnement actif → accès autorisé
