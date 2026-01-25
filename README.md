@@ -1,8 +1,10 @@
-# 🏥 Nurses Notes AI
+# 🏥 Medannot
 
 **L'assistant IA pour vos annotations infirmières**
 
 Dictez. L'IA rédige. Vous copiez. Simple et professionnel.
+
+**🌐 [Accéder à la plateforme en direct](https://medannot-v1.vercel.app)** | **📖 [Guide de déploiement complet](./DEPLOYMENT_CHECKLIST.md)**
 
 ---
 
