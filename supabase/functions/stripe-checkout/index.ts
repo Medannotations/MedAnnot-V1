@@ -30,9 +30,14 @@ serve(async (req) => {
       throw new Error("Missing required parameters");
     }
 
-    const origin = req.headers.get("origin") || "https://medannot-v1.vercel.app";
+    // Déterminer l'origin avec fallback robuste
+    const rawOrigin = req.headers.get("origin");
+    const origin = (rawOrigin && rawOrigin !== "" && rawOrigin !== "null")
+      ? rawOrigin
+      : "https://medannot-v1.vercel.app";
 
     console.log("Creating Stripe Checkout session with fetch API...");
+    console.log("Origin:", origin);
     console.log("Price ID:", priceId);
     console.log("Email:", email);
 
