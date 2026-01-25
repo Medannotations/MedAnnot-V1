@@ -98,13 +98,7 @@ export function SignupCheckoutPage() {
 
       if (signInError) throw signInError;
 
-      // 3. Créer le profil (le webhook Stripe le fera, on skip pour éviter les erreurs)
-      // Le profil sera créé automatiquement par Supabase ou le webhook
-
-      if (profileError) {
-        console.error("Profile error:", profileError);
-        // Don't fail - continue to checkout
-      }
+      // 3. Le profil sera créé automatiquement par le webhook Stripe après paiement
 
       // 4. Créer la session Stripe Checkout
       const priceId = selectedPlan === "monthly"
