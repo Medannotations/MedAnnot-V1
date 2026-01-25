@@ -1,0 +1,7 @@
+project_id = "hnlrvlhhimkqezjoslmy"
+
+[functions.transcribe]
+verify_jwt = false
+
+[functions.generate-annotation]
+verify_jwt = false
