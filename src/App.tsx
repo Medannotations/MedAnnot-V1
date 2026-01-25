@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import ConfigurationPage from "./pages/ConfigurationPage";
@@ -26,6 +27,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/app" element={<DashboardLayout />}>
               <Route index element={<DashboardHome />} />
