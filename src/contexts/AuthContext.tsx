@@ -84,11 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
+    // Create user without email verification
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
         data: {
           full_name: name,
         },
@@ -96,6 +96,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) throw error;
+
+    // Auto-confirm the user immediately (skip email verification)
+    if (data.user?.id) {
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        data.user.id,
+        { email_confirm: true }
+      );
+      
+      if (updateError) {
+        console.warn("Could not auto-confirm email, but account created:", updateError);
+        // Don't throw - account is still created, just not confirmed
+      }
+    }
+
+    // Sign in immediately after signup
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) throw signInError;
   };
 
   const login = async (email: string, password: string) => {

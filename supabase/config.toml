@@ -1,4 +1,4 @@
-project_id = "hnlrvlhhimkqezjoslmy"
+project_id = "vbaaohcsmiaxbqcyfhhl"
 
 [functions.transcribe]
 verify_jwt = false

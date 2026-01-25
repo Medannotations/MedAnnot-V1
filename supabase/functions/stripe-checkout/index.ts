@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-  apiVersion: "2023-10-16",
-  httpClient: Stripe.createFetchHttpClient(),
-});
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -17,6 +12,26 @@ serve(async (req) => {
   }
 
   try {
+    // Vérifier que la clé Stripe existe
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+
+    if (!stripeKey) {
+      console.error("STRIPE_SECRET_KEY is not set!");
+      return new Response(
+        JSON.stringify({ error: "Stripe configuration error: Missing API key" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
+    }
+
+    // Créer le client Stripe avec la clé
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: "2023-10-16",
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+
     const { priceId, email, userId, successUrl, cancelUrl } = await req.json();
 
     if (!priceId || !email || !userId) {
