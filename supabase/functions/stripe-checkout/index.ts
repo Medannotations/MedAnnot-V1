@@ -23,6 +23,9 @@ serve(async (req) => {
       throw new Error("Missing required parameters");
     }
 
+    // Déterminer l'origine pour les URLs de retour
+    const origin = req.headers.get("origin") || "https://medannot-v1.vercel.app";
+
     // Créer une session Checkout
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -35,8 +38,8 @@ serve(async (req) => {
       ],
       customer_email: email,
       client_reference_id: userId,
-      success_url: successUrl || `${req.headers.get("origin")}/subscription/success`,
-      cancel_url: cancelUrl || `${req.headers.get("origin")}/subscription/cancel`,
+      success_url: successUrl || `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${origin}/signup`,
       subscription_data: {
         trial_period_days: 7, // 7 jours gratuits
         metadata: {
@@ -49,7 +52,10 @@ serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ sessionId: session.id }),
+      JSON.stringify({
+        sessionId: session.id,
+        url: session.url
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

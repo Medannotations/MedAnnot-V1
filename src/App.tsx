@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
 import LandingPage from "./pages/LandingPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
+import { SignupCheckoutPage } from "./pages/SignupCheckoutPage";
+import { SuccessPage } from "./pages/SuccessPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
@@ -29,6 +31,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/signup" element={<SignupCheckoutPage />} />
+            <Route path="/success" element={<SuccessPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route
               path="/app"

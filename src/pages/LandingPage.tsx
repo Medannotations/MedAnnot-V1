@@ -22,7 +22,11 @@ export default function LandingPage() {
   const handleOpenAuth = (mode: "login" | "signup") => {
     if (user) {
       navigate("/app");
+    } else if (mode === "signup") {
+      // Rediriger vers la nouvelle page signup/checkout
+      navigate("/signup");
     } else {
+      // Ouvrir le modal uniquement pour le login
       setAuthMode(mode);
       setIsAuthOpen(true);
     }
