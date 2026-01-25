@@ -84,10 +84,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       await signup(signupEmail, signupPassword, signupName);
       toast({
         title: "Compte créé !",
-        description: "Bienvenue sur Medannot.",
+        description: "Redirection vers le paiement...",
       });
       onClose();
-      navigate("/app");
+      // Rediriger vers Stripe checkout au lieu de /app
+      navigate("/checkout");
     } catch (error: any) {
       toast({
         title: "Erreur d'inscription",
