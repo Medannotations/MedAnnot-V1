@@ -34,7 +34,7 @@ serve(async (req) => {
     const rawOrigin = req.headers.get("origin");
     const origin = (rawOrigin && rawOrigin !== "" && rawOrigin !== "null")
       ? rawOrigin
-      : "https://medannot-v1.vercel.app";
+      : "https://medannotv2.vercel.app";
 
     console.log("Creating Stripe Checkout session with fetch API...");
     console.log("Origin:", origin);
