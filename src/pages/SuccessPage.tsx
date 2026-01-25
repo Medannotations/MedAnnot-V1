@@ -9,12 +9,12 @@ export function SuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(60);
 
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    // Auto-redirect après 10 secondes
+    // Auto-redirect après 60 secondes (temps pour que le webhook Stripe se traite)
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {

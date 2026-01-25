@@ -14,19 +14,39 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Check if user has an active subscription
+    // Pas connecté → retour landing
     if (!user) {
       navigate("/");
       return;
     }
 
-    // If no profile or subscription_status is not 'active', redirect to checkout
-    if (!profile || profile.subscription_status !== "active") {
-      navigate("/checkout");
+    // Pas de profil encore chargé → on attend
+    if (!profile) {
+      setIsChecking(true);
       return;
     }
 
-    setIsChecking(false);
+    // Utilisateur a un abonnement actif → accès autorisé
+    if (profile.subscription_status === "active") {
+      setIsChecking(false);
+      return;
+    }
+
+    // Utilisateur vient juste de payer → donner 2 minutes pour que le webhook Stripe traite
+    // On vérifie si le compte a été créé récemment (moins de 5 minutes)
+    const createdAt = new Date(profile.created_at);
+    const now = new Date();
+    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / 1000 / 60;
+
+    if (minutesSinceCreation < 5) {
+      // Compte récent, probablement en train de s'inscrire
+      // On autorise temporairement l'accès pour que le webhook ait le temps de traiter
+      setIsChecking(false);
+      return;
+    }
+
+    // Sinon, pas d'abonnement → redirection checkout
+    navigate("/checkout");
   }, [user, profile, navigate]);
 
   if (isChecking) {
