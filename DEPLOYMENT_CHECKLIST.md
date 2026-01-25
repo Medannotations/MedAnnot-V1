@@ -49,7 +49,7 @@ ON users(stripe_customer_id);
 | `STRIPE_SECRET_KEY` | `sk_test_51StDyP6OhZ2TN4iPkinhtiCQ6lVYxrLi4NwJKyb6Khw7aElzTh2udjmegA5OzIfJqxl6T7vnkmyhztPillQPMy3J00Da4ART64` |
 | `STRIPE_WEBHOOK_SECRET` | **À récupérer dans Stripe** (voir étape 3) |
 | `SUPABASE_URL` | `https://vbaaohcsmiaxbqcyfhhl.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiYWFvaGNzbWlheGJxY3lmaGhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTM0MTMzMCwiZXhwIjoyMDg0OTE3MzMwfQ.qOOWFdPOCYxRIHlqM1KV3JJmhNuLBP-zZRhiSHJ4z-8` |
+| `SUPABASE_SERVICE_ROLE_KEY` | **À récupérer dans Supabase > Settings > API > Service Role Secret** ⚠️ **NE PAS COMMITTER** |
 
 ---
 
