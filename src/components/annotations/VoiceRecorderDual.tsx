@@ -361,8 +361,8 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
                   className="hidden"
                 />
                 
-                <div className="flex items-center justify-center gap-3">
-                  <Button variant="outline" onClick={togglePlayback} disabled={isProcessing}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+                  <Button variant="outline" onClick={togglePlayback} disabled={isProcessing} className="flex-1 sm:flex-none">
                     {isPlaying ? (
                       <>
                         <Pause className="w-4 h-4 mr-2" />
@@ -375,13 +375,13 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
                       </>
                     )}
                   </Button>
-                  
-                  <Button variant="ghost" onClick={resetRecording} disabled={isProcessing}>
+
+                  <Button variant="ghost" onClick={resetRecording} disabled={isProcessing} className="flex-1 sm:flex-none">
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Réenregistrer
                   </Button>
-                  
-                  <Button onClick={handleContinue} disabled={isProcessing}>
+
+                  <Button onClick={handleContinue} disabled={isProcessing} className="flex-1 sm:flex-none">
                     {isProcessing ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
@@ -458,7 +458,7 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
                   className="w-full"
                 />
                 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button variant="outline" onClick={clearImportedFile} className="flex-1">
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Changer de fichier
