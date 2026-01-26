@@ -173,11 +173,11 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-6xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Mes patients</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mes patients</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Gérez vos patients et leurs annotations
           </p>
         </div>

@@ -242,8 +242,8 @@ export default function ConfigurationPage() {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Configuration</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Configuration</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">
           Personnalisez votre structure d'annotation et ajoutez des exemples pour améliorer l'IA.
         </p>
       </div>
