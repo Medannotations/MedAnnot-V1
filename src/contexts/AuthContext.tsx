@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
-import { setEncryptionPassword, clearEncryptionPassword } from "@/services/secureStorage";
-import { clearKeyCache } from "@/services/encryptionService";
 
 interface Profile {
   id: string;
@@ -145,10 +143,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (signInError) throw signInError;
-
-    // Stocker le mot de passe en mémoire pour le chiffrement
-    // Le mot de passe n'est JAMAIS envoyé au serveur ni stocké sur disque
-    setEncryptionPassword(password);
   };
 
   const login = async (email: string, password: string) => {
@@ -158,19 +152,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) throw error;
-
-    // Stocker le mot de passe en mémoire pour le chiffrement
-    // Le mot de passe n'est JAMAIS envoyé au serveur ni stocké sur disque
-    setEncryptionPassword(password);
   };
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-
-    // Effacer complètement le mot de passe et le cache de clés
-    clearEncryptionPassword();
-    clearKeyCache();
     setProfile(null);
   };
 

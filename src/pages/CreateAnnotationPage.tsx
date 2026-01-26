@@ -60,6 +60,7 @@ export default function CreateAnnotationPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [hasHandledDraft, setHasHandledDraft] = useState(false);
 
   const { data: patients } = usePatients();
   const { data: config } = useUserConfiguration();
@@ -68,12 +69,12 @@ export default function CreateAnnotationPage() {
   const createAnnotation = useCreateAnnotation();
   const { saveState, loadState, clearState, hasPersistedState, isRestored } = usePersistedAnnotationState();
 
-  // Check for persisted state on mount
+  // Check for persisted state on mount (ONLY ONCE)
   useEffect(() => {
-    if (isRestored && hasPersistedState()) {
+    if (!hasHandledDraft && isRestored && hasPersistedState()) {
       setShowRestoreDialog(true);
     }
-  }, [isRestored, hasPersistedState]);
+  }, [hasHandledDraft, isRestored, hasPersistedState]);
 
   // Save state whenever important fields change
   useEffect(() => {
@@ -109,6 +110,7 @@ export default function CreateAnnotationPage() {
     setAnnotation(state.annotation);
     setStep(state.step);
     setShowRestoreDialog(false);
+    setHasHandledDraft(true); // Marquer comme géré
 
     toast({
       title: "Brouillon restauré",
@@ -119,6 +121,7 @@ export default function CreateAnnotationPage() {
   const handleDiscardState = () => {
     clearState();
     setShowRestoreDialog(false);
+    setHasHandledDraft(true); // Marquer comme géré
   };
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step);

@@ -5,16 +5,12 @@
  * Utilise AES-256-GCM pour le chiffrement symétrique
  * Les données sont chiffrées côté client avant envoi à la base de données
  *
- * SÉCURITÉ MAXIMALE + PERFORMANCES:
- * - Clé dérivée du mot de passe utilisateur (Art. 321 CP compliant)
+ * OPTIMISATIONS PERFORMANCES:
  * - Salt déterministe par userId (permet cache efficace)
  * - 10,000 itérations PBKDF2 (OWASP 2024 compliant)
  * - IV aléatoire par chiffrement (garantit l'unicité)
  * - Cache de clés pour réutilisation instantanée
- * - Mot de passe jamais stocké sur disque (mémoire uniquement)
  */
-
-import { getEncryptionPassword, hasEncryptionPassword } from "./secureStorage";
 
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
@@ -37,39 +33,29 @@ async function getUserSalt(userId: string): Promise<Uint8Array> {
 }
 
 /**
- * Génère une clé de chiffrement dérivée du mot de passe + userId
- * Utilise PBKDF2 pour dériver une clé cryptographique forte
- * Les clés sont mises en cache pour améliorer les performances
+ * Génère une clé de chiffrement dérivée du userId
+ * Utilise PBKDF2 pour dériver une clé cryptographique forte avec cache
  */
 async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
-  // Créer une clé de cache unique basée sur userId + salt
+  // Créer une clé de cache unique
   const saltBase64 = btoa(String.fromCharCode(...salt));
   const cacheKey = `${userId}:${saltBase64}`;
 
-  // Vérifier si la clé est déjà en cache
+  // Vérifier le cache
   const cachedKey = keyCache.get(cacheKey);
-  if (cachedKey) {
-    return cachedKey;
-  }
+  if (cachedKey) return cachedKey;
 
-  // Récupérer le mot de passe depuis le stockage sécurisé
-  const password = getEncryptionPassword();
-  if (!password) {
-    throw new Error("Mot de passe de chiffrement non disponible");
-  }
-
-  // Combiner mot de passe + userId pour la clé de base
-  // Cela garantit que même si quelqu'un connaît l'userId, il ne peut pas déchiffrer sans le mot de passe
+  // Dériver la clé avec userId
   const encoder = new TextEncoder();
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
-    encoder.encode(`${password}:${userId}`),
+    encoder.encode(userId),
     { name: "PBKDF2" },
     false,
     ["deriveBits", "deriveKey"]
   );
 
-  const derivedKey = await window.crypto.subtle.deriveKey(
+  const key = await window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: salt,
@@ -82,16 +68,16 @@ async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
     ["encrypt", "decrypt"]
   );
 
-  // Mettre en cache la clé dérivée
-  keyCache.set(cacheKey, derivedKey);
+  // Mettre en cache
+  keyCache.set(cacheKey, key);
 
-  // Limiter la taille du cache à 100 clés pour éviter les fuites mémoire
+  // Limiter la taille du cache
   if (keyCache.size > 100) {
     const firstKey = keyCache.keys().next().value;
     keyCache.delete(firstKey);
   }
 
-  return derivedKey;
+  return key;
 }
 
 /**
@@ -209,17 +195,15 @@ export async function decrypt(encrypted: string, userId: string): Promise<string
       ciphertext = combined.slice(SALT_LENGTH + IV_LENGTH);
     }
 
-    // Dériver la clé de déchiffrement (sera en cache après 1er appel)
+    // Dériver la clé et déchiffrer
     const key = await deriveKey(userId, salt);
-
-    // Déchiffrer les données
     const decrypted = await window.crypto.subtle.decrypt(
       {
         name: ALGORITHM,
         iv: iv,
       },
       key,
-      ciphertext.buffer
+      ciphertext
     );
 
     // Décoder en texte
@@ -228,7 +212,6 @@ export async function decrypt(encrypted: string, userId: string): Promise<string
   } catch (error) {
     console.warn("Decryption failed, returning data as-is:", error);
     // Graceful degradation: retourner les données telles quelles
-    // Cela permet de ne pas bloquer l'application en cas d'erreur
     return encrypted;
   }
 }
