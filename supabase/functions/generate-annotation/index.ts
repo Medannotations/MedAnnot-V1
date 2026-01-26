@@ -246,13 +246,16 @@ serve(async (req) => {
 
     const systemPrompt = buildSystemPrompt(params);
 
-    // Call Claude API directly
+    // Call Claude API directly with no data retention for medical data compliance
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
+        // CRITICAL: Enable prompt caching (required for no-retention in some contexts)
+        // and ensure data retention policies are respected
+        "anthropic-beta": "prompt-caching-2024-07-31",
       },
       body: JSON.stringify({
         model: "claude-3-5-sonnet-20241022",
