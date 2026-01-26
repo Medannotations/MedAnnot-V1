@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
-import { encryptPatientData, decryptPatientData } from "@/services/encryptionService";
+// ENCRYPTION DISABLED: Performance optimization - encryption available on branch 'backup-encryption-system'
+// import { encryptPatientData, decryptPatientData } from "@/services/encryptionService";
 
 export type Patient = Tables<"patients">;
 export type PatientInsert = TablesInsert<"patients">;
@@ -29,29 +30,11 @@ export function usePatients(includeArchived = false) {
 
       if (error) throw error;
 
-      // Decrypt patient data and transform JSONB example_annotations
-      const patientsWithExamples = await Promise.all(
-        (data as any[]).map(async (p) => {
-          const decryptedData = await decryptPatientData(
-            {
-              first_name: p.first_name,
-              last_name: p.last_name,
-              address: p.address,
-              postal_code: p.postal_code,
-              city: p.city,
-              pathologies: p.pathologies,
-              notes: p.notes,
-            },
-            user.id
-          );
-
-          return {
-            ...p,
-            ...decryptedData,
-            exampleAnnotations: p.example_annotations || [],
-          };
-        })
-      );
+      // Transform JSONB example_annotations to TypeScript array
+      const patientsWithExamples = (data as any[]).map((p) => ({
+        ...p,
+        exampleAnnotations: p.example_annotations || [],
+      }));
 
       return patientsWithExamples as Patient[];
     },
@@ -75,24 +58,9 @@ export function usePatient(patientId: string | undefined) {
 
       if (error) throw error;
 
-      // Decrypt patient data
-      const decryptedData = await decryptPatientData(
-        {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          address: data.address,
-          postal_code: data.postal_code,
-          city: data.city,
-          pathologies: data.pathologies,
-          notes: data.notes,
-        },
-        user.id
-      );
-
       // Transform JSONB example_annotations to TypeScript array
       const patientWithExamples = {
         ...data,
-        ...decryptedData,
         exampleAnnotations: data.example_annotations || [],
       };
 
@@ -110,25 +78,10 @@ export function useCreatePatient() {
     mutationFn: async (patient: Omit<PatientInsert, "user_id">) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Encrypt sensitive patient data before saving
-      const encryptedData = await encryptPatientData(
-        {
-          first_name: patient.first_name,
-          last_name: patient.last_name,
-          address: patient.address,
-          postal_code: patient.postal_code,
-          city: patient.city,
-          pathologies: patient.pathologies,
-          notes: patient.notes,
-        },
-        user.id
-      );
-
       const { data, error } = await supabase
         .from("patients")
         .insert({
           ...patient,
-          ...encryptedData,
           user_id: user.id
         })
         .select()
@@ -136,24 +89,9 @@ export function useCreatePatient() {
 
       if (error) throw error;
 
-      // Decrypt for local use
-      const decryptedData = await decryptPatientData(
-        {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          address: data.address,
-          postal_code: data.postal_code,
-          city: data.city,
-          pathologies: data.pathologies,
-          notes: data.notes,
-        },
-        user.id
-      );
-
       // Transform JSONB example_annotations to TypeScript array
       const patientWithExamples = {
         ...data,
-        ...decryptedData,
         exampleAnnotations: data.example_annotations || [],
       };
 
@@ -173,44 +111,9 @@ export function useUpdatePatient() {
     mutationFn: async ({ id, exampleAnnotations, ...updates }: PatientUpdate & { id: string; exampleAnnotations?: any[] }) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Encrypt sensitive fields if they are being updated
-      const sensitiveFields = ["first_name", "last_name", "address", "postal_code", "city", "pathologies", "notes"];
-      const hasEncryptableFields = Object.keys(updates).some(key => sensitiveFields.includes(key));
-
-      let encryptedUpdates: any = { ...updates };
-
-      if (hasEncryptableFields) {
-        const dataToEncrypt: any = {};
-        sensitiveFields.forEach(field => {
-          if (field in updates) {
-            dataToEncrypt[field] = (updates as any)[field];
-          }
-        });
-
-        if (Object.keys(dataToEncrypt).length > 0) {
-          const encrypted = await encryptPatientData(
-            {
-              first_name: dataToEncrypt.first_name ?? "",
-              last_name: dataToEncrypt.last_name ?? "",
-              address: dataToEncrypt.address,
-              postal_code: dataToEncrypt.postal_code,
-              city: dataToEncrypt.city,
-              pathologies: dataToEncrypt.pathologies ?? "",
-              notes: dataToEncrypt.notes,
-            },
-            user.id
-          );
-
-          // Only update fields that were in the original update
-          Object.keys(dataToEncrypt).forEach(field => {
-            encryptedUpdates[field] = (encrypted as any)[field];
-          });
-        }
-      }
-
       // Transform exampleAnnotations to example_annotations for database
       const dbUpdates: any = {
-        ...encryptedUpdates,
+        ...updates,
         ...(exampleAnnotations !== undefined && {
           example_annotations: exampleAnnotations,
         }),
@@ -225,24 +128,9 @@ export function useUpdatePatient() {
 
       if (error) throw error;
 
-      // Decrypt for local use
-      const decryptedData = await decryptPatientData(
-        {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          address: data.address,
-          postal_code: data.postal_code,
-          city: data.city,
-          pathologies: data.pathologies,
-          notes: data.notes,
-        },
-        user.id
-      );
-
       // Transform JSONB example_annotations back to TypeScript array
       const patientWithExamples = {
         ...data,
-        ...decryptedData,
         exampleAnnotations: data.example_annotations || [],
       };
 
