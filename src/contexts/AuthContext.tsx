@@ -5,12 +5,13 @@ import type { User, Session } from "@supabase/supabase-js";
 interface Profile {
   id: string;
   email: string;
-  full_name: string;
-  subscription_status: "none" | "active" | "past_due" | "canceled";
-  subscription_current_period_end: string | null;
-  stripe_customer_id: string | null;
+  full_name: string | null;
+  subscription_status?: "none" | "active" | "past_due" | "canceled";
+  subscription_current_period_end?: string | null;
+  stripe_customer_id?: string | null;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
 interface AuthContextType {
@@ -36,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .single();
 
     if (error) {

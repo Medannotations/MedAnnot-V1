@@ -1,4 +1,5 @@
 import { Heart, Shield, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
@@ -38,14 +39,14 @@ export function Footer() {
                   </a>
                 </li>
                 <li>
-                  <a href="/app" className="hover:text-background transition-colors hover:underline">
+                  <Link to="/app" className="hover:text-background transition-colors hover:underline">
                     Se connecter
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/signup" className="hover:text-background transition-colors hover:underline">
+                  <Link to="/signup" className="hover:text-background transition-colors hover:underline">
                     Commencer gratuitement
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -70,14 +71,24 @@ export function Footer() {
                 <h4 className="font-semibold mb-3 text-lg">Légal</h4>
                 <ul className="space-y-2 text-background/80 text-sm">
                   <li>
-                    <a href="#" className="hover:text-background transition-colors hover:underline">
-                      Conditions générales
-                    </a>
+                    <Link to="/terms-of-service" className="hover:text-background transition-colors hover:underline">
+                      Conditions générales d'utilisation
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="hover:text-background transition-colors hover:underline">
+                    <Link to="/terms-of-sale" className="hover:text-background transition-colors hover:underline">
+                      Conditions générales de vente
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/privacy-policy" className="hover:text-background transition-colors hover:underline">
                       Politique de confidentialité
-                    </a>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/legal-notice" className="hover:text-background transition-colors hover:underline">
+                      Mentions légales
+                    </Link>
                   </li>
                 </ul>
               </div>

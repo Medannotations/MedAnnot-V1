@@ -17,6 +17,10 @@ import PatientsPage from "./pages/PatientsPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
 import AnnotationsPage from "./pages/AnnotationsPage";
 import CreateAnnotationPage from "./pages/CreateAnnotationPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+import TermsOfSalePage from "./pages/TermsOfSalePage";
+import LegalNoticePage from "./pages/LegalNoticePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +38,13 @@ const App = () => (
             <Route path="/signup" element={<SignupCheckoutPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+
+            {/* Legal Pages */}
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/terms-of-sale" element={<TermsOfSalePage />} />
+            <Route path="/legal-notice" element={<LegalNoticePage />} />
+
             <Route
               path="/app"
               element={

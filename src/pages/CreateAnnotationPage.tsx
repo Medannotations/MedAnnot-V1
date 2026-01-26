@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,7 @@ const STEPS: { key: Step; label: string; number: number }[] = [
 
 export default function CreateAnnotationPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>("patient");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [visitDate, setVisitDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -60,6 +61,7 @@ export default function CreateAnnotationPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [hasHandledDraft, setHasHandledDraft] = useState(false);
 
   const { data: patients } = usePatients();
   const { data: config } = useUserConfiguration();
@@ -68,12 +70,24 @@ export default function CreateAnnotationPage() {
   const createAnnotation = useCreateAnnotation();
   const { saveState, loadState, clearState, hasPersistedState, isRestored } = usePersistedAnnotationState();
 
-  // Check for persisted state on mount
+  // Auto-select patient from URL parameter
   useEffect(() => {
-    if (isRestored && hasPersistedState()) {
+    const patientIdFromUrl = searchParams.get('patientId');
+    if (patientIdFromUrl && patients) {
+      const patient = patients.find(p => p.id === patientIdFromUrl);
+      if (patient) {
+        setSelectedPatient(patient);
+        setStep("visit"); // Skip patient selection step
+      }
+    }
+  }, [searchParams, patients]);
+
+  // Check for persisted state on mount (ONLY ONCE)
+  useEffect(() => {
+    if (!hasHandledDraft && isRestored && hasPersistedState()) {
       setShowRestoreDialog(true);
     }
-  }, [isRestored, hasPersistedState]);
+  }, [hasHandledDraft, isRestored, hasPersistedState]);
 
   // Save state whenever important fields change
   useEffect(() => {
@@ -109,6 +123,7 @@ export default function CreateAnnotationPage() {
     setAnnotation(state.annotation);
     setStep(state.step);
     setShowRestoreDialog(false);
+    setHasHandledDraft(true);
 
     toast({
       title: "Brouillon restauré",
@@ -119,6 +134,11 @@ export default function CreateAnnotationPage() {
   const handleDiscardState = () => {
     clearState();
     setShowRestoreDialog(false);
+    setHasHandledDraft(true);
+    toast({
+      title: "Brouillon supprimé",
+      description: "Vous repartez de zéro.",
+    });
   };
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step);
@@ -217,7 +237,7 @@ export default function CreateAnnotationPage() {
         visit_date: visitDate,
         visit_time: visitTime,
         visit_duration: visitDuration,
-        transcription,
+        transcription: "", // ⚠️ SÉCURITÉ: Transcription NON sauvegardée (secret médical)
         content: annotation,
         structure_used: config?.annotation_structure,
         audio_duration: audioDuration,
