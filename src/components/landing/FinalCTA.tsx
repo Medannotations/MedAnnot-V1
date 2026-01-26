@@ -58,7 +58,7 @@ export function FinalCTA({ onGetStarted }: FinalCTAProps) {
               🚀 Commencer mon essai gratuit maintenant
             </Button>
             <p className="text-sm text-muted-foreground">
-              ✓ Sans carte bancaire • ✓ Sans engagement • ✓ Activation en 30 secondes
+              ✓ Sans engagement • ✓ Résiliable à tout moment • ✓ Activation en 30 secondes
             </p>
             <div className="mt-2 bg-yellow-50 border-2 border-yellow-200 rounded-lg py-3 px-6 inline-block">
               <p className="text-sm font-semibold text-yellow-800">

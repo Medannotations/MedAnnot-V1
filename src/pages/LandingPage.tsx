@@ -43,15 +43,15 @@ export default function LandingPage() {
         onGetStarted={() => handleOpenAuth("signup")}
         onLogin={() => handleOpenAuth("login")}
       />
-      <Problem />
       <HowItWorks />
+      <Problem />
+      <section id="pricing">
+        <Pricing onGetStarted={() => handleOpenAuth("signup")} />
+      </section>
       <Benefits />
       <Features />
       <section id="testimonials">
         <Testimonials />
-      </section>
-      <section id="pricing">
-        <Pricing onGetStarted={() => handleOpenAuth("signup")} />
       </section>
       <FAQ />
       <FinalCTA onGetStarted={() => handleOpenAuth("signup")} />

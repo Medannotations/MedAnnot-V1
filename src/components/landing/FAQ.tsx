@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     question: "Que se passe-t-il après les 7 jours d'essai gratuit ?",
-    answer: "RIEN si vous ne faites rien. L'essai est vraiment sans engagement : pas de carte bancaire demandée, pas de prélèvement automatique. Après 7 jours, vous choisissez librement si vous voulez continuer avec un abonnement (mensuel à 189 CHF ou annuel à 1499 CHF). Vous gardez le contrôle total.",
+    answer: "RIEN si vous ne faites rien. L'essai est vraiment sans engagement : 7 jours 100% gratuits. Après cette période, vous choisissez librement si vous voulez continuer avec un abonnement (mensuel à 189 CHF ou annuel à 1499 CHF). Vous gardez le contrôle total et pouvez résilier à tout moment.",
   },
   {
     question: "Mes données médicales sont-elles vraiment sécurisées ?",

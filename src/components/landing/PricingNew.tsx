@@ -108,7 +108,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
                     🎁 7 JOURS D'ESSAI GRATUIT
                   </div>
                   <div className="text-base text-green-600 font-medium mb-3">
-                    À 0 CHF • Sans carte bancaire • Sans engagement
+                    À 0 CHF • Sans engagement • Résiliable à tout moment
                   </div>
                   <div className="text-sm text-green-700 bg-white/60 rounded-lg py-2 px-4 inline-block">
                     Testez toutes les fonctionnalités. Résiliez quand vous voulez.
@@ -137,7 +137,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
                 🚀 Commencer à économiser 2h par jour - Essai gratuit
               </Button>
               <p className="text-center text-sm text-muted-foreground">
-                ✓ Activation en 30 secondes • ✓ Sans carte bancaire • ✓ Sans engagement • ✓ 100% sécurisé
+                ✓ Activation en 30 secondes • ✓ Sans engagement • ✓ Résiliable à tout moment • ✓ 100% sécurisé
               </p>
               <div className="mt-2 text-center text-sm text-foreground font-medium bg-yellow-50 border border-yellow-200 rounded-lg py-2 px-4">
                 ⏰ Profitez de vos soirées dès ce soir !
@@ -190,7 +190,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
                 <Check className="w-6 h-6 text-green-600" />
               </div>
               <p className="text-sm font-medium text-foreground">7 jours d'essai à 0 CHF</p>
-              <p className="text-xs text-muted-foreground">Sans carte bancaire</p>
+              <p className="text-xs text-muted-foreground">100% gratuit</p>
             </div>
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">

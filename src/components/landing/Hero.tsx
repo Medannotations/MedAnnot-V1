@@ -57,7 +57,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
 
             <div className="bg-white/80 backdrop-blur border border-border/50 rounded-xl p-4 inline-block">
               <p className="text-sm text-foreground font-medium">
-                ✓ Sans carte bancaire • ✓ Sans engagement • ✓ Résiliable en 1 clic
+                ✓ Sans engagement • ✓ Résiliable à tout moment • ✓ 100% gratuit pendant 7 jours
               </p>
             </div>
 

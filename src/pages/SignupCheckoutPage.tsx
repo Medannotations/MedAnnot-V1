@@ -340,11 +340,11 @@ export function SignupCheckoutPage() {
                 <div className="mt-6 pt-6 border-t">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Check className="w-4 h-4 text-green-500" />
-                    <span>Pas de carte bancaire requise pour l'essai</span>
+                    <span>7 jours d'essai 100% gratuits</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
                     <Check className="w-4 h-4 text-green-500" />
-                    <span>Annulation possible à tout moment</span>
+                    <span>Sans engagement • Résiliable à tout moment</span>
                   </div>
                 </div>
               </CardContent>
