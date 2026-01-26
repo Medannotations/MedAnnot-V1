@@ -1,18 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Loader2, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Loader2,
   User,
   ChevronRight,
-  ChevronLeft 
+  ChevronLeft,
+  AlertCircle
 } from "lucide-react";
 import { usePatients, type Patient } from "@/hooks/usePatients";
 import { useUserConfiguration, useExampleAnnotations } from "@/hooks/useConfiguration";
@@ -24,6 +33,7 @@ import { VoiceRecorderDual } from "@/components/annotations/VoiceRecorderDual";
 import { TranscriptionReview } from "@/components/annotations/TranscriptionReview";
 import { AnnotationResult } from "@/components/annotations/AnnotationResult";
 import { EmptyState } from "@/components/ui/empty-state";
+import { usePersistedAnnotationState } from "@/hooks/usePersistedAnnotationState";
 
 type Step = "patient" | "visit" | "record" | "transcription" | "result";
 
@@ -49,12 +59,67 @@ export default function CreateAnnotationPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
 
   const { data: patients } = usePatients();
   const { data: config } = useUserConfiguration();
   const { data: examples } = useExampleAnnotations();
   const { data: patientAnnotations } = useAnnotationsByPatient(selectedPatient?.id);
   const createAnnotation = useCreateAnnotation();
+  const { saveState, loadState, clearState, hasPersistedState, isRestored } = usePersistedAnnotationState();
+
+  // Check for persisted state on mount
+  useEffect(() => {
+    if (isRestored && hasPersistedState()) {
+      setShowRestoreDialog(true);
+    }
+  }, [isRestored, hasPersistedState]);
+
+  // Save state whenever important fields change
+  useEffect(() => {
+    if (isRestored && (transcription || annotation)) {
+      saveState({
+        selectedPatientId: selectedPatient?.id || null,
+        visitDate,
+        visitTime,
+        visitDuration,
+        audioDuration,
+        transcription,
+        annotation,
+        step,
+      });
+    }
+  }, [transcription, annotation, step, selectedPatient, visitDate, visitTime, visitDuration, audioDuration, isRestored, saveState]);
+
+  const handleRestoreState = () => {
+    const state = loadState();
+    if (!state) return;
+
+    // Find patient if exists
+    if (state.selectedPatientId && patients) {
+      const patient = patients.find(p => p.id === state.selectedPatientId);
+      if (patient) setSelectedPatient(patient);
+    }
+
+    setVisitDate(state.visitDate);
+    setVisitTime(state.visitTime);
+    setVisitDuration(state.visitDuration);
+    setAudioDuration(state.audioDuration);
+    setTranscription(state.transcription);
+    setAnnotation(state.annotation);
+    setStep(state.step);
+    setShowRestoreDialog(false);
+
+    toast({
+      title: "Brouillon restauré",
+      description: "Votre travail en cours a été récupéré.",
+    });
+  };
+
+  const handleDiscardState = () => {
+    clearState();
+    setShowRestoreDialog(false);
+  };
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step);
 
@@ -159,9 +224,10 @@ export default function CreateAnnotationPage() {
         was_transcription_edited: false,
         was_content_edited: false,
       });
-      toast({ 
-        title: "✓ Annotation enregistrée", 
-        description: "L'annotation a été sauvegardée avec succès." 
+      clearState(); // Clear persisted state on successful save
+      toast({
+        title: "✓ Annotation enregistrée",
+        description: "L'annotation a été sauvegardée avec succès."
       });
       navigate("/app/annotations");
     } catch (error: any) {
@@ -412,6 +478,29 @@ export default function CreateAnnotationPage() {
           isSaving={isSaving}
         />
       )}
+
+      {/* Restore Draft Dialog */}
+      <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              Brouillon détecté
+            </DialogTitle>
+            <DialogDescription>
+              Vous avez un brouillon d'annotation non terminé. Voulez-vous le restaurer pour continuer où vous vous êtes arrêté ?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={handleDiscardState}>
+              Recommencer
+            </Button>
+            <Button onClick={handleRestoreState}>
+              Restaurer le brouillon
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

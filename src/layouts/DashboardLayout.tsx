@@ -11,8 +11,9 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Only redirect if we're done loading AND there's no user
     if (!isLoading && !user) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [user, isLoading, navigate]);
 

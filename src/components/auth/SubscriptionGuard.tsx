@@ -9,11 +9,16 @@ interface ProtectedRouteProps {
 }
 
 export function SubscriptionGuard({ children }: ProtectedRouteProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Still loading auth state, don't redirect yet
+    if (isLoading) {
+      return;
+    }
+
     // Pas connecté → retour landing
     if (!user) {
       navigate("/");
@@ -51,9 +56,9 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
 
     // Sinon, pas d'abonnement → redirection checkout
     navigate("/checkout");
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, isLoading]);
 
-  if (isChecking) {
+  if (isLoading || isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />
