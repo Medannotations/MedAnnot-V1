@@ -37,10 +37,11 @@ export function SignupCheckoutPage() {
     },
     {
       name: "Annuel",
-      price: "1499",
-      period: "par an",
+      price: "125",
+      period: "par mois",
       priceId: "yearly",
-      savings: "Économisez 769 CHF !",
+      annualTotal: "Payé annuellement (1499 CHF/an)",
+      savings: "Économisez 769 CHF/an !",
       popular: true,
       features: [
         "Tout du plan mensuel",
@@ -203,6 +204,11 @@ export function SignupCheckoutPage() {
                           <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
                           <span className="text-gray-600 ml-2">CHF {plan.period}</span>
                         </CardDescription>
+                        {plan.annualTotal && (
+                          <p className="text-gray-500 text-xs mt-1">
+                            {plan.annualTotal}
+                          </p>
+                        )}
                         {plan.savings && (
                           <p className="text-green-600 font-semibold mt-2 text-sm">
                             {plan.savings}

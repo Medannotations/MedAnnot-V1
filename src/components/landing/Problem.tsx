@@ -4,6 +4,15 @@ export function Problem() {
   return (
     <section className="py-24 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Votre quotidien va radicalement changer
+          </h2>
+          <p className="text-xl text-muted-foreground">
+            Comparez votre journée actuelle avec votre future journée avec MedAnnot
+          </p>
+        </div>
+
         <div className="max-w-6xl mx-auto">
           {/* Grid 2 colonnes équilibrées */}
           <div className="grid lg:grid-cols-2 gap-12 items-stretch">

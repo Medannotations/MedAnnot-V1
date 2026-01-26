@@ -85,17 +85,14 @@ export function Pricing({ onGetStarted }: PricingProps) {
                   </>
                 ) : (
                   <>
-                    <div className="mb-3">
-                      <span className="text-2xl text-muted-foreground line-through">2268 CHF</span>
-                    </div>
                     <div className="text-5xl md:text-6xl font-bold text-foreground mb-2">
-                      1499 CHF
+                      125 CHF<span className="text-2xl">/mois</span>
                     </div>
-                    <div className="text-lg text-muted-foreground mb-3">
-                      par an
+                    <div className="text-base text-muted-foreground mb-3">
+                      Payé annuellement (1499 CHF/an)
                     </div>
                     <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl py-3 px-6 rounded-xl inline-block">
-                      Soit 125 CHF/mois • Économisez 769 CHF/an !
+                      Économisez 769 CHF/an par rapport au mensuel !
                     </div>
                   </>
                 )}

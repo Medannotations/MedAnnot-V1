@@ -46,8 +46,8 @@ export function Testimonials() {
             <span className="text-sm font-semibold text-green-700">Plus de 100 infirmiers actifs</span>
           </div>
         </div>
-        
-        <div className="grid md:grid-cols-3 gap-8">
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {testimonials.map((testimonial, index) => (
             <Card key={index} className="bg-card border-border/50 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group">
               <CardContent className="p-6 space-y-4">
