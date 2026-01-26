@@ -209,7 +209,7 @@ export default function CreateAnnotationPage() {
 
   const handleSave = async () => {
     if (!selectedPatient) return;
-    
+
     setIsSaving(true);
     try {
       await createAnnotation.mutateAsync({
@@ -217,7 +217,7 @@ export default function CreateAnnotationPage() {
         visit_date: visitDate,
         visit_time: visitTime,
         visit_duration: visitDuration,
-        transcription,
+        transcription: "", // ⚠️ SÉCURITÉ: Transcription NON sauvegardée (secret médical)
         content: annotation,
         structure_used: config?.annotation_structure,
         audio_duration: audioDuration,
