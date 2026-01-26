@@ -52,10 +52,11 @@ export function FinalCTA({ onGetStarted }: FinalCTAProps) {
           <div className="flex flex-col items-center gap-4 pt-4">
             <Button
               size="xl"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xl px-12 py-8 shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-sm sm:text-xl px-8 sm:px-12 py-6 sm:py-8 shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 w-full sm:w-auto"
               onClick={onGetStarted}
             >
-              🚀 Commencer mon essai gratuit maintenant
+              <span className="hidden sm:inline">🚀 Commencer mon essai gratuit maintenant</span>
+              <span className="sm:hidden">🚀 Essai gratuit maintenant</span>
             </Button>
             <p className="text-sm text-muted-foreground">
               ✓ Sans engagement • ✓ Résiliable à tout moment • ✓ Activation en 30 secondes

@@ -38,9 +38,10 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
                 variant="hero"
                 size="xl"
                 onClick={onGetStarted}
-                className="relative transform hover:scale-105 transition-all shadow-xl hover:shadow-2xl"
+                className="relative transform hover:scale-105 transition-all shadow-xl hover:shadow-2xl text-sm sm:text-base"
               >
-                🚀 Essayer gratuitement pendant 7 jours
+                <span className="hidden sm:inline">🚀 Essayer gratuitement pendant 7 jours</span>
+                <span className="sm:hidden">🚀 Essai gratuit 7 jours</span>
                 <span className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-lg">
                   0 CHF
                 </span>

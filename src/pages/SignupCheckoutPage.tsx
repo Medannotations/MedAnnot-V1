@@ -164,21 +164,21 @@ export function SignupCheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
         {/* Title */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Commencez votre essai gratuit
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-base sm:text-lg text-gray-600">
             Créez votre compte et choisissez votre plan - 7 jours gratuits
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 max-w-6xl mx-auto">
           {/* Left: Plan Selection */}
           <div>
-            <h2 className="text-2xl font-bold mb-6">Choisissez votre plan</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Choisissez votre plan</h2>
 
             <div className="space-y-4">
               {plans.map((plan) => (
@@ -243,7 +243,7 @@ export function SignupCheckoutPage() {
 
           {/* Right: Signup Form */}
           <div>
-            <h2 className="text-2xl font-bold mb-6">Créez votre compte</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Créez votre compte</h2>
 
             <Card>
               <CardContent className="pt-6">

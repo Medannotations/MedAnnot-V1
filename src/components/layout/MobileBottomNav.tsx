@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/app", icon: Home, label: "Accueil" },
-  { to: "/app/configuration", icon: Settings, label: "Config" },
-  { to: "/app/annotations/new", icon: Plus, label: "Nouveau", isAction: true },
   { to: "/app/patients", icon: User, label: "Patients" },
+  { to: "/app/annotations/new", icon: Plus, label: "Annotations", isAction: true },
+  { to: "/app/configuration", icon: Settings, label: "Config" },
 ];
 
 export function MobileBottomNav() {

@@ -30,24 +30,24 @@ export function SuccessPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         {/* Success Icon & Title */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full mb-4 sm:mb-6">
+            <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-green-600" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Bienvenue chez Medannot !
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600">
             Votre compte est actif et votre période d'essai gratuit a commencé
           </p>
         </div>
 
         {/* Main Card */}
-        <Card className="mb-8">
+        <Card className="mb-6 sm:mb-8">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-            <CardTitle className="text-2xl">Prochaines étapes</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Prochaines étapes</CardTitle>
             <CardDescription className="text-blue-100">
               Voici comment accéder à votre espace et commencer à utiliser Medannot
             </CardDescription>

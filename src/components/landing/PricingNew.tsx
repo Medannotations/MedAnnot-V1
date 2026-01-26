@@ -125,13 +125,14 @@ export function Pricing({ onGetStarted }: PricingProps) {
               </ul>
             </CardContent>
 
-            <CardFooter className="px-8 pb-8 flex-col gap-4">
+            <CardFooter className="px-4 sm:px-8 pb-8 flex-col gap-4">
               <Button
                 size="xl"
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-lg py-7 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-sm sm:text-lg py-6 sm:py-7 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
                 onClick={onGetStarted}
               >
-                🚀 Commencer à économiser 2h par jour - Essai gratuit
+                <span className="hidden sm:inline">🚀 Commencer à économiser 2h par jour - Essai gratuit</span>
+                <span className="sm:hidden">🚀 Commencer l'essai gratuit</span>
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 ✓ Activation en 30 secondes • ✓ Sans engagement • ✓ Résiliable à tout moment • ✓ 100% sécurisé

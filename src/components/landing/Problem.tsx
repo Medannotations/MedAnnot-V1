@@ -18,7 +18,7 @@ export function Problem() {
           <div className="grid lg:grid-cols-2 gap-12 items-stretch">
             {/* Problem - Colonne de gauche */}
             <div className="relative">
-              <div className="bg-white border-2 border-red-100 rounded-3xl p-10 h-full shadow-lg hover:shadow-xl transition-shadow">
+              <div className="bg-white border-2 border-red-100 rounded-3xl p-6 sm:p-10 h-full shadow-lg hover:shadow-xl transition-shadow">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0">
                     <Clock className="w-7 h-7 text-red-600" />
@@ -50,7 +50,7 @@ export function Problem() {
             {/* Solution - Colonne de droite */}
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-3xl blur opacity-20"></div>
-              <div className="relative bg-white border-2 border-green-200 rounded-3xl p-10 h-full shadow-xl">
+              <div className="relative bg-white border-2 border-green-200 rounded-3xl p-6 sm:p-10 h-full shadow-xl">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center flex-shrink-0">
                     <Zap className="w-7 h-7 text-green-600" />
