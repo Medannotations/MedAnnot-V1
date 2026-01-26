@@ -5,20 +5,32 @@
  * Utilise AES-256-GCM pour le chiffrement symétrique
  * Les données sont chiffrées côté client avant envoi à la base de données
  *
- * ⚠️ CHIFFREMENT TEMPORAIREMENT DÉSACTIVÉ POUR RÉSOUDRE LES PROBLÈMES DE PERFORMANCE
- * À réactiver avant la commercialisation lors de la migration vers Safe Swiss Cloud
+ * OPTIMISATIONS PERFORMANCES:
+ * - Salt dérivé de l'userId (permet cache de clé efficace)
+ * - 10,000 itérations PBKDF2 (balance sécurité/performance)
+ * - IV aléatoire par chiffrement (garantit l'unicité)
+ * - Cache de clés pour réutilisation instantanée
  */
-
-const ENCRYPTION_ENABLED = false; // Mettre à true pour réactiver le chiffrement
 
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits recommandé pour GCM
 const SALT_LENGTH = 16;
-const ITERATIONS = 100000; // PBKDF2 iterations
+const ITERATIONS = 10000; // Réduit à 10k pour performance (toujours très sécurisé)
 
 // Cache des clés dérivées pour éviter de recalculer PBKDF2 à chaque fois
 const keyCache = new Map<string, CryptoKey>();
+
+/**
+ * Génère un salt déterministe basé sur l'userId
+ * Permet de réutiliser la même clé en cache pour tous les chiffrements d'un utilisateur
+ */
+async function getUserSalt(userId: string): Promise<Uint8Array> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`medannot-salt-${userId}`);
+  const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+  return new Uint8Array(hashBuffer).slice(0, SALT_LENGTH);
+}
 
 /**
  * Génère une clé de chiffrement dérivée de l'ID utilisateur
@@ -75,27 +87,23 @@ async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
  * Chiffre une chaîne de caractères
  * @param plaintext - Texte en clair à chiffrer
  * @param userId - ID de l'utilisateur (utilisé pour dériver la clé)
- * @returns Base64 du format: salt + iv + ciphertext
+ * @returns Base64 du format: iv + ciphertext (le salt est dérivé de l'userId)
  */
 export async function encrypt(plaintext: string, userId: string): Promise<string> {
   if (!plaintext) return plaintext;
-
-  // Si le chiffrement est désactivé, retourner les données en clair
-  if (!ENCRYPTION_ENABLED) {
-    return plaintext;
-  }
 
   try {
     const encoder = new TextEncoder();
     const data = encoder.encode(plaintext);
 
-    // Générer un salt aléatoire pour PBKDF2
-    const salt = window.crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+    // Utiliser un salt déterministe basé sur l'userId
+    // Cela permet au cache de clé de fonctionner efficacement
+    const salt = await getUserSalt(userId);
 
-    // Générer un IV aléatoire
+    // Générer un IV aléatoire (important pour la sécurité AES-GCM)
     const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
-    // Dériver la clé de chiffrement
+    // Dériver la clé de chiffrement (sera en cache après 1er appel)
     const key = await deriveKey(userId, salt);
 
     // Chiffrer les données
@@ -108,11 +116,10 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
       data
     );
 
-    // Combiner salt + iv + ciphertext
-    const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
-    combined.set(salt, 0);
-    combined.set(iv, salt.length);
-    combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
+    // Combiner iv + ciphertext (pas besoin de stocker le salt)
+    const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+    combined.set(iv, 0);
+    combined.set(new Uint8Array(ciphertext), iv.length);
 
     // Encoder en base64
     return btoa(String.fromCharCode(...combined));
@@ -126,7 +133,7 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
  * Vérifie si une chaîne est chiffrée (format base64 valide avec longueur minimale)
  */
 function isEncrypted(data: string): boolean {
-  if (!data || data.length < 64) return false; // Les données chiffrées sont toujours assez longues
+  if (!data || data.length < 32) return false; // Les données chiffrées sont toujours assez longues
 
   // Si ça ressemble à du texte normal (contient des espaces, accents, ponctuation courante)
   // alors ce n'est probablement PAS chiffré
@@ -140,8 +147,9 @@ function isEncrypted(data: string): boolean {
 
   try {
     const decoded = atob(data);
-    // Les données chiffrées doivent avoir au moins salt (16) + iv (12) + ciphertext (>10)
-    return decoded.length >= SALT_LENGTH + IV_LENGTH + 10;
+    // Nouveau format: iv (12) + ciphertext (>10)
+    // Ancien format: salt (16) + iv (12) + ciphertext (>10)
+    return decoded.length >= IV_LENGTH + 10;
   } catch {
     return false;
   }
@@ -156,11 +164,6 @@ function isEncrypted(data: string): boolean {
 export async function decrypt(encrypted: string, userId: string): Promise<string> {
   if (!encrypted) return encrypted;
 
-  // Si le chiffrement est désactivé, retourner les données telles quelles
-  if (!ENCRYPTION_ENABLED) {
-    return encrypted;
-  }
-
   // Si les données ne sont pas chiffrées, les retourner telles quelles (rétrocompatibilité)
   if (!isEncrypted(encrypted)) {
     return encrypted;
@@ -170,12 +173,25 @@ export async function decrypt(encrypted: string, userId: string): Promise<string
     // Décoder le base64
     const combined = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
 
-    // Extraire salt, iv et ciphertext
-    const salt = combined.slice(0, SALT_LENGTH);
-    const iv = combined.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
-    const ciphertext = combined.slice(SALT_LENGTH + IV_LENGTH);
+    // Déterminer le format (nouveau ou ancien)
+    let iv: Uint8Array;
+    let ciphertext: Uint8Array;
+    let salt: Uint8Array;
 
-    // Dériver la clé de déchiffrement
+    // Nouveau format: iv + ciphertext (pas de salt stocké)
+    if (combined.length < SALT_LENGTH + IV_LENGTH + 10) {
+      // Format court = nouveau format
+      iv = combined.slice(0, IV_LENGTH);
+      ciphertext = combined.slice(IV_LENGTH);
+      salt = await getUserSalt(userId);
+    } else {
+      // Format long = ancien format (salt + iv + ciphertext)
+      salt = combined.slice(0, SALT_LENGTH);
+      iv = combined.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+      ciphertext = combined.slice(SALT_LENGTH + IV_LENGTH);
+    }
+
+    // Dériver la clé de déchiffrement (sera en cache après 1er appel)
     const key = await deriveKey(userId, salt);
 
     // Déchiffrer les données
@@ -185,7 +201,7 @@ export async function decrypt(encrypted: string, userId: string): Promise<string
         iv: iv,
       },
       key,
-      ciphertext
+      ciphertext.buffer
     );
 
     // Décoder en texte
