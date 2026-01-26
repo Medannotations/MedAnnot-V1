@@ -87,6 +87,24 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
 }
 
 /**
+ * Vérifie si une chaîne est chiffrée (format base64 valide avec longueur minimale)
+ */
+function isEncrypted(data: string): boolean {
+  if (!data || data.length < 32) return false;
+
+  // Vérifier si c'est du base64 valide
+  const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+  if (!base64Regex.test(data)) return false;
+
+  try {
+    atob(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Déchiffre une chaîne de caractères
  * @param encrypted - Données chiffrées en base64
  * @param userId - ID de l'utilisateur (utilisé pour dériver la clé)
@@ -94,6 +112,11 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
  */
 export async function decrypt(encrypted: string, userId: string): Promise<string> {
   if (!encrypted) return encrypted;
+
+  // Si les données ne sont pas chiffrées, les retourner telles quelles (rétrocompatibilité)
+  if (!isEncrypted(encrypted)) {
+    return encrypted;
+  }
 
   try {
     // Décoder le base64
