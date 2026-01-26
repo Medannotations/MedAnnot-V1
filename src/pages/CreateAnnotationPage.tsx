@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,7 @@ const STEPS: { key: Step; label: string; number: number }[] = [
 
 export default function CreateAnnotationPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>("patient");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [visitDate, setVisitDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -68,6 +69,18 @@ export default function CreateAnnotationPage() {
   const { data: patientAnnotations } = useAnnotationsByPatient(selectedPatient?.id);
   const createAnnotation = useCreateAnnotation();
   const { saveState, loadState, clearState, hasPersistedState, isRestored } = usePersistedAnnotationState();
+
+  // Auto-select patient from URL parameter
+  useEffect(() => {
+    const patientIdFromUrl = searchParams.get('patientId');
+    if (patientIdFromUrl && patients) {
+      const patient = patients.find(p => p.id === patientIdFromUrl);
+      if (patient) {
+        setSelectedPatient(patient);
+        setStep("visit"); // Skip patient selection step
+      }
+    }
+  }, [searchParams, patients]);
 
   // Check for persisted state on mount (ONLY ONCE)
   useEffect(() => {
@@ -122,6 +135,10 @@ export default function CreateAnnotationPage() {
     clearState();
     setShowRestoreDialog(false);
     setHasHandledDraft(true); // Marquer comme géré
+    toast({
+      title: "Brouillon supprimé",
+      description: "Vous repartez de zéro.",
+    });
   };
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step);
@@ -177,9 +194,9 @@ export default function CreateAnnotationPage() {
         userExamples: examples?.map((e) => e.content) || [],
 
         // Pass patient-specific examples (only active ones)
-        patientExamples: selectedPatient.exampleAnnotations
-          ?.filter((ex) => ex.isLearningExample)
-          .map((ex) => ({
+        patientExamples: (selectedPatient as any).exampleAnnotations
+          ?.filter((ex: any) => ex.isLearningExample)
+          .map((ex: any) => ({
             content: ex.content,
             visitDate: ex.visitDate,
             context: ex.context,

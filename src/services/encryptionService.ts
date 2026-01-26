@@ -29,7 +29,8 @@ async function getUserSalt(userId: string): Promise<Uint8Array> {
   const encoder = new TextEncoder();
   const data = encoder.encode(`medannot-salt-${userId}`);
   const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
-  return new Uint8Array(hashBuffer).slice(0, SALT_LENGTH);
+  const fullArray = new Uint8Array(hashBuffer);
+  return fullArray.slice(0, SALT_LENGTH);
 }
 
 /**
@@ -55,10 +56,13 @@ async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
     ["deriveBits", "deriveKey"]
   );
 
+  // Convert salt to proper BufferSource type
+  const saltBuffer = new Uint8Array(salt);
+
   const key = await window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: salt,
+      salt: saltBuffer,
       iterations: ITERATIONS,
       hash: "SHA-256",
     },
@@ -197,20 +201,27 @@ export async function decrypt(encrypted: string, userId: string): Promise<string
 
     // Dériver la clé et déchiffrer
     const key = await deriveKey(userId, salt);
+    const ciphertextBuffer = new Uint8Array(ciphertext);
     const decrypted = await window.crypto.subtle.decrypt(
       {
         name: ALGORITHM,
         iv: iv,
       },
       key,
-      ciphertext
+      ciphertextBuffer
     );
 
     // Décoder en texte
     const decoder = new TextDecoder();
-    return decoder.decode(decrypted);
+    const result = decoder.decode(decrypted);
+    console.log(`✓ Decrypted successfully (${encrypted.substring(0, 20)}... → ${result.substring(0, 30)}...)`);
+    return result;
   } catch (error) {
-    console.warn("Decryption failed, returning data as-is:", error);
+    console.error("❌ Decryption FAILED:", {
+      encrypted: encrypted.substring(0, 50),
+      userId,
+      error: error instanceof Error ? error.message : String(error)
+    });
     // Graceful degradation: retourner les données telles quelles
     return encrypted;
   }

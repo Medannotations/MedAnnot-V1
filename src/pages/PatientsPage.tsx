@@ -134,9 +134,9 @@ export default function PatientsPage() {
           </div>
           <div className="flex items-center gap-2 ml-4">
             <Button asChild variant="outline" size="sm">
-              <Link to={`/app/patients/${patient.id}`}>
+              <Link to={`/app/annotations/new?patientId=${patient.id}`}>
                 <FileText className="w-4 h-4 mr-1" />
-                Annotations
+                Annotation
               </Link>
             </Button>
             {isArchived ? (
