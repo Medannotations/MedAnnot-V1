@@ -5,12 +5,13 @@ import type { User, Session } from "@supabase/supabase-js";
 interface Profile {
   id: string;
   email: string;
-  full_name: string;
-  subscription_status: "none" | "active" | "past_due" | "canceled";
-  subscription_current_period_end: string | null;
-  stripe_customer_id: string | null;
+  full_name: string | null;
+  subscription_status?: "none" | "active" | "past_due" | "canceled";
+  subscription_current_period_end?: string | null;
+  stripe_customer_id?: string | null;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
 interface AuthContextType {
@@ -50,6 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Timeout de sécurité: forcer l'arrêt du loading après 10 secondes max
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.warn("Auth initialization timeout - forcing load completion");
+        setIsLoading(false);
+      }
+    }, 10000);
+
     // Check for existing session FIRST
     const initializeAuth = async () => {
       try {
@@ -68,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Error initializing auth:", error);
       } finally {
         if (isMounted) {
+          clearTimeout(safetyTimeout);
           setIsLoading(false);
         }
       }
@@ -77,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Set up auth state listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         if (!isMounted) return;
 
         setSession(session);
@@ -94,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);

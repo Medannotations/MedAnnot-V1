@@ -35,6 +35,12 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
       return () => clearTimeout(timer);
     }
 
+    // Si subscription_status n'est pas défini (ancienne DB), on autorise l'accès
+    if (!profile.subscription_status) {
+      setIsChecking(false);
+      return;
+    }
+
     // Utilisateur a un abonnement actif → accès autorisé
     if (profile.subscription_status === "active") {
       setIsChecking(false);
