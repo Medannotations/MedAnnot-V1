@@ -4,7 +4,12 @@
  *
  * Utilise AES-256-GCM pour le chiffrement symétrique
  * Les données sont chiffrées côté client avant envoi à la base de données
+ *
+ * ⚠️ CHIFFREMENT TEMPORAIREMENT DÉSACTIVÉ POUR RÉSOUDRE LES PROBLÈMES DE PERFORMANCE
+ * À réactiver avant la commercialisation lors de la migration vers Safe Swiss Cloud
  */
+
+const ENCRYPTION_ENABLED = false; // Mettre à true pour réactiver le chiffrement
 
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
@@ -74,6 +79,11 @@ async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
  */
 export async function encrypt(plaintext: string, userId: string): Promise<string> {
   if (!plaintext) return plaintext;
+
+  // Si le chiffrement est désactivé, retourner les données en clair
+  if (!ENCRYPTION_ENABLED) {
+    return plaintext;
+  }
 
   try {
     const encoder = new TextEncoder();
@@ -145,6 +155,11 @@ function isEncrypted(data: string): boolean {
  */
 export async function decrypt(encrypted: string, userId: string): Promise<string> {
   if (!encrypted) return encrypted;
+
+  // Si le chiffrement est désactivé, retourner les données telles quelles
+  if (!ENCRYPTION_ENABLED) {
+    return encrypted;
+  }
 
   // Si les données ne sont pas chiffrées, les retourner telles quelles (rétrocompatibilité)
   if (!isEncrypted(encrypted)) {
