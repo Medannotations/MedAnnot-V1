@@ -12,11 +12,26 @@ const IV_LENGTH = 12; // 96 bits recommandé pour GCM
 const SALT_LENGTH = 16;
 const ITERATIONS = 100000; // PBKDF2 iterations
 
+// Cache des clés dérivées pour éviter de recalculer PBKDF2 à chaque fois
+const keyCache = new Map<string, CryptoKey>();
+
 /**
  * Génère une clé de chiffrement dérivée de l'ID utilisateur
  * Utilise PBKDF2 pour dériver une clé cryptographique forte
+ * Les clés sont mises en cache pour améliorer les performances
  */
 async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
+  // Créer une clé de cache unique basée sur userId + salt
+  const saltBase64 = btoa(String.fromCharCode(...salt));
+  const cacheKey = `${userId}:${saltBase64}`;
+
+  // Vérifier si la clé est déjà en cache
+  const cachedKey = keyCache.get(cacheKey);
+  if (cachedKey) {
+    return cachedKey;
+  }
+
+  // Dériver la clé si elle n'est pas en cache
   const encoder = new TextEncoder();
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -26,7 +41,7 @@ async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
     ["deriveBits", "deriveKey"]
   );
 
-  return window.crypto.subtle.deriveKey(
+  const derivedKey = await window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: salt,
@@ -38,6 +53,17 @@ async function deriveKey(userId: string, salt: Uint8Array): Promise<CryptoKey> {
     false,
     ["encrypt", "decrypt"]
   );
+
+  // Mettre en cache la clé dérivée
+  keyCache.set(cacheKey, derivedKey);
+
+  // Limiter la taille du cache à 100 clés pour éviter les fuites mémoire
+  if (keyCache.size > 100) {
+    const firstKey = keyCache.keys().next().value;
+    keyCache.delete(firstKey);
+  }
+
+  return derivedKey;
 }
 
 /**
@@ -90,15 +116,22 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
  * Vérifie si une chaîne est chiffrée (format base64 valide avec longueur minimale)
  */
 function isEncrypted(data: string): boolean {
-  if (!data || data.length < 32) return false;
+  if (!data || data.length < 64) return false; // Les données chiffrées sont toujours assez longues
 
-  // Vérifier si c'est du base64 valide
+  // Si ça ressemble à du texte normal (contient des espaces, accents, ponctuation courante)
+  // alors ce n'est probablement PAS chiffré
+  if (/[\s,\.;àâäéèêëïîôùûüÿçñ]/i.test(data)) {
+    return false;
+  }
+
+  // Vérifier si c'est du base64 valide (seulement A-Z, a-z, 0-9, +, /, =)
   const base64Regex = /^[A-Za-z0-9+/]+=*$/;
   if (!base64Regex.test(data)) return false;
 
   try {
-    atob(data);
-    return true;
+    const decoded = atob(data);
+    // Les données chiffrées doivent avoir au moins salt (16) + iv (12) + ciphertext (>10)
+    return decoded.length >= SALT_LENGTH + IV_LENGTH + 10;
   } catch {
     return false;
   }
@@ -168,32 +201,55 @@ export async function encryptPatientData(
   data: PatientData,
   userId: string
 ): Promise<PatientData> {
+  // Chiffrer tous les champs en parallèle pour gagner du temps
+  const [first_name, last_name, address, postal_code, city, pathologies, notes] = await Promise.all([
+    encrypt(data.first_name, userId),
+    encrypt(data.last_name, userId),
+    data.address ? encrypt(data.address, userId) : Promise.resolve(undefined),
+    data.postal_code ? encrypt(data.postal_code, userId) : Promise.resolve(undefined),
+    data.city ? encrypt(data.city, userId) : Promise.resolve(undefined),
+    encrypt(data.pathologies, userId),
+    data.notes ? encrypt(data.notes, userId) : Promise.resolve(undefined),
+  ]);
+
   return {
-    first_name: await encrypt(data.first_name, userId),
-    last_name: await encrypt(data.last_name, userId),
-    address: data.address ? await encrypt(data.address, userId) : undefined,
-    postal_code: data.postal_code ? await encrypt(data.postal_code, userId) : undefined,
-    city: data.city ? await encrypt(data.city, userId) : undefined,
-    pathologies: await encrypt(data.pathologies, userId),
-    notes: data.notes ? await encrypt(data.notes, userId) : undefined,
+    first_name,
+    last_name,
+    address,
+    postal_code,
+    city,
+    pathologies,
+    notes,
   };
 }
 
 /**
  * Déchiffre les données sensibles d'un patient
+ * Optimisé pour éviter les déchiffrements inutiles
  */
 export async function decryptPatientData(
   data: PatientData,
   userId: string
 ): Promise<PatientData> {
+  // Déchiffrer tous les champs en parallèle pour gagner du temps
+  const [first_name, last_name, address, postal_code, city, pathologies, notes] = await Promise.all([
+    decrypt(data.first_name || "", userId),
+    decrypt(data.last_name || "", userId),
+    data.address ? decrypt(data.address, userId) : Promise.resolve(undefined),
+    data.postal_code ? decrypt(data.postal_code, userId) : Promise.resolve(undefined),
+    data.city ? decrypt(data.city, userId) : Promise.resolve(undefined),
+    decrypt(data.pathologies || "", userId),
+    data.notes ? decrypt(data.notes, userId) : Promise.resolve(undefined),
+  ]);
+
   return {
-    first_name: await decrypt(data.first_name, userId),
-    last_name: await decrypt(data.last_name, userId),
-    address: data.address ? await decrypt(data.address, userId) : undefined,
-    postal_code: data.postal_code ? await decrypt(data.postal_code, userId) : undefined,
-    city: data.city ? await decrypt(data.city, userId) : undefined,
-    pathologies: await decrypt(data.pathologies, userId),
-    notes: data.notes ? await decrypt(data.notes, userId) : undefined,
+    first_name,
+    last_name,
+    address,
+    postal_code,
+    city,
+    pathologies,
+    notes,
   };
 }
 
