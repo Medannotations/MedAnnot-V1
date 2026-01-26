@@ -25,48 +25,60 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Vos annotations infirmières{" "}
-              <span className="text-primary">rédigées en quelques secondes</span>
+              Économisez <span className="text-primary">2 heures par jour</span> sur vos annotations
             </h1>
-            
-            <p className="text-xl text-muted-foreground max-w-xl">
-              Dictez. L'IA rédige. Vous copiez. Simple et professionnel.
+
+            <p className="text-xl text-muted-foreground max-w-xl leading-relaxed">
+              Finissez votre journée sereinement. Profitez de vos soirées au lieu de les passer à rattraper des annotations.
+              <span className="block mt-2 text-foreground font-semibold">L'IA spécialisée paramédical rédige pour vous en 1 clic.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="xl" onClick={onGetStarted} className="relative">
-                Essayer gratuitement pendant 7 jours
-                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                  GRATUIT
+              <Button
+                variant="hero"
+                size="xl"
+                onClick={onGetStarted}
+                className="relative transform hover:scale-105 transition-all shadow-xl hover:shadow-2xl"
+              >
+                🚀 Essayer gratuitement pendant 7 jours
+                <span className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-lg">
+                  0 CHF
                 </span>
               </Button>
-              <Button variant="heroOutline" size="xl" onClick={onLogin}>
+              <Button
+                variant="heroOutline"
+                size="xl"
+                onClick={onLogin}
+                className="transform hover:scale-105 transition-all"
+              >
                 Se connecter
               </Button>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-              Sans carte bancaire • Sans engagement • Annulable à tout moment
-            </p>
+            <div className="bg-white/80 backdrop-blur border border-border/50 rounded-xl p-4 inline-block">
+              <p className="text-sm text-foreground font-medium">
+                ✓ Sans carte bancaire • ✓ Sans engagement • ✓ Résiliable en 1 clic
+              </p>
+            </div>
 
             <div className="flex flex-wrap items-center gap-6 pt-4">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm font-medium text-foreground">Économisez 2h par jour</span>
+                <span className="text-sm font-medium text-foreground">2h économisées chaque jour</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm font-medium text-foreground">Conformité suisse</span>
+                <span className="text-sm font-medium text-foreground">Tranquillité d'esprit garantie</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm font-medium text-foreground">100% sécurisé</span>
+                <span className="text-sm font-medium text-foreground">Profitez de vos soirées</span>
               </div>
             </div>
           </div>

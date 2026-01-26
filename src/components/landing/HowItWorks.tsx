@@ -79,9 +79,28 @@ export function HowItWorks() {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-lg text-muted-foreground mb-4">
-            <strong className="text-foreground">Résultat :</strong> 2 heures économisées chaque jour = 40h par mois !
-          </p>
+          <div className="bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 border-2 border-primary/30 rounded-2xl p-8 max-w-3xl mx-auto">
+            <p className="text-2xl font-bold text-foreground mb-3">
+              ⏱️ Résultat : 2 heures économisées chaque jour
+            </p>
+            <p className="text-lg text-muted-foreground mb-4">
+              = 40 heures par mois = Une semaine complète récupérée
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 mt-6">
+              <div className="bg-white rounded-lg px-6 py-3 shadow-sm">
+                <div className="text-sm text-muted-foreground">Par jour</div>
+                <div className="text-2xl font-bold text-primary">2h</div>
+              </div>
+              <div className="bg-white rounded-lg px-6 py-3 shadow-sm">
+                <div className="text-sm text-muted-foreground">Par mois</div>
+                <div className="text-2xl font-bold text-primary">40h</div>
+              </div>
+              <div className="bg-white rounded-lg px-6 py-3 shadow-sm">
+                <div className="text-sm text-muted-foreground">Par an</div>
+                <div className="text-2xl font-bold text-primary">480h</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

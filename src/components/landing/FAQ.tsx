@@ -4,36 +4,44 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const faqs = [
   {
-    question: "L'IA comprend-elle vraiment le jargon médical suisse ?",
-    answer: "Oui ! Notre IA est entraînée sur le vocabulaire médical français de Suisse romande et s'adapte à votre style de rédaction. Elle reconnaît la terminologie médicale, les abréviations standards et respecte les formulations professionnelles utilisées en Suisse.",
+    question: "Est-ce que je vais vraiment économiser 2 heures par jour ?",
+    answer: "Oui ! La majorité de nos utilisateurs économisent entre 1,5 et 2,5 heures par jour. Pensez au temps que vous passez actuellement à rédiger vos annotations : 10-15 minutes par patient en moyenne. Avec MedAnnot, vous dictez en 2 minutes pendant ou après la visite, et l'annotation est prête en 10 secondes. Soit moins d'une minute par patient au lieu de 15 minutes.",
   },
   {
-    question: "Puis-je personnaliser la structure des annotations ?",
-    answer: "Absolument. Vous définissez votre propre structure d'annotation et l'IA la respecte à chaque fois. Vous pouvez également fournir des exemples d'annotations pour que l'IA apprenne votre style spécifique.",
+    question: "L'IA comprend-elle vraiment le jargon médical et infirmier suisse ?",
+    answer: "Absolument ! Notre IA est spécifiquement entraînée sur le langage paramédical et médical suisse. Elle comprend et utilise correctement la terminologie professionnelle, les abréviations standards (TA, FC, sat O2, etc.), et respecte les formulations utilisées en Suisse romande. Elle rédige exactement comme un professionnel de santé expérimenté.",
   },
   {
-    question: "Mes données sont-elles vraiment sécurisées ?",
-    answer: "Oui, la sécurité est notre priorité absolue. Toutes vos données sont chiffrées de bout en bout. Nous sommes conformes à la Loi fédérale sur la protection des données (LPD) suisse. Vos informations médicales restent strictement confidentielles et ne sont jamais partagées.",
+    question: "Comment copier l'annotation dans mon logiciel infirmier ?",
+    answer: "C'est ultra simple ! Une fois l'annotation générée, vous avez un bouton 'Copier' en un clic. Ensuite, vous collez directement dans votre logiciel habituel (Vivendi, Polypoint, ou autre). Pas besoin de changer vos habitudes - MedAnnot s'intègre parfaitement dans votre workflow existant.",
   },
   {
     question: "Que se passe-t-il après les 7 jours d'essai gratuit ?",
-    answer: "Rien si vous ne faites rien. Il n'y a aucun prélèvement automatique. Vous choisissez votre formule d'abonnement (mensuel ou annuel) uniquement si vous êtes satisfait. Vous gardez le contrôle total.",
+    answer: "RIEN si vous ne faites rien. L'essai est vraiment sans engagement : pas de carte bancaire demandée, pas de prélèvement automatique. Après 7 jours, vous choisissez librement si vous voulez continuer avec un abonnement (mensuel à 189 CHF ou annuel à 1499 CHF). Vous gardez le contrôle total.",
+  },
+  {
+    question: "Mes données médicales sont-elles vraiment sécurisées ?",
+    answer: "Oui, c'est notre priorité absolue. Toutes vos données sont chiffrées de bout en bout avec les meilleurs standards de sécurité. Nous sommes strictement conformes à la Loi fédérale sur la protection des données (LPD) suisse. Hébergement en Suisse. Vos informations médicales restent 100% confidentielles et ne sont JAMAIS partagées ou utilisées à d'autres fins.",
+  },
+  {
+    question: "Puis-je personnaliser complètement la structure des annotations ?",
+    answer: "Oui, totalement ! Vous définissez votre propre structure : vos sections préférées, vos formulations habituelles, vos abréviations. L'IA s'adapte à VOTRE façon de travailler, pas l'inverse. Vous pouvez même fournir des exemples de vos anciennes annotations pour que l'IA reproduise parfaitement votre style.",
+  },
+  {
+    question: "L'IA peut-elle faire des erreurs ? Qui est responsable ?",
+    answer: "L'IA est un outil d'assistance, pas un remplacement de votre jugement professionnel. Elle génère une annotation de qualité professionnelle basée sur vos observations, mais VOUS restez toujours responsable du contenu final. Vous pouvez (et devez) relire et modifier l'annotation avant de la valider. C'est votre expertise qui prime.",
+  },
+  {
+    question: "Est-ce que 125 CHF/mois, c'est vraiment rentable ?",
+    answer: "Absolument ! Calculons ensemble : 40 heures économisées par mois. Si vous valorisez votre temps à seulement 10 CHF/heure (bien en dessous du taux horaire infirmier), ça fait 400 CHF de valeur créée. Pour 125 CHF/mois (en annuel). Sans compter la tranquillité d'esprit et la qualité de vie retrouvée. Le ROI est immédiat.",
+  },
+  {
+    question: "Puis-je utiliser MedAnnot sur mobile ?",
+    answer: "Oui, parfaitement ! L'application fonctionne sur smartphone, tablette et ordinateur. Vous pouvez dicter vos observations directement depuis votre mobile entre deux visites à domicile, et l'annotation est prête quand vous arrivez au prochain patient. C'est conçu pour les infirmiers nomades.",
   },
   {
     question: "Puis-je annuler mon abonnement facilement ?",
-    answer: "Oui, vous pouvez annuler votre abonnement en 1 clic depuis votre compte, à tout moment. Aucun frais d'annulation, aucune justification requise. C'est immédiat et sans complications.",
-  },
-  {
-    question: "L'IA remplace-t-elle mon jugement professionnel ?",
-    answer: "Non, absolument pas. L'IA est un outil pour vous faire gagner du temps en rédaction, pas pour remplacer votre expertise médicale. Vous restez toujours responsable du contenu final et pouvez modifier l'annotation générée avant de l'utiliser.",
-  },
-  {
-    question: "Combien de temps prend la génération d'une annotation ?",
-    answer: "La transcription de votre audio prend généralement 10-30 secondes selon la longueur. La génération de l'annotation structurée prend ensuite 5-10 secondes supplémentaires. Au total, moins d'une minute contre 10-15 minutes de rédaction manuelle.",
-  },
-  {
-    question: "Puis-je utiliser Nurses Notes AI sur mobile ?",
-    answer: "Oui ! L'application est entièrement responsive et fonctionne parfaitement sur smartphone et tablette. Vous pouvez dicter vos observations directement depuis votre mobile lors de vos visites à domicile.",
+    answer: "Oui, en 1 clic depuis votre compte, à tout moment. Aucun frais d'annulation, aucune justification requise, aucune période minimum. C'est immédiat et sans complications. On ne retient jamais personne contre son gré.",
   },
 ];
 
@@ -45,10 +53,10 @@ export function FAQ() {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Questions fréquentes
+            Vos questions, nos réponses
           </h2>
           <p className="text-xl text-muted-foreground">
-            Tout ce que vous devez savoir sur Nurses Notes AI
+            Tout ce que vous devez savoir sur MedAnnot pour prendre votre décision en toute sérénité
           </p>
         </div>
 
