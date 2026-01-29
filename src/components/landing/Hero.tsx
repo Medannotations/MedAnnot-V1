@@ -10,88 +10,100 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-emerald-50" />
+      
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full opacity-20 blur-3xl" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200 rounded-full opacity-20 blur-3xl" />
       
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
               </span>
               Pour infirmiers indépendants suisses
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Économisez <span className="text-primary">2 heures par jour</span> sur vos annotations
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+              Retrouvez{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+                2 heures par jour
+              </span>{" "}
+              pour vos patients
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-xl leading-relaxed">
-              Finissez votre journée sereinement. Profitez de vos soirées au lieu de les passer à rattraper des annotations.
-              <span className="block mt-2 text-foreground font-semibold">L'IA spécialisée paramédical rédige pour vous en 1 clic.</span>
+            <p className="text-xl text-gray-600 max-w-xl leading-relaxed">
+              Dictez vos observations après chaque visite. L'IA rédige des annotations professionnelles en quelques secondes. Vous copiez-collez dans votre logiciel habituel.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
-                variant="hero"
                 size="xl"
                 onClick={onGetStarted}
-                className="relative transform hover:scale-105 transition-all shadow-xl hover:shadow-2xl text-sm sm:text-base"
+                className="relative bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
               >
-                <span className="hidden sm:inline">🚀 Essayer gratuitement pendant 7 jours</span>
-                <span className="sm:hidden">🚀 Essai gratuit 7 jours</span>
-                <span className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-lg">
-                  0 CHF
-                </span>
+                Essayer gratuitement 7 jours
               </Button>
               <Button
-                variant="heroOutline"
+                variant="outline"
                 size="xl"
                 onClick={onLogin}
-                className="transform hover:scale-105 transition-all"
+                className="border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 font-semibold px-8 py-6 rounded-xl transition-all"
               >
                 Se connecter
               </Button>
             </div>
 
-            <div className="bg-white/80 backdrop-blur border border-border/50 rounded-xl p-4 inline-block">
-              <p className="text-sm text-foreground font-medium">
-                ✓ Sans engagement • ✓ Résiliable à tout moment • ✓ 100% gratuit pendant 7 jours
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-6 pt-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            {/* Trust micro-copy */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm font-medium text-foreground">2h économisées chaque jour</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                Sans carte bancaire
+              </span>
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm font-medium text-foreground">Tranquillité d'esprit garantie</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                Conforme LPD
+              </span>
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm font-medium text-foreground">Profitez de vos soirées</span>
-              </div>
+                Annulation en 1 clic
+              </span>
             </div>
           </div>
           
           {/* Right content - Hero image */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-3xl blur-3xl" />
+          <div className="relative hidden lg:block">
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-emerald-500/20 rounded-3xl blur-3xl" />
             <img 
               src={heroImage} 
-              alt="Infirmière utilisant Medannot" 
+              alt="Infirmière utilisant MedAnnot" 
               className="relative w-full rounded-3xl shadow-2xl"
             />
+            
+            {/* Floating card */}
+            <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">2h</div>
+                  <div className="text-sm text-gray-500">économisées/jour</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

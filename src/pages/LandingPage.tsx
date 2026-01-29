@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
+import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { Problem } from "@/components/landing/Problem";
+import { Solution } from "@/components/landing/Solution";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { Benefits } from "@/components/landing/Benefits";
 import { Features } from "@/components/landing/Features";
+import { Security } from "@/components/landing/Security";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { Pricing } from "@/components/landing/PricingNew";
 import { FAQ } from "@/components/landing/FAQ";
@@ -34,7 +36,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Navbar 
         onLogin={() => handleOpenAuth("login")} 
         onSignup={() => handleOpenAuth("signup")} 
@@ -43,16 +45,14 @@ export default function LandingPage() {
         onGetStarted={() => handleOpenAuth("signup")}
         onLogin={() => handleOpenAuth("login")}
       />
-      <HowItWorks />
+      <SocialProofBar />
       <Problem />
-      <section id="pricing">
-        <Pricing onGetStarted={() => handleOpenAuth("signup")} />
-      </section>
-      <Benefits />
+      <Solution />
+      <HowItWorks />
       <Features />
-      <section id="testimonials">
-        <Testimonials />
-      </section>
+      <Security />
+      <Testimonials />
+      <Pricing onGetStarted={() => handleOpenAuth("signup")} />
       <FAQ />
       <FinalCTA onGetStarted={() => handleOpenAuth("signup")} />
       <Footer />
