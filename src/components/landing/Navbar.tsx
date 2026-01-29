@@ -97,7 +97,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
             
             {/* Mobile menu button */}
             <button 
-              className="md:hidden p-3 -mr-2 rounded-lg hover:bg-gray-100 transition-colors touch-target"
+              className="md:hidden p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors touch-manipulation"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={isMenuOpen}
@@ -124,28 +124,28 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
             <a 
               href="#features" 
               onClick={(e) => handleNavClick(e, 'features')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-3 rounded-lg touch-target"
+              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               Fonctionnalités
             </a>
             <a 
               href="#pricing" 
               onClick={(e) => handleNavClick(e, 'pricing')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-3 rounded-lg touch-target"
+              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               Tarification
             </a>
             <a 
               href="#testimonials" 
               onClick={(e) => handleNavClick(e, 'testimonials')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-3 rounded-lg touch-target"
+              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               Témoignages
             </a>
             <a 
               href="#faq" 
               onClick={(e) => handleNavClick(e, 'faq')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-3 rounded-lg touch-target"
+              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               FAQ
             </a>
@@ -154,13 +154,13 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Button 
                 variant="outline" 
                 onClick={() => { onLogin(); closeMenu(); }}
-                className="w-full py-3 text-base"
+                className="w-full min-h-[48px] text-base touch-manipulation"
               >
                 Se connecter
               </Button>
               <Button 
                 onClick={() => { onSignup(); closeMenu(); }}
-                className="w-full py-3 text-base bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold"
+                className="w-full min-h-[48px] text-base bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold touch-manipulation"
               >
                 Essai gratuit 7 jours
               </Button>

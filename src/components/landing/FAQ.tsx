@@ -69,9 +69,10 @@ export function FAQ() {
               >
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full px-6 py-5 text-left flex items-center justify-between gap-4"
+                  className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-3 min-h-[56px] touch-target"
+                  aria-expanded={openIndex === index}
                 >
-                  <span className="text-lg font-semibold text-gray-900">
+                  <span className="text-base sm:text-lg font-semibold text-gray-900">
                     {faq.question}
                   </span>
                   <span
@@ -101,7 +102,7 @@ export function FAQ() {
                     openIndex === index ? "max-h-96" : "max-h-0"
                   }`}
                 >
-                  <div className="px-6 pb-5 text-gray-600 leading-relaxed">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-5 text-gray-600 leading-relaxed text-sm sm:text-base">
                     {faq.answer}
                   </div>
                 </div>

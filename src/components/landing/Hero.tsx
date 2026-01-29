@@ -46,11 +46,11 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
               Dictez vos observations après chaque visite. L'IA rédige des annotations professionnelles en quelques secondes. Vous copiez-collez dans votre logiciel habituel.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up animation-delay-300">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-fade-in-up animation-delay-300">
               <Button
                 size="xl"
                 onClick={onGetStarted}
-                className="relative bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all animate-pulse-glow"
+                className="relative w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-base md:text-lg px-6 md:px-8 py-4 md:py-6 min-h-[48px] rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all animate-pulse-glow touch-manipulation"
               >
                 <span className="mr-2">🎯</span>
                 Essayer gratuitement 7 jours
@@ -59,7 +59,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
                 variant="outline"
                 size="xl"
                 onClick={onLogin}
-                className="border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 font-semibold px-8 py-6 rounded-xl transition-all"
+                className="w-full sm:w-auto border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 font-semibold px-6 md:px-8 py-4 md:py-6 min-h-[48px] rounded-xl transition-all touch-manipulation"
               >
                 Se connecter
               </Button>

@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-foreground to-slate-900 text-background py-16">
+    <footer className="bg-gradient-to-b from-foreground to-slate-900 text-background py-12 sm:py-16">
       <div className="container mx-auto px-4">
         {/* Section principale */}
-        <div className="max-w-6xl mx-auto mb-12">
-          <div className="grid md:grid-cols-3 gap-12">
+        <div className="max-w-6xl mx-auto mb-8 sm:mb-12">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12">
             {/* Colonne 1 - À propos */}
             <div className="space-y-4">
               <h3 className="text-3xl font-bold">MedAnnot</h3>
@@ -27,24 +27,24 @@ export function Footer() {
             {/* Colonne 2 - Navigation rapide */}
             <div>
               <h4 className="font-semibold mb-4 text-lg">Navigation</h4>
-              <ul className="space-y-3 text-background/80">
+              <ul className="space-y-2 text-background/80">
                 <li>
-                  <a href="#pricing" className="hover:text-background transition-colors hover:underline">
+                  <a href="#pricing" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                     Tarification
                   </a>
                 </li>
                 <li>
-                  <a href="#testimonials" className="hover:text-background transition-colors hover:underline">
+                  <a href="#testimonials" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                     Témoignages
                   </a>
                 </li>
                 <li>
-                  <Link to="/app" className="hover:text-background transition-colors hover:underline">
+                  <Link to="/app" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                     Se connecter
                   </Link>
                 </li>
                 <li>
-                  <Link to="/signup" className="hover:text-background transition-colors hover:underline">
+                  <Link to="/signup" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                     Commencer gratuitement
                   </Link>
                 </li>
@@ -69,24 +69,24 @@ export function Footer() {
 
               <div className="mt-6">
                 <h4 className="font-semibold mb-3 text-lg">Légal</h4>
-                <ul className="space-y-2 text-background/80 text-sm">
+                <ul className="space-y-1 text-background/80 text-sm">
                   <li>
-                    <Link to="/terms-of-service" className="hover:text-background transition-colors hover:underline">
+                    <Link to="/terms-of-service" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                       Conditions générales d'utilisation
                     </Link>
                   </li>
                   <li>
-                    <Link to="/terms-of-sale" className="hover:text-background transition-colors hover:underline">
+                    <Link to="/terms-of-sale" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                       Conditions générales de vente
                     </Link>
                   </li>
                   <li>
-                    <Link to="/privacy-policy" className="hover:text-background transition-colors hover:underline">
+                    <Link to="/privacy-policy" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                       Politique de confidentialité
                     </Link>
                   </li>
                   <li>
-                    <Link to="/legal-notice" className="hover:text-background transition-colors hover:underline">
+                    <Link to="/legal-notice" className="inline-block py-1 hover:text-background transition-colors hover:underline">
                       Mentions légales
                     </Link>
                   </li>
