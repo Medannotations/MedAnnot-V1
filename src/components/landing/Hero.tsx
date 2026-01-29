@@ -16,20 +16,20 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
       <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full opacity-20 blur-3xl animate-pulse" />
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200 rounded-full opacity-20 blur-3xl animate-pulse animation-delay-500" />
       
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left content */}
-          <div className="space-y-8">
+          <div className="space-y-6 md:space-y-8">
             {/* Badge gratuit */}
-            <div className="inline-flex items-center gap-3 animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 animate-fade-in-up">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs sm:text-sm font-medium">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                 </span>
                 Pour infirmiers indépendants suisses
               </div>
-              <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg">
+              <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg">
                 0 CHF pour commencer
               </div>
             </div>
@@ -42,7 +42,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
               pour vos patients
             </h1>
 
-            <p className="text-xl text-gray-600 max-w-xl leading-relaxed animate-fade-in-up animation-delay-200">
+            <p className="text-base md:text-xl text-gray-600 max-w-xl leading-relaxed animate-fade-in-up animation-delay-200">
               Dictez vos observations après chaque visite. L'IA rédige des annotations professionnelles en quelques secondes. Vous copiez-collez dans votre logiciel habituel.
             </p>
 
@@ -89,16 +89,17 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
           </div>
           
           {/* Right content - Hero image */}
-          <div className="relative hidden lg:block animate-fade-in animation-delay-200">
+          <div className="relative animate-fade-in animation-delay-200">
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-emerald-500/20 rounded-3xl blur-3xl animate-pulse" />
             <img 
               src={heroImage} 
               alt="Infirmière utilisant MedAnnot" 
-              className="relative w-full rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300"
+              className="relative w-full max-w-md lg:max-w-none mx-auto rounded-2xl lg:rounded-3xl shadow-xl lg:shadow-2xl hover:shadow-3xl transition-shadow duration-300"
+              loading="eager"
             />
             
             {/* Floating card - Time saved */}
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-4 border border-gray-100 animate-float">
+            <div className="hidden lg:block absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-4 border border-gray-100 animate-float">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
                   <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +114,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
             </div>
 
             {/* Floating card - Fast annotation */}
-            <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100 animate-float animation-delay-500">
+            <div className="hidden lg:block absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100 animate-float animation-delay-500">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

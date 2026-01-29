@@ -83,7 +83,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
             </div>
 
             {/* Annual plan - RECOMMENDED */}
-            <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl transform md:scale-105">
+            <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 md:p-8 text-white shadow-xl transform scale-100 md:scale-105">
               {/* Recommended badge */}
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg">
