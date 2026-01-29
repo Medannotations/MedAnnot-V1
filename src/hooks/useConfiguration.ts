@@ -26,12 +26,16 @@ export function useUserConfiguration() {
 
 export function useUpdateConfiguration() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (structure: string) => {
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("user_configurations")
         .update({ annotation_structure: structure })
+        .eq("user_id", user.id)
         .select()
         .single();
 

@@ -34,18 +34,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Fetch user profile from profiles table
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
-      return;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        // Ne pas bloquer - continuer avec profile null
+        return;
+      }
+
+      setProfile(data as Profile);
+    } catch (err) {
+      console.error("Unexpected error fetching profile:", err);
     }
-
-    setProfile(data as Profile);
   };
 
   useEffect(() => {
