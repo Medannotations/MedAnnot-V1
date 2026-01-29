@@ -37,7 +37,7 @@ export function FinalCTA({ onGetStarted }: FinalCTAProps) {
           <Button
             onClick={onGetStarted}
             size="xl"
-            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 font-bold text-lg sm:text-xl px-8 sm:px-12 py-5 sm:py-7 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 animate-pulse-glow"
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-5 md:py-7 min-h-[56px] rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 animate-pulse-glow touch-manipulation"
           >
             <span className="mr-2">🚀</span>
             Démarrer mon essai gratuit
