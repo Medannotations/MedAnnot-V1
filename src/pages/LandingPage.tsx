@@ -63,14 +63,10 @@ export default function LandingPage() {
       <Security />
       
       {/* Social proof */}
-      <section id="testimonials">
-        <Testimonials />
-      </section>
+      <Testimonials />
       
       {/* Pricing */}
-      <section id="pricing">
-        <Pricing onGetStarted={() => handleOpenAuth("signup")} />
-      </section>
+      <Pricing onGetStarted={() => handleOpenAuth("signup")} />
       
       {/* FAQ */}
       <FAQ />
