@@ -185,6 +185,7 @@ export default function CreateAnnotationPage() {
       const result = await generateAnnotation({
         transcription: editedTranscription,
         patientName: `${selectedPatient.last_name} ${selectedPatient.first_name}`,
+        patientId: selectedPatient.id,  // SECURITY: Used for pseudonymization (LPD compliance)
         patientAddress: selectedPatient.address || "",
         patientPathologies: selectedPatient.pathologies || "",
         visitDate,
