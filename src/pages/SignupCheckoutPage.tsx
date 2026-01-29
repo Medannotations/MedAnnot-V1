@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Check, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Loader2, Check, ArrowLeft, Eye, EyeOff, Stethoscope, Shield, Clock, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,31 +23,31 @@ export function SignupCheckoutPage() {
 
   const plans = [
     {
+      id: "monthly" as const,
       name: "Mensuel",
-      price: "189",
-      period: "par mois",
-      priceId: "monthly",
+      price: "149",
+      period: "/mois",
+      description: "Flexibilité maximale",
       features: [
         "Annotations illimitées",
         "Patients illimités",
-        "Exportation PDF/Word",
-        "Support prioritaire",
         "7 jours d'essai gratuit",
+        "Annulation à tout moment",
       ],
     },
     {
+      id: "yearly" as const,
       name: "Annuel",
       price: "125",
-      period: "par mois",
-      priceId: "yearly",
-      annualTotal: "Payé annuellement (1499 CHF/an)",
-      savings: "Économisez 769 CHF/an !",
-      popular: true,
+      period: "/mois",
+      annualTotal: "1'499 CHF/an",
+      badge: "Économisez 16%",
+      recommended: true,
       features: [
         "Tout du plan mensuel",
-        "Paiement annuel",
         "7 jours d'essai gratuit",
-        "-45% par rapport au mensuel",
+        "Meilleur rapport qualité-prix",
+        "Support prioritaire",
       ],
     },
   ];
@@ -76,7 +76,7 @@ export function SignupCheckoutPage() {
     setIsLoading(true);
 
     try {
-      // 1. Créer le compte utilisateur (sans vérification email)
+      // 1. Créer le compte utilisateur
       const { data: authData, error: signupError } = await supabase.auth.signUp({
         email,
         password,
@@ -99,9 +99,7 @@ export function SignupCheckoutPage() {
 
       if (signInError) throw signInError;
 
-      // 3. Le profil sera créé automatiquement par le webhook Stripe après paiement
-
-      // 4. Créer la session Stripe Checkout
+      // 3. Créer la session Stripe Checkout
       const priceId = selectedPlan === "monthly"
         ? import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY
         : import.meta.env.VITE_STRIPE_PRICE_ID_YEARLY;
@@ -124,13 +122,11 @@ export function SignupCheckoutPage() {
       const data = await response.json();
 
       if (data.url) {
-        // 5. Rediriger vers Stripe Checkout
         toast({
           title: "Compte créé !",
           description: "Redirection vers le paiement sécurisé...",
         });
 
-        // Attendre un peu pour que l'utilisateur voie le message
         setTimeout(() => {
           window.location.href = data.url;
         }, 500);
@@ -149,133 +145,177 @@ export function SignupCheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50">
       {/* Header */}
-      <div className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center">
+              <Stethoscope className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+              MedAnnot
+            </span>
+          </div>
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="gap-2"
+            className="gap-2 text-gray-600 hover:text-gray-900 touch-manipulation"
           >
             <ArrowLeft className="w-4 h-4" />
-            Retour
+            <span className="hidden sm:inline">Retour</span>
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
-        {/* Title */}
-        <div className="text-center mb-8 sm:mb-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16">
+        {/* Title Section */}
+        <div className="text-center mb-8 sm:mb-12 animate-fade-in-up">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Commencez votre essai gratuit
+            Commencez votre essai gratuit de{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+              7 jours
+            </span>
           </h1>
-          <p className="text-base sm:text-lg text-gray-600">
-            Créez votre compte et choisissez votre plan - 7 jours gratuits
+          <p className="text-base sm:text-lg text-gray-600 mb-4">
+            Créez votre compte et récupérez 2h par jour
           </p>
+          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium">
+            <Check className="w-4 h-4" />
+            Sans carte bancaire pour l'essai
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left: Plan Selection */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Choisissez votre plan</h2>
+          <div className="animate-fade-in-up animation-delay-100">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
+              Choisissez votre plan
+            </h2>
 
             <div className="space-y-4">
               {plans.map((plan) => (
-                <Card
-                  key={plan.priceId}
-                  className={`relative cursor-pointer transition-all ${
-                    selectedPlan === plan.priceId
-                      ? "ring-2 ring-blue-500 shadow-xl bg-blue-50"
-                      : "hover:shadow-lg"
+                <div
+                  key={plan.id}
+                  className={`relative cursor-pointer transition-all duration-300 rounded-2xl p-1 ${
+                    selectedPlan === plan.id
+                      ? "bg-gradient-to-r from-blue-600 to-emerald-500"
+                      : "bg-transparent"
                   }`}
-                  onClick={() => setSelectedPlan(plan.priceId as "monthly" | "yearly")}
+                  onClick={() => setSelectedPlan(plan.id)}
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
-                      Plus populaire
+                  {plan.recommended && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
+                        RECOMMANDÉ
+                      </span>
                     </div>
                   )}
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl">{plan.name}</CardTitle>
-                        <CardDescription className="mt-2">
-                          <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
-                          <span className="text-gray-600 ml-2">CHF {plan.period}</span>
-                        </CardDescription>
-                        {plan.annualTotal && (
-                          <p className="text-gray-500 text-xs mt-1">
-                            {plan.annualTotal}
-                          </p>
-                        )}
-                        {plan.savings && (
-                          <p className="text-green-600 font-semibold mt-2 text-sm">
-                            {plan.savings}
-                          </p>
-                        )}
-                      </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        selectedPlan === plan.priceId
-                          ? "border-blue-600 bg-blue-600"
-                          : "border-gray-300"
-                      }`}>
-                        {selectedPlan === plan.priceId && (
-                          <Check className="w-4 h-4 text-white" />
-                        )}
-                      </div>
+                  {plan.badge && (
+                    <div className="absolute -top-3 right-4 z-10">
+                      <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                        {plan.badge}
+                      </span>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm">
-                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span className="text-gray-700">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                  )}
+                  
+                  <Card className={`relative transition-all duration-300 ${
+                    selectedPlan === plan.id
+                      ? "bg-white shadow-xl"
+                      : "bg-white hover:shadow-lg border-gray-200"
+                  }`}>
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                          
+                          <div className="mt-4 flex items-baseline gap-1">
+                            <span className="text-3xl sm:text-4xl font-bold text-gray-900">
+                              {plan.price}
+                            </span>
+                            <span className="text-gray-600 font-medium">CHF</span>
+                            <span className="text-gray-500">{plan.period}</span>
+                          </div>
+                          
+                          {plan.annualTotal && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              Facturé {plan.annualTotal}
+                            </p>
+                          )}
+
+                          <ul className="mt-4 space-y-2">
+                            {plan.features.map((feature, i) => (
+                              <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                                <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          selectedPlan === plan.id
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-gray-300"
+                        }`}>
+                          {selectedPlan === plan.id && (
+                            <Check className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
             </div>
           </div>
 
           {/* Right: Signup Form */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Créez votre compte</h2>
+          <div className="animate-fade-in-up animation-delay-200">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
+              Créez votre compte
+            </h2>
 
-            <Card>
-              <CardContent className="pt-6">
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <Card className="shadow-xl border-0">
+              <CardContent className="p-4 sm:p-6 md:p-8">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nom complet</Label>
+                    <Label htmlFor="name" className="text-gray-700 font-medium">
+                      Nom complet
+                    </Label>
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Marie Dupont"
+                      placeholder="Dr. Marie Dupont"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                       disabled={isLoading}
+                      className="h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email professionnel</Label>
+                    <Label htmlFor="email" className="text-gray-700 font-medium">
+                      Email professionnel
+                    </Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="votre@email.ch"
+                      placeholder="marie@cabinet-medical.ch"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
+                      className="h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Mot de passe</Label>
+                    <Label htmlFor="password" className="text-gray-700 font-medium">
+                      Mot de passe
+                    </Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -286,55 +326,66 @@ export function SignupCheckoutPage() {
                         required
                         disabled={isLoading}
                         minLength={6}
-                        className="pr-10"
+                        className="h-12 pr-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 touch-manipulation"
                         disabled={isLoading}
                       >
                         {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
+                          <EyeOff className="w-5 h-5" />
                         ) : (
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-5 h-5" />
                         )}
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-2 pt-2">
+                  <div className="flex items-start space-x-3 pt-2">
                     <Checkbox
                       id="terms"
                       checked={acceptTerms}
                       onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                       disabled={isLoading}
+                      className="mt-1 border-gray-300 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                     />
-                    <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer">
-                      J'accepte les conditions générales et la politique de confidentialité
+                    <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed cursor-pointer">
+                      J'accepte les{" "}
+                      <a href="/cgv" className="text-blue-600 hover:underline">
+                        conditions générales
+                      </a>{" "}
+                      et la{" "}
+                      <a href="/confidentialite" className="text-blue-600 hover:underline">
+                        politique de confidentialité
+                      </a>
                     </Label>
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg py-6"
                     disabled={isLoading}
+                    className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-lg font-bold rounded-xl shadow-lg animate-pulse-glow touch-manipulation"
                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Création du compte...
+                        Création en cours...
                       </>
                     ) : (
-                      "Commencer mon essai gratuit"
+                      <>
+                        <span className="mr-2">🚀</span>
+                        Démarrer mon essai gratuit
+                      </>
                     )}
                   </Button>
 
-                  <p className="text-center text-sm text-gray-500 pt-2">
+                  <p className="text-center text-sm text-gray-500">
                     Déjà un compte ?{" "}
                     <button
                       type="button"
-                      className="text-blue-600 hover:underline font-medium"
+                      className="text-blue-600 hover:underline font-medium touch-manipulation"
                       onClick={() => navigate("/?login=true")}
                       disabled={isLoading}
                     >
@@ -342,22 +393,35 @@ export function SignupCheckoutPage() {
                     </button>
                   </p>
                 </form>
-
-                <div className="mt-6 pt-6 border-t">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>7 jours d'essai 100% gratuits</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>Sans engagement • Résiliable à tout moment</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
         </div>
-      </div>
+
+        {/* Trust Badges */}
+        <div className="mt-12 sm:mt-16 animate-fade-in-up animation-delay-300">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+            <div className="flex items-center gap-2 text-gray-600">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-emerald-600" />
+              </div>
+              <span className="text-sm font-medium">7 jours gratuits</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-blue-600" />
+              </div>
+              <span className="text-sm font-medium">Conforme LPD</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <XCircle className="w-5 h-5 text-gray-600" />
+              </div>
+              <span className="text-sm font-medium">Annulation en 1 clic</span>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

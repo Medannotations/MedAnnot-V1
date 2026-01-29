@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, ArrowRight, Mail, FileText, Headphones } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle2, ArrowRight, Mic, Clock, Stethoscope, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function SuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(30);
 
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    // Auto-redirect après 60 secondes (temps pour que le webhook Stripe se traite)
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -28,176 +27,182 @@ export function SuccessPage() {
     return () => clearInterval(timer);
   }, [navigate]);
 
+  const steps = [
+    {
+      icon: ArrowRight,
+      title: "Accédez à votre espace",
+      description: "Votre tableau de bord est prêt. Découvrez toutes les fonctionnalités.",
+      primary: true,
+    },
+    {
+      icon: Mic,
+      title: "Dictez votre première annotation",
+      description: "Parlez naturellement, notre IA transcrit et structure automatiquement.",
+      primary: false,
+    },
+    {
+      icon: Clock,
+      title: "Gagnez 2h par jour",
+      description: "Terminez vos annotations en quelques minutes au lieu d'heures.",
+      primary: false,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-        {/* Success Icon & Title */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full mb-4 sm:mb-6">
-            <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-green-600" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-emerald-500 py-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex justify-center">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <Stethoscope className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white">
+              MedAnnot
+            </span>
           </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16">
+        {/* Success Icon & Title */}
+        <div className="text-center mb-8 sm:mb-12 animate-fade-in-up">
+          <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full mb-6 shadow-xl">
+            <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+          </div>
+          
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Bienvenue chez Medannot !
+            Bienvenue dans MedAnnot! 🎉
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-gray-600">
-            Votre compte est actif et votre période d'essai gratuit a commencé
+          
+          <p className="text-lg sm:text-xl text-gray-600">
+            Votre compte est prêt.{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500 font-semibold">
+              Vos soirées aussi.
+            </span>
           </p>
         </div>
 
-        {/* Main Card */}
-        <Card className="mb-6 sm:mb-8">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-            <CardTitle className="text-xl sm:text-2xl">Prochaines étapes</CardTitle>
-            <CardDescription className="text-blue-100">
-              Voici comment accéder à votre espace et commencer à utiliser Medannot
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              {/* Step 1 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                  1
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">Accédez à votre espace</h3>
-                  <p className="text-gray-600 mb-3">
-                    Votre compte est déjà configuré. Cliquez sur le bouton ci-dessous pour accéder immédiatement à votre tableau de bord.
-                  </p>
-                  <Button
-                    onClick={() => navigate("/app")}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  >
-                    Accéder à mon espace
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Redirection automatique dans {countdown} secondes...
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="flex gap-4 pt-6 border-t">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                  2
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">Créez votre première annotation</h3>
-                  <p className="text-gray-600">
-                    Ajoutez un patient, puis créez votre première annotation médicale. Notre IA vous assistera pour gagner du temps.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="flex gap-4 pt-6 border-t">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                  3
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">Vérifiez votre email</h3>
-                  <p className="text-gray-600">
-                    Nous vous avons envoyé un email de confirmation avec tous les détails de votre abonnement et des conseils pour bien démarrer.
-                  </p>
-                  {user?.email && (
-                    <p className="text-sm text-blue-600 mt-2 font-medium">
-                      <Mail className="w-4 h-4 inline mr-1" />
-                      Email envoyé à {user.email}
+        {/* Steps Cards */}
+        <div className="space-y-4 mb-8 sm:mb-12">
+          {steps.map((step, index) => (
+            <Card 
+              key={index}
+              className={`animate-fade-in-up border-0 shadow-lg transition-all duration-300 hover:shadow-xl ${
+                step.primary 
+                  ? "bg-gradient-to-r from-blue-600 to-emerald-500" 
+                  : "bg-white"
+              }`}
+              style={{ animationDelay: `${(index + 1) * 100}ms` }}
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    step.primary 
+                      ? "bg-white/20" 
+                      : "bg-gradient-to-br from-blue-100 to-emerald-100"
+                  }`}>
+                    <step.icon className={`w-6 h-6 ${
+                      step.primary ? "text-white" : "text-blue-600"
+                    }`} />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className={`text-lg font-bold mb-1 ${
+                      step.primary ? "text-white" : "text-gray-900"
+                    }`}>
+                      {step.title}
+                    </h3>
+                    <p className={`text-sm ${
+                      step.primary ? "text-blue-100" : "text-gray-600"
+                    }`}>
+                      {step.description}
                     </p>
-                  )}
+                    
+                    {step.primary && (
+                      <Button
+                        onClick={() => navigate("/app")}
+                        className="mt-4 bg-white text-blue-600 hover:bg-blue-50 font-bold px-6 py-2 rounded-lg shadow-lg touch-manipulation"
+                      >
+                        Accéder à mon espace
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                    step.primary 
+                      ? "bg-white/20 text-white" 
+                      : "bg-blue-100 text-blue-600"
+                  }`}>
+                    {index + 1}
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Info Card */}
+        <Card className="animate-fade-in-up animation-delay-400 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-emerald-50">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-emerald-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 mb-2">
+                  Votre essai gratuit est actif
+                </h3>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    <span>7 jours d'essai gratuit — aucun paiement maintenant</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    <span>Accès illimité à toutes les fonctionnalités</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    <span>Annulation en 1 clic depuis votre espace</span>
+                  </li>
+                  {user?.email && (
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      <span>Confirmation envoyée à {user.email}</span>
+                    </li>
+                  )}
+                </ul>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Info Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-              <CardTitle className="text-lg">Essai gratuit actif</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Profitez de 7 jours d'essai gratuit. Aucun paiement ne sera effectué avant la fin de cette période.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-              <CardTitle className="text-lg">Documentation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Consultez nos guides pour maîtriser toutes les fonctionnalités de Medannot.
-              </p>
-              <Button variant="outline" size="sm" className="w-full">
-                Voir les guides
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                <Headphones className="w-6 h-6 text-purple-600" />
-              </div>
-              <CardTitle className="text-lg">Support prioritaire</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Notre équipe est disponible pour répondre à toutes vos questions.
-              </p>
-              <Button variant="outline" size="sm" className="w-full">
-                Contacter le support
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Final CTA */}
+        <div className="mt-8 sm:mt-12 text-center animate-fade-in-up animation-delay-500">
+          <Button
+            onClick={() => navigate("/app")}
+            size="lg"
+            className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-lg font-bold px-8 sm:px-12 py-6 rounded-xl shadow-xl animate-pulse-glow touch-manipulation"
+          >
+            <span className="mr-2">🚀</span>
+            Commencer maintenant
+          </Button>
+          
+          <p className="mt-4 text-sm text-gray-500">
+            Redirection automatique dans{" "}
+            <span className="font-semibold text-blue-600">{countdown}s</span>
+          </p>
         </div>
-
-        {/* Important Info */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-blue-600" />
-              Informations importantes
-            </h3>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>Vos identifiants de connexion : {user?.email}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>Période d'essai : 7 jours gratuits sans engagement</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>Vous pouvez annuler à tout moment depuis votre espace</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>Nous ne facturerons rien avant la fin de votre essai</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
 
         {/* Session ID (for debugging) */}
         {sessionId && (
-          <p className="text-center text-xs text-gray-400 mt-6">
-            Session ID: {sessionId}
+          <p className="text-center text-xs text-gray-400 mt-8">
+            Session: {sessionId.slice(0, 8)}...
           </p>
         )}
-      </div>
+      </main>
     </div>
   );
 }
