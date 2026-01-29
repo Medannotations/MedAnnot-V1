@@ -47,6 +47,9 @@ export function Pricing({ onGetStarted }: PricingProps) {
                   <span className="text-2xl font-medium text-gray-500 ml-1">CHF</span>
                   <span className="text-gray-500 ml-2">/ mois</span>
                 </div>
+                <p className="text-gray-400 mt-2 text-sm">
+                  Flexibilité maximale
+                </p>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -79,12 +82,12 @@ export function Pricing({ onGetStarted }: PricingProps) {
               </Button>
             </div>
 
-            {/* Annual plan */}
-            <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl">
+            {/* Annual plan - RECOMMENDED */}
+            <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl transform md:scale-105">
               {/* Recommended badge */}
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg">
-                  ⭐ Recommandé
+                  ⭐ Recommandé — Économisez 16%
                 </span>
               </div>
 
@@ -93,13 +96,18 @@ export function Pricing({ onGetStarted }: PricingProps) {
                   Annuel
                 </span>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-5xl font-bold">1'499</span>
+                  <span className="text-5xl font-bold">125</span>
                   <span className="text-2xl font-medium text-blue-200 ml-1">CHF</span>
-                  <span className="text-blue-200 ml-2">/ an</span>
+                  <span className="text-blue-200 ml-2">/ mois</span>
                 </div>
-                <p className="text-blue-200 mt-1">
-                  Soit 125 CHF/mois — <span className="text-emerald-300 font-semibold">économisez 289 CHF</span>
-                </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="text-blue-200 text-sm">
+                    soit 1'499 CHF/an
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-semibold">
+                    -24 CHF/mois
+                  </span>
+                </div>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -107,13 +115,13 @@ export function Pricing({ onGetStarted }: PricingProps) {
                   <svg className="w-5 h-5 text-emerald-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  2 mois offerts
+                  <span><strong>2 mois offerts</strong> par rapport au mensuel</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-emerald-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Même accès complet
+                  Même accès complet à toutes les fonctionnalités
                 </li>
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-emerald-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,9 +133,9 @@ export function Pricing({ onGetStarted }: PricingProps) {
 
               <Button
                 onClick={onGetStarted}
-                className="w-full py-6 text-lg font-bold bg-white text-blue-600 hover:bg-blue-50 transition-all"
+                className="w-full py-6 text-lg font-bold bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-lg"
               >
-                Commencer l'essai gratuit
+                🎯 Commencer l'essai gratuit
               </Button>
             </div>
           </div>
@@ -152,7 +160,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
           {/* CTA micro-copy */}
           <div className="mt-8 text-center">
             <p className="text-gray-500">
-              Aucune carte bancaire requise. Annulation en 1 clic.
+              🔒 Aucune carte bancaire requise. Annulation en 1 clic.
             </p>
           </div>
         </div>

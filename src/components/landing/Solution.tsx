@@ -19,7 +19,7 @@ export function Solution() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
               Imaginez terminer vos annotations{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-emerald-600">
-                avant de quitter votre patient
+                avant de partir pour votre prochain patient
               </span>
             </h2>
           </div>

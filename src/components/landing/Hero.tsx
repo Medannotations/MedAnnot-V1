@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-nurse.jpg";
+import heroImage from "@/assets/hero-nurse-clean.png";
 
 interface HeroProps {
   onGetStarted: () => void;
