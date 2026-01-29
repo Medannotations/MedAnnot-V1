@@ -50,7 +50,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
               <Button
                 size="xl"
                 onClick={onGetStarted}
-                className="relative bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                className="relative bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all animate-pulse-glow"
               >
                 <span className="mr-2">🎯</span>
                 Essayer gratuitement 7 jours
