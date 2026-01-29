@@ -39,20 +39,20 @@ export function SocialProofBar() {
   ];
 
   return (
-    <section className="bg-gradient-to-r from-blue-600 to-blue-700 py-6">
+    <section className="bg-gradient-to-r from-blue-600 to-blue-700 py-4 sm:py-6">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
           {stats.map((stat, index) => (
             <div
               key={index}
               className="flex items-center gap-3 text-white justify-center md:justify-start"
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-white/20 flex items-center justify-center">
                 {stat.icon}
               </div>
               <div>
-                <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
-                <div className="text-xs md:text-sm text-blue-100 leading-tight">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-blue-100 leading-tight">
                   {stat.label}
                 </div>
               </div>

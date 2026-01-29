@@ -41,10 +41,10 @@ export function FAQ() {
   };
 
   return (
-    <section className="py-20 bg-gray-50" id="faq">
+    <section className="py-12 md:py-20 bg-gray-50" id="faq">
       <div className="container mx-auto px-4">
         {/* Section header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 md:mb-12">
           <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
             FAQ
           </span>
@@ -69,7 +69,7 @@ export function FAQ() {
               >
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-3 min-h-[56px] touch-target"
+                  className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-3 min-h-[56px] touch-manipulation"
                   aria-expanded={openIndex === index}
                 >
                   <span className="text-base sm:text-lg font-semibold text-gray-900">
@@ -112,13 +112,13 @@ export function FAQ() {
         </div>
 
         {/* Still have questions */}
-        <div className="mt-12 text-center">
+        <div className="mt-8 md:mt-12 text-center">
           <p className="text-gray-600 mb-4">
             Vous avez encore des questions?
           </p>
           <a
             href="mailto:support@medannot.ch"
-            className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 transition-colors py-2 px-4 min-h-[44px] touch-manipulation"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

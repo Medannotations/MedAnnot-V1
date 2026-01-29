@@ -8,7 +8,7 @@ export function Problem() {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-12 md:py-20 bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Section header */}
@@ -26,7 +26,7 @@ export function Problem() {
           </div>
 
           {/* Pain description */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 md:p-10 mb-10">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 sm:p-8 md:p-10 mb-8 md:mb-10">
             <div className="flex items-start gap-4 mb-8">
               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,14 +43,14 @@ export function Problem() {
               {frustrations.map((frustration, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-red-50 border border-red-100"
+                  className="flex items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-red-50 border border-red-100"
                 >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </div>
-                  <span className="text-gray-800 font-medium">{frustration}</span>
+                  <span className="text-gray-800 font-medium text-sm sm:text-base">{frustration}</span>
                 </div>
               ))}
             </div>

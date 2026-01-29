@@ -108,7 +108,7 @@ export function Features() {
   };
 
   return (
-    <section className="py-20 bg-gray-50" id="features">
+    <section className="py-12 md:py-20 bg-gray-50" id="features">
       <div className="container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-16">
@@ -134,7 +134,7 @@ export function Features() {
               return (
                 <div
                   key={index}
-                  className={`bg-white rounded-2xl border-2 border-gray-100 p-6 hover:shadow-lg transition-all duration-300 ${colors.border}`}
+                  className={`bg-white rounded-2xl border-2 border-gray-100 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 ${colors.border}`}
                 >
                   {/* Icon */}
                   <div

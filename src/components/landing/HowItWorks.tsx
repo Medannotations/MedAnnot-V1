@@ -75,10 +75,10 @@ export function HowItWorks() {
   };
 
   return (
-    <section className="py-20 bg-white" id="how-it-works">
+    <section className="py-12 md:py-20 bg-white" id="how-it-works">
       <div className="container mx-auto px-4">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
             Comment ça marche
           </span>
@@ -96,7 +96,7 @@ export function HowItWorks() {
 
         {/* Steps */}
         <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             {steps.map((step, index) => {
               const colors = colorClasses[step.color as keyof typeof colorClasses];
               return (
@@ -106,26 +106,26 @@ export function HowItWorks() {
                     <div className="hidden md:block absolute top-16 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-gray-200 to-gray-100" />
                   )}
 
-                  <div className="relative bg-white rounded-2xl border-2 border-gray-100 p-8 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
+                  <div className="relative bg-white rounded-2xl border-2 border-gray-100 p-5 md:p-8 hover:border-blue-200 hover:shadow-lg transition-all duration-300 ml-2 md:ml-0">
                     {/* Step number badge */}
                     <div
-                      className={`absolute -top-4 -left-4 w-10 h-10 rounded-full bg-gradient-to-r ${colors.gradient} text-white font-bold flex items-center justify-center shadow-lg`}
+                      className={`absolute -top-3 -left-3 md:-top-4 md:-left-4 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r ${colors.gradient} text-white font-bold text-sm md:text-base flex items-center justify-center shadow-lg`}
                     >
                       {step.number}
                     </div>
 
                     {/* Icon */}
                     <div
-                      className={`w-16 h-16 rounded-2xl ${colors.bg} ${colors.text} flex items-center justify-center mb-6`}
+                      className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${colors.bg} ${colors.text} flex items-center justify-center mb-4 md:mb-6`}
                     >
                       {step.icon}
                     </div>
 
                     {/* Content */}
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
                       {step.title}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                       {step.description}
                     </p>
                   </div>

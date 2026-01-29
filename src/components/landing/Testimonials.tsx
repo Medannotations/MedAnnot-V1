@@ -69,10 +69,10 @@ export function Testimonials() {
   };
 
   return (
-    <section className="py-20 bg-white" id="testimonials">
+    <section className="py-12 md:py-20 bg-white" id="testimonials">
       <div className="container mx-auto px-4">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
             Témoignages
           </span>
@@ -89,18 +89,18 @@ export function Testimonials() {
 
         {/* Testimonials grid */}
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-5 md:gap-8">
             {testimonials.map((testimonial, index) => {
               const colors = colorClasses[testimonial.color as keyof typeof colorClasses];
               return (
                 <div
                   key={index}
-                  className="bg-white rounded-2xl border-2 border-gray-100 p-6 hover:shadow-xl hover:border-gray-200 transition-all duration-300 flex flex-col"
+                  className="bg-white rounded-2xl border-2 border-gray-100 p-5 md:p-6 hover:shadow-xl hover:border-gray-200 transition-all duration-300 flex flex-col"
                 >
                   {/* Quote icon */}
-                  <div className="mb-4">
+                  <div className="mb-3 md:mb-4">
                     <svg
-                      className="w-10 h-10 text-gray-200"
+                      className="w-8 h-8 md:w-10 md:h-10 text-gray-200"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -109,13 +109,13 @@ export function Testimonials() {
                   </div>
 
                   {/* Quote */}
-                  <p className="text-gray-700 text-lg leading-relaxed mb-6 flex-grow italic">
+                  <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-4 md:mb-6 flex-grow italic">
                     "{testimonial.quote}"
                   </p>
 
                   {/* Result badge */}
                   <div
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${colors.resultBg} ${colors.resultText} text-sm font-medium mb-6 w-fit`}
+                    className={`inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-full ${colors.resultBg} ${colors.resultText} text-xs md:text-sm font-medium mb-4 md:mb-6 w-fit`}
                   >
                     {testimonial.resultIcon}
                     {testimonial.result}
@@ -124,15 +124,15 @@ export function Testimonials() {
                   {/* Author */}
                   <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
                     <div
-                      className={`w-12 h-12 rounded-full ${colors.bg} ${colors.text} flex items-center justify-center font-bold text-lg`}
+                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${colors.bg} ${colors.text} flex items-center justify-center font-bold text-base md:text-lg flex-shrink-0`}
                     >
                       {testimonial.avatar}
                     </div>
-                    <div>
-                      <div className="font-semibold text-gray-900">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 text-sm md:text-base">
                         {testimonial.name}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs md:text-sm text-gray-500 truncate">
                         {testimonial.role}
                       </div>
                     </div>

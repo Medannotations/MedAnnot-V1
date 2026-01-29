@@ -6,7 +6,7 @@ interface FinalCTAProps {
 
 export function FinalCTA({ onGetStarted }: FinalCTAProps) {
   return (
-    <section className="py-20 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 relative overflow-hidden">
+    <section className="py-12 md:py-20 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full opacity-20 blur-3xl -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500 rounded-full opacity-20 blur-3xl translate-x-1/2 translate-y-1/2" />
@@ -37,7 +37,7 @@ export function FinalCTA({ onGetStarted }: FinalCTAProps) {
           <Button
             onClick={onGetStarted}
             size="xl"
-            className="bg-white text-blue-600 hover:bg-blue-50 font-bold text-xl px-12 py-7 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 animate-pulse-glow"
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 font-bold text-lg sm:text-xl px-8 sm:px-12 py-5 sm:py-7 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 animate-pulse-glow"
           >
             <span className="mr-2">🚀</span>
             Démarrer mon essai gratuit

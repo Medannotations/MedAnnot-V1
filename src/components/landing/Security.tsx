@@ -64,7 +64,7 @@ export function Security() {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-b from-slate-900 to-slate-800" id="security">
+    <section className="py-12 md:py-20 bg-gradient-to-b from-slate-900 to-slate-800" id="security">
       <div className="container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-16">
@@ -96,18 +96,18 @@ export function Security() {
             {securityPoints.map((point, index) => (
               <div
                 key={index}
-                className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 p-6 hover:border-emerald-500/50 transition-all duration-300"
+                className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 p-4 sm:p-6 hover:border-emerald-500/50 transition-all duration-300"
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 sm:w-14 h-12 sm:h-14 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                     {point.icon}
                   </div>
 
                   {/* Content */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-white">
+                      <h3 className="text-lg sm:text-xl font-bold text-white">
                         {point.title}
                       </h3>
                       {point.badge && (
@@ -116,7 +116,7 @@ export function Security() {
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-300 leading-relaxed">
+                    <p className="text-slate-300 leading-relaxed text-sm sm:text-base">
                       {point.description}
                     </p>
                   </div>

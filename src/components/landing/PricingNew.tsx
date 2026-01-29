@@ -37,7 +37,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8">
             {/* Monthly plan */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 hover:shadow-lg transition-all duration-300">
+            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 md:p-8 hover:shadow-lg transition-all duration-300">
               <div className="mb-6">
                 <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">
                   Mensuel
@@ -76,7 +76,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
               <Button
                 onClick={onGetStarted}
                 variant="outline"
-                className="w-full py-6 text-lg font-semibold border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-all"
+                className="w-full py-4 md:py-6 min-h-[48px] text-base md:text-lg font-semibold border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-all touch-manipulation"
               >
                 Commencer l'essai gratuit
               </Button>
@@ -133,7 +133,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
 
               <Button
                 onClick={onGetStarted}
-                className="w-full py-6 text-lg font-bold bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-lg"
+                className="w-full py-4 md:py-6 min-h-[48px] text-base md:text-lg font-bold bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-lg touch-manipulation"
               >
                 🎯 Commencer l'essai gratuit
               </Button>
@@ -141,17 +141,17 @@ export function Pricing({ onGetStarted }: PricingProps) {
           </div>
 
           {/* Included features */}
-          <div className="mt-12 bg-gray-50 rounded-2xl p-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+          <div className="mt-8 md:mt-12 bg-gray-50 rounded-2xl p-5 md:p-8">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6 text-center">
               Inclus dans les deux formules
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {includedFeatures.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div key={index} className="flex items-center gap-2 py-1">
                   <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">{feature}</span>
+                  <span className="text-sm md:text-base text-gray-700">{feature}</span>
                 </div>
               ))}
             </div>

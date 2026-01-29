@@ -27,24 +27,24 @@ export function Footer() {
             {/* Colonne 2 - Navigation rapide */}
             <div>
               <h4 className="font-semibold mb-4 text-lg">Navigation</h4>
-              <ul className="space-y-2 text-background/80">
+              <ul className="space-y-1 text-background/80">
                 <li>
-                  <a href="#pricing" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                  <a href="#pricing" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                     Tarification
                   </a>
                 </li>
                 <li>
-                  <a href="#testimonials" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                  <a href="#testimonials" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                     Témoignages
                   </a>
                 </li>
                 <li>
-                  <Link to="/app" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                  <Link to="/app" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                     Se connecter
                   </Link>
                 </li>
                 <li>
-                  <Link to="/signup" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                  <Link to="/signup" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                     Commencer gratuitement
                   </Link>
                 </li>
@@ -69,24 +69,24 @@ export function Footer() {
 
               <div className="mt-6">
                 <h4 className="font-semibold mb-3 text-lg">Légal</h4>
-                <ul className="space-y-1 text-background/80 text-sm">
+                <ul className="space-y-0 text-background/80 text-sm">
                   <li>
-                    <Link to="/terms-of-service" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                    <Link to="/terms-of-service" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                       Conditions générales d'utilisation
                     </Link>
                   </li>
                   <li>
-                    <Link to="/terms-of-sale" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                    <Link to="/terms-of-sale" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                       Conditions générales de vente
                     </Link>
                   </li>
                   <li>
-                    <Link to="/privacy-policy" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                    <Link to="/privacy-policy" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                       Politique de confidentialité
                     </Link>
                   </li>
                   <li>
-                    <Link to="/legal-notice" className="inline-block py-1 hover:text-background transition-colors hover:underline">
+                    <Link to="/legal-notice" className="inline-block py-2 min-h-[44px] flex items-center hover:text-background transition-colors hover:underline touch-manipulation">
                       Mentions légales
                     </Link>
                   </li>
