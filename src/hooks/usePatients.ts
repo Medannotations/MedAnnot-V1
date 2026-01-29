@@ -1,11 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { encryptData, decryptData } from "@/lib/encryption";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 export type Patient = Tables<"patients">;
 export type PatientInsert = TablesInsert<"patients">;
 export type PatientUpdate = TablesUpdate<"patients">;
+
+// Helper pour déchiffrer un patient
+const decryptPatient = (patient: Patient, userId: string): Patient => ({
+  ...patient,
+  first_name: decryptData(patient.first_name, userId),
+  last_name: decryptData(patient.last_name, userId),
+  address: patient.address ? decryptData(patient.address, userId) : null,
+});
 
 export function usePatients(includeArchived = false) {
   const { user } = useAuth();
@@ -13,6 +22,8 @@ export function usePatients(includeArchived = false) {
   return useQuery({
     queryKey: ["patients", user?.id, includeArchived],
     queryFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+
       let query = supabase
         .from("patients")
         .select("*")
@@ -26,9 +37,9 @@ export function usePatients(includeArchived = false) {
 
       if (error) throw error;
 
-      // Transform JSONB example_annotations to TypeScript array
-      const patientsWithExamples = (data as any[]).map((p) => ({
-        ...p,
+      // Déchiffrer et transformer les données
+      const patientsWithExamples = (data as Patient[]).map((p) => ({
+        ...decryptPatient(p, user.id),
         exampleAnnotations: p.example_annotations || [],
       }));
 
@@ -44,7 +55,7 @@ export function usePatient(patientId: string | undefined) {
   return useQuery({
     queryKey: ["patient", patientId],
     queryFn: async () => {
-      if (!patientId) return null;
+      if (!patientId || !user) return null;
 
       const { data, error } = await supabase
         .from("patients")
@@ -54,9 +65,9 @@ export function usePatient(patientId: string | undefined) {
 
       if (error) throw error;
 
-      // Transform JSONB example_annotations to TypeScript array
+      // Déchiffrer et transformer
       const patientWithExamples = {
-        ...data,
+        ...decryptPatient(data as Patient, user.id),
         exampleAnnotations: data.example_annotations || [],
       };
 
@@ -74,17 +85,30 @@ export function useCreatePatient() {
     mutationFn: async (patient: Omit<PatientInsert, "user_id">) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Chiffrer les données PII avant insertion
+      const encryptedFirstName = encryptData(patient.first_name, user.id);
+      const encryptedLastName = encryptData(patient.last_name, user.id);
+      const encryptedAddress = patient.address 
+        ? encryptData(patient.address, user.id) 
+        : null;
+
       const { data, error } = await supabase
         .from("patients")
-        .insert({ ...patient, user_id: user.id })
+        .insert({ 
+          ...patient, 
+          user_id: user.id,
+          first_name: encryptedFirstName,
+          last_name: encryptedLastName,
+          address: encryptedAddress,
+        })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Transform JSONB example_annotations to TypeScript array
+      // Retourner les données déchiffrées
       const patientWithExamples = {
-        ...data,
+        ...decryptPatient(data as Patient, user.id),
         exampleAnnotations: data.example_annotations || [],
       };
 
@@ -98,12 +122,30 @@ export function useCreatePatient() {
 
 export function useUpdatePatient() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ id, exampleAnnotations, ...updates }: PatientUpdate & { id: string; exampleAnnotations?: any[] }) => {
+    mutationFn: async ({ id, exampleAnnotations, ...updates }: PatientUpdate & { id: string; exampleAnnotations?: unknown[] }) => {
+      if (!user) throw new Error("User not authenticated");
+
+      // Chiffrer les champs PII si présents dans la mise à jour
+      const encryptedUpdates: Record<string, unknown> = { ...updates };
+      
+      if (updates.first_name !== undefined) {
+        encryptedUpdates.first_name = encryptData(updates.first_name, user.id);
+      }
+      if (updates.last_name !== undefined) {
+        encryptedUpdates.last_name = encryptData(updates.last_name, user.id);
+      }
+      if (updates.address !== undefined) {
+        encryptedUpdates.address = updates.address 
+          ? encryptData(updates.address, user.id) 
+          : null;
+      }
+
       // Transform exampleAnnotations to example_annotations for database
-      const dbUpdates: any = {
-        ...updates,
+      const dbUpdates = {
+        ...encryptedUpdates,
         ...(exampleAnnotations !== undefined && {
           example_annotations: exampleAnnotations,
         }),
@@ -118,9 +160,9 @@ export function useUpdatePatient() {
 
       if (error) throw error;
 
-      // Transform JSONB example_annotations back to TypeScript array
+      // Retourner les données déchiffrées
       const patientWithExamples = {
-        ...data,
+        ...decryptPatient(data as Patient, user.id),
         exampleAnnotations: data.example_annotations || [],
       };
 
@@ -135,9 +177,12 @@ export function useUpdatePatient() {
 
 export function useArchivePatient() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, isArchived }: { id: string; isArchived: boolean }) => {
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("patients")
         .update({ is_archived: isArchived })
@@ -147,9 +192,9 @@ export function useArchivePatient() {
 
       if (error) throw error;
 
-      // Transform JSONB example_annotations to TypeScript array
+      // Retourner les données déchiffrées
       const patientWithExamples = {
-        ...data,
+        ...decryptPatient(data as Patient, user.id),
         exampleAnnotations: data.example_annotations || [],
       };
 

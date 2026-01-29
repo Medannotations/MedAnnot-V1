@@ -56,6 +56,7 @@ export async function transcribeAudio(
 export interface GenerateAnnotationParams {
   transcription: string;
   patientName: string;
+  patientId?: string;
   patientAddress?: string;
   patientPathologies: string;
   visitDate: string;
@@ -76,6 +77,25 @@ export interface GenerateAnnotationParams {
   patientPostalCode?: string;
 }
 
+/**
+ * Escape special regex characters in a string
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Generate annotation with pseudonymization for LPD compliance.
+ * 
+ * SECURITY FLOW:
+ * 1. Client sends patientId (not name) to edge function
+ * 2. Edge function generates pseudonym from patientId
+ * 3. AI receives only pseudonym, never real patient name
+ * 4. Edge function returns annotation with pseudonym + the pseudonym used
+ * 5. Client substitutes pseudonym with real patient name locally
+ * 
+ * Result: Patient name NEVER leaves the client, NEVER sent to Anthropic API
+ */
 export async function generateAnnotation(
   params: GenerateAnnotationParams,
   onProgress?: (progress: number) => void
@@ -108,9 +128,21 @@ export async function generateAnnotation(
 
     const result = await response.json();
 
+    if (onProgress) onProgress(90);
+
+    // SECURITY: Substitute pseudonym with real patient name locally
+    // The AI only saw the pseudonym, never the real name
+    let finalAnnotation = result.annotation;
+    
+    if (result.pseudonymUsed && params.patientName) {
+      // Case-insensitive replacement of pseudonym with real name
+      const pseudonymRegex = new RegExp(escapeRegExp(result.pseudonymUsed), 'gi');
+      finalAnnotation = finalAnnotation.replace(pseudonymRegex, params.patientName);
+    }
+
     if (onProgress) onProgress(100);
 
-    return result.annotation;
+    return finalAnnotation;
   } catch (error) {
     console.error("Generation error:", error);
     throw error instanceof Error ? error : new Error("Erreur lors de la génération");

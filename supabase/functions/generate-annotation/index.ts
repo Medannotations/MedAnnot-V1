@@ -8,6 +8,7 @@ const corsHeaders = {
 interface GenerateRequest {
   transcription: string;
   patientName: string;
+  patientId?: string;
   patientAddress?: string;
   patientPathologies: string;
   visitDate: string;
@@ -28,13 +29,26 @@ interface GenerateRequest {
   patientPostalCode?: string;
 }
 
-function buildSystemPrompt(params: GenerateRequest): string {
+/**
+ * Generate a deterministic pseudonym for a patient.
+ * SECURITY: This ensures no real patient names are sent to external AI APIs.
+ * Compliant with Swiss LPD (Loi sur la Protection des Données).
+ */
+function generatePseudonym(patientId?: string): string {
+  const idPart = (patientId || 'UNKNOWN').slice(0, 8).toUpperCase();
+  return `Patient-${idPart}`;
+}
+
+/**
+ * Build the system prompt for annotation generation.
+ * SECURITY: Uses pseudonym instead of real patient name.
+ * Address and location data are NOT included for LPD compliance.
+ */
+function buildSystemPrompt(params: GenerateRequest, pseudonym: string): string {
   const {
-    patientName,
-    patientAddress,
+    // NOTE: patientName, patientAddress, patientCity, patientPostalCode 
+    // are intentionally NOT destructured - they must NEVER be in the prompt
     patientPathologies,
-    patientCity,
-    patientPostalCode,
     visitDate,
     visitTime,
     visitDuration,
@@ -52,17 +66,14 @@ function buildSystemPrompt(params: GenerateRequest): string {
     year: "numeric",
   });
 
+  // SECURITY: Use pseudonym only, never real patient name
   let prompt = `Tu es un assistant expert en rédaction d'annotations infirmières pour infirmiers indépendants en Suisse.
 
 CONTEXTE DU PATIENT :
-- Nom complet : ${patientName}`;
+- Identifiant patient : ${pseudonym}`;
 
-  if (patientAddress) {
-    prompt += `\n- Adresse : ${patientAddress}`;
-    if (patientPostalCode && patientCity) {
-      prompt += `, ${patientPostalCode} ${patientCity}`;
-    }
-  }
+  // SECURITY: Address, city, postal code intentionally omitted for LPD compliance
+  // No PII (Personally Identifiable Information) is sent to external AI APIs
 
   prompt += `\n${patientPathologies && patientPathologies.trim() ? `- Pathologies connues : ${patientPathologies}` : "- Pathologies connues : Aucune pathologie renseignée"}
 
@@ -204,6 +215,10 @@ ${example}
     - "ça va bien" → "Évolution favorable"
     - Mais conserve le SENS exact de ce qui est dit
 
+11. **IMPORTANT - Utilise l'identifiant patient fourni**
+    - Réfère-toi au patient par son identifiant (${pseudonym})
+    - C'est l'identifiant qui sera utilisé dans l'annotation
+
 Rédige maintenant l'annotation complète, professionnelle et structurée en te basant UNIQUEMENT sur la transcription ci-dessous. Ne rajoute aucune information de ton propre chef.`;
 
   return prompt;
@@ -242,9 +257,14 @@ serve(async (req) => {
       );
     }
 
-    console.log("Generating annotation for patient:", params.patientName);
+    // SECURITY: Generate pseudonym - NEVER log or send real patient name to AI
+    const pseudonym = generatePseudonym(params.patientId);
+    
+    // SECURITY: Log only the pseudonym, never the real name
+    console.log(`Generating annotation for pseudonym: ${pseudonym}`);
 
-    const systemPrompt = buildSystemPrompt(params);
+    // SECURITY: Build prompt with pseudonym, no PII sent to Anthropic
+    const systemPrompt = buildSystemPrompt(params, pseudonym);
 
     // Call Claude API directly
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -303,8 +323,12 @@ serve(async (req) => {
 
     console.log("Annotation generated successfully, length:", annotation.length);
 
+    // SECURITY: Return the pseudonym so client can substitute the real name
     return new Response(
-      JSON.stringify({ annotation: annotation.trim() }),
+      JSON.stringify({ 
+        annotation: annotation.trim(),
+        pseudonymUsed: pseudonym  // Client will replace this with real name
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

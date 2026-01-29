@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { encryptData, decryptData } from "@/lib/encryption";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 export type Annotation = Tables<"annotations">;
@@ -15,6 +16,23 @@ export interface AnnotationWithPatient extends Annotation {
   };
 }
 
+// Helper pour déchiffrer une annotation
+const decryptAnnotation = <T extends Annotation>(annotation: T, userId: string): T => ({
+  ...annotation,
+  content: decryptData(annotation.content, userId),
+  transcription: decryptData(annotation.transcription, userId),
+});
+
+// Helper pour déchiffrer les données patient jointes (aussi chiffrées)
+const decryptPatientData = (
+  patient: { first_name: string; last_name: string; pathologies: string | null },
+  userId: string
+) => ({
+  first_name: decryptData(patient.first_name, userId),
+  last_name: decryptData(patient.last_name, userId),
+  pathologies: patient.pathologies,
+});
+
 export function useAnnotations(filters?: {
   patientId?: string;
   startDate?: string;
@@ -26,6 +44,8 @@ export function useAnnotations(filters?: {
   return useQuery({
     queryKey: ["annotations", user?.id, filters],
     queryFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+
       let query = supabase
         .from("annotations")
         .select(`
@@ -56,9 +76,13 @@ export function useAnnotations(filters?: {
 
       if (error) throw error;
 
-      // Client-side search in content/transcription
-      let result = data as AnnotationWithPatient[];
+      // Déchiffrer les annotations et les données patient jointes
+      let result = (data as AnnotationWithPatient[]).map((a) => ({
+        ...decryptAnnotation(a, user.id),
+        patients: decryptPatientData(a.patients, user.id),
+      }));
 
+      // Client-side search in decrypted content/transcription
       if (filters?.searchQuery) {
         const search = filters.searchQuery.toLowerCase();
         result = result.filter(
@@ -81,7 +105,7 @@ export function useAnnotation(annotationId: string | undefined) {
   return useQuery({
     queryKey: ["annotation", annotationId],
     queryFn: async () => {
-      if (!annotationId) return null;
+      if (!annotationId || !user) return null;
 
       const { data, error } = await supabase
         .from("annotations")
@@ -97,7 +121,14 @@ export function useAnnotation(annotationId: string | undefined) {
         .single();
 
       if (error) throw error;
-      return data as AnnotationWithPatient;
+
+      const annotation = data as AnnotationWithPatient;
+      
+      // Déchiffrer l'annotation et les données patient
+      return {
+        ...decryptAnnotation(annotation, user.id),
+        patients: decryptPatientData(annotation.patients, user.id),
+      };
     },
     enabled: !!user && !!annotationId,
   });
@@ -109,7 +140,7 @@ export function useAnnotationsByPatient(patientId: string | undefined) {
   return useQuery({
     queryKey: ["annotations", "patient", patientId],
     queryFn: async () => {
-      if (!patientId) return [];
+      if (!patientId || !user) return [];
 
       const { data, error } = await supabase
         .from("annotations")
@@ -119,7 +150,9 @@ export function useAnnotationsByPatient(patientId: string | undefined) {
         .order("visit_date", { ascending: false });
 
       if (error) throw error;
-      return data as Annotation[];
+
+      // Déchiffrer les annotations
+      return (data as Annotation[]).map((a) => decryptAnnotation(a, user.id));
     },
     enabled: !!user && !!patientId,
   });
@@ -133,14 +166,25 @@ export function useCreateAnnotation() {
     mutationFn: async (annotation: Omit<AnnotationInsert, "user_id">) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Chiffrer les données PII avant insertion
+      const encryptedContent = encryptData(annotation.content, user.id);
+      const encryptedTranscription = encryptData(annotation.transcription, user.id);
+
       const { data, error } = await supabase
         .from("annotations")
-        .insert({ ...annotation, user_id: user.id })
+        .insert({ 
+          ...annotation, 
+          user_id: user.id,
+          content: encryptedContent,
+          transcription: encryptedTranscription,
+        })
         .select()
         .single();
 
       if (error) throw error;
-      return data as Annotation;
+
+      // Retourner les données déchiffrées
+      return decryptAnnotation(data as Annotation, user.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
@@ -150,18 +194,33 @@ export function useCreateAnnotation() {
 
 export function useUpdateAnnotation() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: AnnotationUpdate & { id: string }) => {
+      if (!user) throw new Error("User not authenticated");
+
+      // Chiffrer les champs PII si présents dans la mise à jour
+      const encryptedUpdates: Record<string, unknown> = { ...updates };
+      
+      if (updates.content !== undefined) {
+        encryptedUpdates.content = encryptData(updates.content, user.id);
+      }
+      if (updates.transcription !== undefined) {
+        encryptedUpdates.transcription = encryptData(updates.transcription, user.id);
+      }
+
       const { data, error } = await supabase
         .from("annotations")
-        .update(updates)
+        .update(encryptedUpdates)
         .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as Annotation;
+
+      // Retourner les données déchiffrées
+      return decryptAnnotation(data as Annotation, user.id);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
