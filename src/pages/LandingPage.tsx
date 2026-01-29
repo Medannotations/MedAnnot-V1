@@ -36,25 +36,49 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <Navbar 
         onLogin={() => handleOpenAuth("login")} 
         onSignup={() => handleOpenAuth("signup")} 
       />
+      
+      {/* Hero + Social Proof */}
       <Hero
         onGetStarted={() => handleOpenAuth("signup")}
         onLogin={() => handleOpenAuth("login")}
       />
       <SocialProofBar />
+      
+      {/* Problem / Solution */}
       <Problem />
       <Solution />
+      
+      {/* How it works */}
       <HowItWorks />
+      
+      {/* Features */}
       <Features />
+      
+      {/* Security */}
       <Security />
-      <Testimonials />
-      <Pricing onGetStarted={() => handleOpenAuth("signup")} />
+      
+      {/* Social proof */}
+      <section id="testimonials">
+        <Testimonials />
+      </section>
+      
+      {/* Pricing */}
+      <section id="pricing">
+        <Pricing onGetStarted={() => handleOpenAuth("signup")} />
+      </section>
+      
+      {/* FAQ */}
       <FAQ />
+      
+      {/* Final CTA */}
       <FinalCTA onGetStarted={() => handleOpenAuth("signup")} />
+      
+      {/* Footer */}
       <Footer />
       
       <AuthModal 

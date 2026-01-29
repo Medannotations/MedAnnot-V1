@@ -20,12 +20,18 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-              </span>
-              Pour infirmiers indépendants suisses
+            {/* Badge gratuit */}
+            <div className="inline-flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                </span>
+                Pour infirmiers indépendants suisses
+              </div>
+              <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg">
+                0 CHF pour commencer
+              </div>
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -46,6 +52,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
                 onClick={onGetStarted}
                 className="relative bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
               >
+                <span className="mr-2">🎯</span>
                 Essayer gratuitement 7 jours
               </Button>
               <Button
@@ -90,7 +97,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
               className="relative w-full rounded-3xl shadow-2xl"
             />
             
-            {/* Floating card */}
+            {/* Floating card - Time saved */}
             <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -101,6 +108,21 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
                 <div>
                   <div className="text-2xl font-bold text-gray-900">2h</div>
                   <div className="text-sm text-gray-500">économisées/jour</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating card - Fast annotation */}
+            <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-gray-900">&lt; 30s</div>
+                  <div className="text-xs text-gray-500">par annotation</div>
                 </div>
               </div>
             </div>
