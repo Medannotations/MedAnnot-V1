@@ -182,7 +182,7 @@ export function SignupCheckoutPage() {
           </p>
           <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium">
             <Check className="w-4 h-4" />
-            Sans carte bancaire pour l'essai
+            0 CHF prélevé pendant 7 jours
           </div>
         </div>
 

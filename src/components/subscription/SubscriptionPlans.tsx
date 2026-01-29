@@ -119,7 +119,7 @@ export function SubscriptionPlans() {
           <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6">
             <div className="text-center">
               <div className="text-xl font-bold text-green-700 mb-1">✅ 7 JOURS D'ESSAI GRATUIT</div>
-              <div className="text-sm text-green-600">Sans carte bancaire • Sans engagement</div>
+              <div className="text-sm text-green-600">0 CHF prélevé pendant l'essai • Sans engagement</div>
             </div>
           </div>
         </CardHeader>
@@ -152,7 +152,7 @@ export function SubscriptionPlans() {
             )}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Sans carte bancaire • Activation instantanée • 100% sécurisé 🔒
+            0 CHF pendant l'essai • Activation instantanée • 100% sécurisé 🔒
           </p>
         </CardFooter>
       </Card>
@@ -170,8 +170,8 @@ export function SubscriptionPlans() {
           <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
             <Check className="w-6 h-6 text-green-600" />
           </div>
-          <p className="text-sm font-medium text-foreground">Sans carte bancaire</p>
-          <p className="text-xs text-muted-foreground">Pour l'essai gratuit de 7 jours</p>
+          <p className="text-sm font-medium text-foreground">0 CHF prélevé</p>
+          <p className="text-xs text-muted-foreground">Pendant les 7 jours d'essai</p>
         </div>
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">

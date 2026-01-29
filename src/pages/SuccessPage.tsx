@@ -51,16 +51,17 @@ export function SuccessPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-emerald-500 py-6">
+      <header className="border-b bg-white/95 backdrop-blur-md shadow-sm py-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex justify-center">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <Stethoscope className="w-6 h-6 text-white" />
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+              <Stethoscope className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">
-              MedAnnot
+            <span className="text-xl font-bold">
+              <span className="text-gray-900">Med</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">Annot</span>
             </span>
-          </div>
+          </Link>
         </div>
       </header>
 

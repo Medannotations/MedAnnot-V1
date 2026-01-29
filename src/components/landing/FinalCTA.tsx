@@ -54,7 +54,7 @@ export function FinalCTA({ onGetStarted }: FinalCTAProps) {
               <svg className="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Sans carte bancaire
+              0 CHF pendant l'essai
             </span>
             <span className="flex items-center gap-2">
               <svg className="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
