@@ -86,26 +86,13 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
       return;
     }
 
-    // Utilisateur vient juste de payer → donner 10 minutes pour que le webhook Stripe traite
-    // On vérifie si le compte a été créé récemment (moins de 10 minutes)
-    const createdAt = new Date(profile.created_at);
-    const now = new Date();
-    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / 1000 / 60;
-
-    if (minutesSinceCreation < 10) {
-      // Compte récent, probablement en train de s'inscrire
-      // On autorise temporairement l'accès pour que le webhook ait le temps de traiter
-      setIsChecking(false);
-      return;
-    }
-
     // Vérifier si nous venons d'une page de succès (paramètre URL)
     const urlParams = new URLSearchParams(window.location.search);
     const fromSuccess = urlParams.get('from') === 'success';
-    const minutesSinceSuccess = sessionStorage.getItem('successTimestamp');
+    const successTimestamp = sessionStorage.getItem('successTimestamp');
     
-    if (fromSuccess && minutesSinceSuccess) {
-      const successTime = new Date(parseInt(minutesSinceSuccess));
+    if (fromSuccess && successTimestamp) {
+      const successTime = new Date(parseInt(successTimestamp));
       const now = new Date();
       const minutesSinceSuccessCalc = (now.getTime() - successTime.getTime()) / 1000 / 60;
       

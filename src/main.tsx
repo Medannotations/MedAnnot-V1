@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker } from "./utils/serviceWorker";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
+import { ThemeProvider } from "./components/theme-provider";
 
 // Register service worker for caching and offline functionality
 registerServiceWorker();
@@ -12,10 +13,10 @@ const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);
   root.render(
-    <>
+    <ThemeProvider defaultTheme="system" storageKey="medannot-theme">
       <App />
       <PerformanceMonitor />
-    </>
+    </ThemeProvider>
   );
 }
 

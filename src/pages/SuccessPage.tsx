@@ -14,10 +14,13 @@ export function SuccessPage() {
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
+    // Store success timestamp for SubscriptionGuard
+    sessionStorage.setItem('successTimestamp', Date.now().toString());
+    
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          navigate("/app");
+          navigate("/app?from=success");
           return 0;
         }
         return prev - 1;
