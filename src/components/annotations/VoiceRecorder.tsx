@@ -99,24 +99,33 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
     setIsTranscribing(true);
 
     try {
-      // Create FormData for audio upload
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      
       // Get authentication token
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Call transcription API with medical-grade security
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: formData,
-      });
+      if (!session?.access_token) {
+        throw new Error("Session utilisateur invalide");
+      }
+
+      // Create FormData for audio upload
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('timestamp', new Date().toISOString());
+      
+      // MEDICAL-GRADE: Call enhanced transcription service
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Transcription failed: ${response.statusText}`);
+        const error = await response.json().catch(() => ({ error: "Erreur inconnue" }));
+        throw new Error(error.error || "Erreur lors de la transcription");
       }
 
       const result = await response.json();
@@ -124,14 +133,19 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
       if (result.transcription) {
         setIsTranscribing(false);
         onTranscriptionComplete(result.transcription);
+        
+        toast({
+          title: "✓ Transcription réussie",
+          description: "Votre audio a été transcrit avec succès.",
+        });
       } else {
-        throw new Error('No transcription received');
+        throw new Error('Aucune transcription reçue');
       }
     } catch (error) {
-      console.error('Transcription error:', error);
+      console.error('Erreur de transcription médicale:', error);
       toast({
         title: "Erreur de transcription",
-        description: "Impossible de transcrire l'audio. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Impossible de transcrire l'audio. Veuillez réessayer.",
         variant: "destructive",
       });
       setIsTranscribing(false);
