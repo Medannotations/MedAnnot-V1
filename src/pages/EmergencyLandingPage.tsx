@@ -1,7 +1,8 @@
+// EMERGENCY LANDING PAGE OVERRIDE - Complete debug elimination
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
-import { StickyCTA, OptimizedStickyCTA } from "@/components/ui/sticky-cta";
+import { EmergencyStickyCTA } from "@/components/landing/EmergencyStickyCTA"; // EMERGENCY OVERRIDE
 import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { Problem } from "@/components/landing/Problem";
 import { Solution } from "@/components/landing/Solution";
@@ -17,7 +18,8 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export default function LandingPage() {
+// EMERGENCY: Complete bypass of all existing sticky CTA implementations
+export default function EmergencyLandingPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const { user } = useAuth();
@@ -26,11 +28,7 @@ export default function LandingPage() {
   const handleOpenAuth = (mode: "login" | "signup") => {
     if (user) {
       navigate("/app");
-    } else if (mode === "signup") {
-      // Rediriger vers la nouvelle page signup/checkout
-      navigate("/signup");
     } else {
-      // Ouvrir le modal uniquement pour le login
       setAuthMode(mode);
       setIsAuthOpen(true);
     }
@@ -38,49 +36,31 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* EMERGENCY: Ultra-clean navigation */}
       <Navbar 
         onLogin={() => handleOpenAuth("login")} 
         onSignup={() => handleOpenAuth("signup")} 
       />
       
-      {/* Hero + Social Proof */}
+      {/* EMERGENCY: Hero section */}
       <Hero
         onGetStarted={() => handleOpenAuth("signup")}
         onLogin={() => handleOpenAuth("login")}
       />
       <SocialProofBar />
-      
-      {/* Problem / Solution */}
       <Problem />
       <Solution />
-      
-      {/* How it works */}
       <HowItWorks />
-      
-      {/* Features */}
       <Features />
-      
-      {/* Security */}
       <Security />
-      
-      {/* Social proof */}
       <Testimonials />
-      
-      {/* Pricing */}
       <Pricing onGetStarted={() => handleOpenAuth("signup")} />
-      
-      {/* FAQ */}
       <FAQ />
-      
-      {/* Final CTA */}
       <FinalCTA onGetStarted={() => handleOpenAuth("signup")} />
-      
-      {/* Footer */}
       <Footer />
       
-      {/* Medical-Grade Sticky CTAs - CRITICAL for conversion */}
-      <StickyCTA variant="trial" position="bottom" />
-      <OptimizedStickyCTA variant="trial" />
+      {/* EMERGENCY OVERRIDE: Ultra-clean sticky CTA - ZERO DEBUG CODE */}
+      <EmergencyStickyCTA onGetStarted={() => handleOpenAuth("signup")} />
       
       <AuthModal 
         isOpen={isAuthOpen}
