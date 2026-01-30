@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
-import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA";
+import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA-ENHANCED";
 import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { Problem } from "@/components/landing/Problem";
 import { Solution } from "@/components/landing/Solution";

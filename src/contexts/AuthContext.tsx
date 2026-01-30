@@ -118,18 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) throw error;
 
-    // Auto-confirm the user immediately (skip email verification)
-    if (data.user?.id) {
-      const { error: updateError } = await supabase.auth.admin.updateUserById(
-        data.user.id,
-        { email_confirm: true }
-      );
-      
-      if (updateError) {
-        console.warn("Could not auto-confirm email, but account created:", updateError);
-        // Don't throw - account is still created, just not confirmed
-      }
-    }
+    // Note: Email confirmation is handled server-side via Supabase Auth settings
+    // The admin API cannot be called from client-side for security reasons
 
     // Sign in immediately after signup
     const { error: signInError } = await supabase.auth.signInWithPassword({

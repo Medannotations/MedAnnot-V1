@@ -1,10 +1,10 @@
 export function Problem() {
   const frustrations = [
-    "2 heures par jour perdues en rédaction administrative",
-    "Des détails importants oubliés entre deux visites",
-    "Du temps volé à vos patients — et à votre vie personnelle",
-    "Des annotations rédigées à la va-vite quand la fatigue prend le dessus",
-    "Le stress de devoir tout documenter « correctement »",
+    "2 heures par jour VOLÉES à votre vie de famille",
+    "Vos enfants dorment quand vous finissez vos rapports à 22h",
+    "Votre dimanche après-midi sacrifié aux administratifs en retard",
+    "La peur d'avoir oublié un détail important pour votre patient",
+    "Des annotations bâclées parce que vous êtes épuisé(e)",
   ];
 
   return (
@@ -14,14 +14,14 @@ export function Problem() {
           {/* Section header */}
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full bg-red-100 text-red-700 text-sm font-medium mb-4">
-              Le problème
+              Le cauchemar quotidien
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Vous êtes devenu infirmier{" "}
+              Vous êtes devenu(e) infirmier(ère){" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-700">
                 pour soigner
               </span>
-              , pas pour rédiger
+              , pas pour rédiger des romans
             </h2>
           </div>
 

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Shield, MapPin, Users, TrendingUp, Check } from "lucide-react";
+import { Star, Shield, MapPin, Users, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-nurse-optimized.jpg";
 
 interface HeroProps {
@@ -8,7 +8,7 @@ interface HeroProps {
   onLogin: () => void;
 }
 
-export function Hero({ onGetStarted, onLogin }: HeroProps) {
+export function HeroOptimized({ onGetStarted, onLogin }: HeroProps) {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden pt-16">
       {/* Background gradient */}
@@ -20,7 +20,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
       
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left content - CONVERSION OPTIMIZED */}
+          {/* Left content */}
           <div className="space-y-6 md:space-y-8">
             {/* URGENT: Enhanced social proof badges - ABOVE THE FOLD */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-fade-in-up">
@@ -124,9 +124,7 @@ export function Hero({ onGetStarted, onLogin }: HeroProps) {
             <div className="hidden lg:block absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-4 border border-gray-100 animate-float">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <Clock className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900">2h</div>
