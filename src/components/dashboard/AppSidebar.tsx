@@ -1,4 +1,5 @@
-import { Settings, FileText, Users, Home, LogOut } from "lucide-react";
+import { Settings, FileText, Users, Home, LogOut, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -41,6 +42,7 @@ const navigationItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const isActive = (path: string) => {
     if (path === "/app") {
@@ -99,6 +101,18 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-2 mb-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="h-8 w-8"
+          >
+            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        </div>
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
             <span className="text-sm font-medium text-sidebar-accent-foreground">

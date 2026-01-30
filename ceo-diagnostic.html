@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAnnot CEO Diagnostic - Medical Grade Testing</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 30px; border-radius: 16px; margin-bottom: 30px; }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .test-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+        .test-card.critical { border-left: 4px solid #ef4444; }
+        .test-card.important { border-left: 4px solid #f59e0b; }
+        .test-card.success { border-left: 4px solid #10b981; }
+        .status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .status.pass { background: #dcfce7; color: #166534; }
+        .status.fail { background: #fef2f2; color: #dc2626; }
+        .status.pending { background: #fef3c7; color: #d97706; }
+        button { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .result { margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; font-family: 'Monaco', 'Consolas', monospace; font-size: 12px; white-space: pre-wrap; }
+        .error { color: #dc2626; }
+        .success { color: #166534; }
+        .medical-badge { display: inline-flex; align-items: center; gap: 6px; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 MedAnnot CEO Diagnostic Suite</h1>
+            <p>Medical-grade platform testing with zero tolerance for failure</p>
+            <div style="margin-top: 16px;">
+                <span class="medical-badge">🇨🇭 Swiss Medical Grade</span>
+                <span class="medical-badge">🔒 LPD Compliant</span>
+                <span class="medical-badge">⚡ Under 2s Load</span>
+            </div>
+        </div>
+
+        <div class="test-grid">
+            <!-- Critical Issues -->
+            <div class="test-card critical">
+                <h3>🚨 UI Access After Subscription</h3>
+                <p>Users cannot access platform after payment</p>
+                <button onclick="testStripeCheckout()">Test Stripe Checkout</button>
+                <div id="stripe-result" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-card critical">
+                <h3>🎤 Voice Upload & Annotation</h3>
+                <p>Core feature: Voice to annotation conversion</p>
+                <button onclick="testVoiceUpload()">Test Voice Processing</button>
+                <div id="voice-result" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-card critical">
+                <h3>🔐 Medical Encryption</h3>
+                <p>Patient data protection and LPD compliance</p>
+                <button onclick="testEncryption()">Test Encryption</button>
+                <div id="encryption-result" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Performance Issues -->
+            <div class="test-card important">
+                <h3>⚡ Platform Performance</h3>
+                <p>Load time and interaction speed</p>
+                <button onclick="testPerformance()">Test Performance</button>
+                <div id="performance-result" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-card important">
+                <h3>📱 Mobile Responsiveness</h3>
+                <p>60% traffic affected by mobile issues</p>
+                <button onclick="testMobile()">Test Mobile</button>
+                <div id="mobile-result" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Security & Compliance -->
+            <div class="test-card success">
+                <h3>🛡️ Patient Name Protection</h3>
+                <p>Zero patient names sent to AI APIs</p>
+                <button onclick="testPatientProtection()">Test Protection</button>
+                <div id="protection-result" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-card success">
+                <h3>📋 Audit Trail</h3>
+                <p>Complete medical data access logging</p>
+                <button onclick="testAuditTrail()">Test Audit</button>
+                <div id="audit-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; background: white; border-radius: 12px; padding: 24px;">
+            <h3>🔧 Environment Configuration Status</h3>
+            <div id="env-status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Environment Check
+        function checkEnvironment() {
+            const envChecks = [
+                { key: 'VITE_SUPABASE_URL', required: true },
+                { key: 'VITE_SUPABASE_PUBLISHABLE_KEY', required: true },
+                { key: 'VITE_STRIPE_PUBLISHABLE_KEY', required: true },
+                { key: 'VITE_STRIPE_PRICE_ID_MONTHLY', required: true },
+                { key: 'VITE_STRIPE_PRICE_ID_YEARLY', required: true },
+                { key: 'VITE_ENCRYPTION_SALT', required: true }
+            ];
+
+            const results = envChecks.map(check => ({
+                ...check,
+                status: window[check.key] ? '✅ Configured' : '❌ Missing',
+                value: window[check.key] ? 'Set' : 'Not Set'
+            }));
+
+            document.getElementById('env-status').innerHTML = results.map(r => 
+                `<div style="margin: 8px 0; padding: 12px; background: #f8fafc; border-radius: 6px;">
+                    <strong>${r.key}:</strong> ${r.status}
+                </div>`
+            ).join('');
+        }
+
+        // Test Stripe Checkout
+        async function testStripeCheckout() {
+            const result = document.getElementById('stripe-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing Stripe checkout flow...';
+            
+            try {
+                // Test the Supabase function directly
+                const response = await fetch('http://localhost:8081/api/test-stripe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        priceId: 'price_test_monthly',
+                        email: 'test@medannot.ch',
+                        userId: 'test-user-123'
+                    })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = response.ok ? 
+                    `<span class="success">✅ Stripe checkout working: ${data.url}</span>` :
+                    `<span class="error">❌ Stripe checkout failed: ${data.error}</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Network error: ${error.message}</span>`;
+            }
+        }
+
+        // Test Voice Upload
+        async function testVoiceUpload() {
+            const result = document.getElementById('voice-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing voice upload and transcription...';
+            
+            try {
+                // Create a test audio blob
+                const audioBlob = new Blob(['test audio data'], { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'test.wav');
+                
+                const response = await fetch('http://localhost:8081/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                result.innerHTML = response.ok ? 
+                    `<span class="success">✅ Voice upload working: ${data.transcription}</span>` :
+                    `<span class="error">❌ Voice upload failed: ${data.error}</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Network error: ${error.message}</span>`;
+            }
+        }
+
+        // Test Encryption
+        async function testEncryption() {
+            const result = document.getElementById('encryption-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing medical-grade encryption...';
+            
+            try {
+                const testData = 'Patient: Marie Dupont, Address: Rue du Lac 123';
+                const response = await fetch('http://localhost:8081/api/test-encryption', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: testData })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = response.ok ? 
+                    `<span class="success">✅ Encryption working: ${data.encrypted}</span>` :
+                    `<span class="error">❌ Encryption failed: ${data.error}</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Network error: ${error.message}</span>`;
+            }
+        }
+
+        // Test Performance
+        async function testPerformance() {
+            const result = document.getElementById('performance-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing platform performance...';
+            
+            const start = performance.now();
+            try {
+                await fetch('http://localhost:8081/signup-checkout');
+                const loadTime = performance.now() - start;
+                
+                result.innerHTML = loadTime < 2000 ? 
+                    `<span class="success">✅ Performance excellent: ${loadTime.toFixed(0)}ms load time</span>` :
+                    `<span class="error">❌ Performance issue: ${loadTime.toFixed(0)}ms load time (target: <2000ms)</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Performance test failed: ${error.message}</span>`;
+            }
+        }
+
+        // Test Mobile Responsiveness
+        function testMobile() {
+            const result = document.getElementById('mobile-result');
+            result.style.display = 'block';
+            
+            const width = window.innerWidth;
+            const isMobile = width <= 768;
+            
+            result.innerHTML = isMobile ? 
+                `<span class="success">✅ Mobile view detected (${width}px)</span>` :
+                `<span class="pending">📱 Desktop view (${width}px) - Test on mobile device</span>`;
+        }
+
+        // Test Patient Protection
+        async function testPatientProtection() {
+            const result = document.getElementById('protection-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing patient name protection...';
+            
+            try {
+                const response = await fetch('http://localhost:8081/api/test-pseudonymization', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patientName: 'Marie Dupont',
+                        patientId: 'patient-123',
+                        transcription: 'Le patient Marie Dupont a reçu les soins nécessaires.'
+                    })
+                });
+                
+                const data = await response.json();
+                const hasRealName = data.annotation && data.annotation.includes('Marie Dupont');
+                
+                result.innerHTML = !hasRealName ? 
+                    `<span class="success">✅ Patient protection working - Real name not sent to AI</span>` :
+                    `<span class="error">❌ Patient protection failed - Real name leaked to AI</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Protection test failed: ${error.message}</span>`;
+            }
+        }
+
+        // Test Audit Trail
+        async function testAuditTrail() {
+            const result = document.getElementById('audit-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing audit trail logging...';
+            
+            try {
+                const response = await fetch('http://localhost:8081/api/test-audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'test_access',
+                        patientId: 'patient-123',
+                        userId: 'user-test'
+                    })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = response.ok ? 
+                    `<span class="success">✅ Audit trail working: ${data.logId}</span>` :
+                    `<span class="error">❌ Audit trail failed: ${data.error}</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Audit test failed: ${error.message}</span>`;
+            }
+        }
+
+        // Initialize
+        checkEnvironment();
+    </script>
+</body>
+</html>

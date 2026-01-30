@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { MedicalEncryption } from "@/lib/medical-encryption";
 
 export async function transcribeAudio(
   audioFile: File | Blob,
@@ -101,10 +102,15 @@ export async function generateAnnotation(
   onProgress?: (progress: number) => void
 ): Promise<string> {
   try {
+    console.log('🏥 MEDICAL AI SERVICE: Starting annotation generation');
     if (onProgress) onProgress(20);
 
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error("Session utilisateur invalide");
+    }
 
+    console.log('🏥 MEDICAL AI SERVICE: User authenticated, proceeding with generation');
     if (onProgress) onProgress(40);
 
     const response = await fetch(
@@ -112,7 +118,7 @@ export async function generateAnnotation(
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(params),
@@ -123,28 +129,32 @@ export async function generateAnnotation(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "Erreur inconnue" }));
+      console.error('🏥 MEDICAL AI SERVICE: Generation failed:', error);
       throw new Error(error.error || "Erreur lors de la génération");
     }
 
     const result = await response.json();
+    console.log('🏥 MEDICAL AI SERVICE: Raw annotation received, processing pseudonym substitution');
 
     if (onProgress) onProgress(90);
 
-    // SECURITY: Substitute pseudonym with real patient name locally
-    // The AI only saw the pseudonym, never the real name
+    // MEDICAL-GRADE SECURITY: Substitute pseudonym with real patient name locally
+    // The AI only saw the pseudonym, never the real name - this is critical for LPD compliance
     let finalAnnotation = result.annotation;
     
     if (result.pseudonymUsed && params.patientName) {
+      console.log('🏥 MEDICAL AI SERVICE: Substituting pseudonym with real patient name');
       // Case-insensitive replacement of pseudonym with real name
       const pseudonymRegex = new RegExp(escapeRegExp(result.pseudonymUsed), 'gi');
       finalAnnotation = finalAnnotation.replace(pseudonymRegex, params.patientName);
     }
 
     if (onProgress) onProgress(100);
+    console.log('🏥 MEDICAL AI SERVICE: Annotation generation completed successfully');
 
     return finalAnnotation;
   } catch (error) {
-    console.error("Generation error:", error);
-    throw error instanceof Error ? error : new Error("Erreur lors de la génération");
+    console.error("🏥 MEDICAL AI SERVICE: Annotation generation failed:", error);
+    throw error instanceof Error ? error : new Error("Erreur lors de la génération de l'annotation");
   }
 }

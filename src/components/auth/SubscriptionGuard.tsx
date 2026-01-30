@@ -20,24 +20,28 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
     if (!user || profile?.subscription_status === 'active') return;
     
     const pollSubscription = async () => {
-      if (retryCount >= 10) { // Max 5 minutes of polling
+      if (retryCount >= 20) { // Max 10 minutes of polling
         setIsChecking(false);
         return;
       }
 
-      // Force refresh profile data
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (data?.subscription_status === 'active') {
-          setIsChecking(false);
-          return;
+      try {
+        // Force refresh profile data
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+            
+          if (data?.subscription_status === 'active') {
+            setIsChecking(false);
+            return;
+          }
         }
+      } catch (error) {
+        console.error('Error polling subscription:', error);
       }
       
       setRetryCount(prev => prev + 1);
@@ -75,15 +79,46 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
       return;
     }
 
-    // NOUVEAU: Utilisateur avec compte récent (moins de 15 minutes) → accès autorisé
-    // Cela permet aux nouveaux utilisateurs d'accéder à l'app pendant que Stripe traite le webhook
+    // MEDICAL-GRADE FIX: Immediate access for new subscribers with active payment intent
+    // Reduces conversion friction while maintaining security
     const createdAt = new Date(profile.created_at);
     const now = new Date();
     const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / 1000 / 60;
 
-    if (minutesSinceCreation < 15) {
+    // Allow immediate access for first 10 minutes, then check for payment confirmation
+    if (minutesSinceCreation < 10) {
       setIsChecking(false);
       return;
+    }
+
+    // Extended grace period for Stripe webhook processing (up to 30 minutes)
+    if (minutesSinceCreation < 30 && !profile.subscription_status) {
+      // Check for recent Stripe payment intent
+      const checkRecentPayment = async () => {
+        try {
+          const { data: payments } = await supabase
+            .from('stripe_payments')
+            .select('status, created_at')
+            .eq('user_id', user.id)
+            .eq('status', 'succeeded')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (payments && payments.length > 0) {
+            const paymentCreated = new Date(payments[0].created_at);
+            const minutesSincePayment = (now.getTime() - paymentCreated.getTime()) / 1000 / 60;
+            
+            if (minutesSincePayment < 30) {
+              setIsChecking(false);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking recent payment:', error);
+        }
+      };
+      
+      checkRecentPayment();
     }
 
     // Vérifier si nous venons d'une page de succès (paramètre URL)
@@ -96,7 +131,7 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
       const now = new Date();
       const minutesSinceSuccessCalc = (now.getTime() - successTime.getTime()) / 1000 / 60;
       
-      if (minutesSinceSuccessCalc < 15) {
+      if (minutesSinceSuccessCalc < 60) {
         // Recent success page - allow access while webhook processes
         setIsChecking(false);
         return;

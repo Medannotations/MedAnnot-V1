@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Square, Play, Pause, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VoiceRecorderProps {
   onTranscriptionComplete: (transcription: string) => void;
@@ -97,14 +98,44 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
 
     setIsTranscribing(true);
 
-    // Simulate transcription (in production, this would call an API like Whisper)
-    setTimeout(() => {
-      const mockTranscription =
-        "Le patient présente un état général satisfaisant. Tension artérielle mesurée à 130/80. Pas de signes d'infection au niveau du pansement. Le patient signale une légère douleur au niveau de la plaie, cotée à 3 sur 10. Changement de pansement effectué selon protocole. Patient éduqué sur les signes d'alerte à surveiller.";
+    try {
+      // Create FormData for audio upload
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
       
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Call transcription API with medical-grade security
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Transcription failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.transcription) {
+        setIsTranscribing(false);
+        onTranscriptionComplete(result.transcription);
+      } else {
+        throw new Error('No transcription received');
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      toast({
+        title: "Erreur de transcription",
+        description: "Impossible de transcrire l'audio. Veuillez réessayer.",
+        variant: "destructive",
+      });
       setIsTranscribing(false);
-      onTranscriptionComplete(mockTranscription);
-    }, 2000);
+    }
   };
 
   const formatTime = (seconds: number) => {

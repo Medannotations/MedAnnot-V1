@@ -44,17 +44,18 @@ export const encryptData = (data: string, userId: string): string => {
 
 /**
  * Déchiffre une chaîne AES-256
- * Rétrocompatible avec les données legacy non chiffrées
- * @param encryptedData - Données chiffrées ou legacy
+ * MEDICAL-GRADE SECURITY: No legacy fallback for patient data
+ * @param encryptedData - Données chiffrées
  * @param userId - ID de l'utilisateur pour dériver la clé
  * @returns Données en clair
+ * @throws Error if decryption fails - prevents data exposure
  */
 export const decryptData = (encryptedData: string, userId: string): string => {
   if (!encryptedData) return '';
   
-  // Données legacy non chiffrées - retourner tel quel
+  // MEDICAL-GRADE: Strict encryption validation - no legacy fallback for sensitive data
   if (!isEncrypted(encryptedData)) {
-    return encryptedData;
+    throw new Error('INVALID_ENCRYPTION: Data appears to be unencrypted');
   }
   
   try {
@@ -62,16 +63,15 @@ export const decryptData = (encryptedData: string, userId: string): string => {
     const bytes = CryptoJS.AES.decrypt(encryptedData, key);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
     
-    // Si le déchiffrement échoue (chaîne vide), c'est probablement des données legacy
+    // MEDICAL-GRADE: Strict validation - empty decryption = security breach
     if (!decrypted) {
-      console.warn('Decryption returned empty string, treating as legacy data');
-      return encryptedData;
+      throw new Error('DECRYPTION_FAILED: Unable to decrypt data - possible tampering');
     }
     
     return decrypted;
   } catch (error) {
-    console.error('Decryption failed:', error);
-    return encryptedData; // Retourner tel quel en cas d'erreur
+    console.error('Medical-grade decryption failed:', error);
+    throw new Error(`SECURITY_BREACH: Decryption failed for user ${userId}`);
   }
 };
 
