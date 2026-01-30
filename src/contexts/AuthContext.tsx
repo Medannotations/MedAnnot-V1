@@ -42,14 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error);
         // Ne pas bloquer - continuer avec profile null
         return;
       }
 
       setProfile(data as Profile);
     } catch (err) {
-      console.error("Unexpected error fetching profile:", err);
     }
   };
 
@@ -71,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await fetchProfile(session.user.id);
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
       } finally {
         if (isMounted) {
           setIsLoading(false);

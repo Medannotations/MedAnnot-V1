@@ -81,7 +81,6 @@ export function useOptimizedPerformance() {
             optimizePerformance();
             
             // Log critical performance issue
-            console.warn('🚨 MEDICAL-GRADE PERFORMANCE ALERT: LCP exceeded threshold', {
               lcp: `${Math.round(lcp)}ms`,
               threshold: `${CRITICAL_THRESHOLDS.LCP}ms`,
               action: 'Auto-optimization triggered'
@@ -90,7 +89,6 @@ export function useOptimizedPerformance() {
         });
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
       } catch (e) {
-        console.warn('LCP monitoring not available');
       }
 
       // First Contentful Paint
@@ -102,7 +100,6 @@ export function useOptimizedPerformance() {
         });
         fcpObserver.observe({ entryTypes: ['paint'] });
       } catch (e) {
-        console.warn('FCP monitoring not available');
       }
 
       // Cumulative Layout Shift
@@ -118,7 +115,6 @@ export function useOptimizedPerformance() {
         });
         clsObserver.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
-        console.warn('CLS monitoring not available');
       }
 
       // First Input Delay
@@ -132,7 +128,6 @@ export function useOptimizedPerformance() {
         });
         fidObserver.observe({ entryTypes: ['first-input'] });
       } catch (e) {
-        console.warn('FID monitoring not available');
       }
 
       // Enhanced Time to First Byte with network latency
@@ -149,7 +144,6 @@ export function useOptimizedPerformance() {
           }));
         }
       } catch (e) {
-        console.warn('Enhanced TTFB monitoring not available');
       }
 
       // Memory usage monitoring (if available)
@@ -159,7 +153,6 @@ export function useOptimizedPerformance() {
           const memoryUsage = memoryInfo.usedJSHeapSize / (1024 * 1024); // MB
           setMetrics(prev => ({ ...prev, memoryUsage }));
         } catch (e) {
-          console.warn('Memory monitoring not available');
         }
       }
 
@@ -172,7 +165,6 @@ export function useOptimizedPerformance() {
         const cacheHitRate = resources.length > 0 ? cachedResources.length / resources.length : 0;
         setMetrics(prev => ({ ...prev, cacheHitRate }));
       } catch (e) {
-        console.warn('Cache monitoring not available');
       }
     };
 
@@ -192,7 +184,6 @@ export function useOptimizedPerformance() {
       (!metrics.fid || metrics.fid <= CRITICAL_THRESHOLDS.FID);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🏥 MEDICAL-GRADE PERFORMANCE REPORT:', {
         'LCP (2s max)': metrics.lcp ? `${Math.round(metrics.lcp)}ms ${isPerformanceCritical('LCP', metrics.lcp) ? '❌' : '✅'}` : 'N/A',
         'FCP (1.5s max)': metrics.fcp ? `${Math.round(metrics.fcp)}ms ${isPerformanceCritical('FCP', metrics.fcp) ? '❌' : '✅'}` : 'N/A',
         'FID (100ms max)': metrics.fid ? `${Math.round(metrics.fid)}ms ${isPerformanceCritical('FID', metrics.fid) ? '❌' : '✅'}` : 'N/A',

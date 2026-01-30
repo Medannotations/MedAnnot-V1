@@ -142,7 +142,6 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
         throw new Error('Aucune transcription reçue');
       }
     } catch (error) {
-      console.error('Erreur de transcription médicale:', error);
       toast({
         title: "Erreur de transcription",
         description: error instanceof Error ? error.message : "Impossible de transcrire l'audio. Veuillez réessayer.",

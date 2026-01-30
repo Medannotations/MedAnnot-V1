@@ -70,7 +70,6 @@ export function SubscriptionGuard({ children }: ProtectedRouteProps) {
           }
         }
       } catch (error) {
-        console.error('Payment check failed:', error);
       }
       
       // No valid subscription → redirect to checkout

@@ -1,5 +1,4 @@
 // SURGICAL LANDING PAGE - Medical-grade perfection
-// Complete debug elimination, professional appearance, Swiss medical standard
 
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";

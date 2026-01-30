@@ -6,7 +6,6 @@ const getStripe = () => {
   if (!stripePromise) {
     const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
     if (!publishableKey) {
-      console.error('Stripe publishable key is not defined');
       return null;
     }
     stripePromise = loadStripe(publishableKey);
@@ -59,7 +58,6 @@ export async function createCheckoutSession(params: CheckoutSessionParams): Prom
       throw new Error(error.message || 'Erreur lors de la redirection vers Stripe');
     }
   } catch (error) {
-    console.error('Erreur checkout Stripe:', error);
     throw error instanceof Error ? error : new Error('Erreur lors du paiement');
   }
 }
@@ -88,7 +86,6 @@ export async function createCustomerPortalSession(customerId: string): Promise<v
     const { url } = await response.json();
     window.location.href = url;
   } catch (error) {
-    console.error('Erreur portail Stripe:', error);
     throw error instanceof Error ? error : new Error('Erreur lors de l\'accès au portail');
   }
 }
@@ -115,7 +112,6 @@ export async function getSubscriptionInfo(userId: string): Promise<{
 
     return await response.json();
   } catch (error) {
-    console.error('Erreur récupération abonnement:', error);
     return { status: 'none' };
   }
 }

@@ -134,7 +134,6 @@ export function SignupCheckoutPage() {
         throw new Error("Impossible de créer la session de paiement");
       }
     } catch (error: any) {
-      console.error("Signup error:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors de l'inscription",

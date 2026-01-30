@@ -28,7 +28,6 @@ export function usePersistedAnnotationState() {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
     } catch (error) {
-      console.error("Error saving annotation state:", error);
     }
   };
 
@@ -47,7 +46,6 @@ export function usePersistedAnnotationState() {
 
       return state;
     } catch (error) {
-      console.error("Error loading annotation state:", error);
       return null;
     }
   };
@@ -56,7 +54,6 @@ export function usePersistedAnnotationState() {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      console.error("Error clearing annotation state:", error);
     }
   };
 

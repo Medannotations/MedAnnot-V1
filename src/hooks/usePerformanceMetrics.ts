@@ -22,7 +22,6 @@ export function usePerformanceMetrics() {
         });
         fcpObserver.observe({ entryTypes: ['paint'] });
       } catch (e) {
-        console.warn('FCP observation not supported');
       }
 
       // Largest Contentful Paint
@@ -34,7 +33,6 @@ export function usePerformanceMetrics() {
         });
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
       } catch (e) {
-        console.warn('LCP observation not supported');
       }
 
       // Cumulative Layout Shift
@@ -50,7 +48,6 @@ export function usePerformanceMetrics() {
         });
         clsObserver.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
-        console.warn('CLS observation not supported');
       }
 
       // First Input Delay
@@ -64,7 +61,6 @@ export function usePerformanceMetrics() {
         });
         fidObserver.observe({ entryTypes: ['first-input'] });
       } catch (e) {
-        console.warn('FID observation not supported');
       }
 
       // Time to First Byte
@@ -75,7 +71,6 @@ export function usePerformanceMetrics() {
           setMetrics(prev => ({ ...prev, ttfb }));
         }
       } catch (e) {
-        console.warn('TTFB calculation not supported');
       }
     }
   }, []);
@@ -84,16 +79,6 @@ export function usePerformanceMetrics() {
 }
 
 export function logPerformanceMetrics(metrics: PerformanceMetrics) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('📊 Performance Metrics:', {
-      FCP: metrics.fcp ? `${Math.round(metrics.fcp)}ms` : 'N/A',
-      LCP: metrics.lcp ? `${Math.round(metrics.lcp)}ms` : 'N/A',
-      FID: metrics.fid ? `${Math.round(metrics.fid)}ms` : 'N/A',
-      CLS: metrics.cls ? metrics.cls.toFixed(3) : 'N/A',
-      TTFB: metrics.ttfb ? `${Math.round(metrics.ttfb)}ms` : 'N/A',
-    });
-  }
-
   // Send to analytics in production
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
     // Example: Send to your analytics service

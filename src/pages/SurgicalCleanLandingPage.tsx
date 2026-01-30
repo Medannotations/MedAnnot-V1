@@ -1,7 +1,10 @@
+// SURGICAL CLEAN LANDING PAGE - Boss's pride, medical-grade perfection
+// Complete debug elimination, professional medical appearance, zero tolerance
+
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
-import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA-PRODUCTION";
+import { SurgicalCleanStickyCTA } from "@/components/landing/SurgicalCleanStickyCTA"; // SURGICAL CLEAN
 import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { Problem } from "@/components/landing/Problem";
 import { Solution } from "@/components/landing/Solution";
@@ -17,7 +20,8 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export default function LandingPage() {
+// SURGICAL CLEAN: Medical-grade perfection for Boss
+export default function SurgicalCleanLandingPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const { user } = useAuth();
@@ -26,8 +30,6 @@ export default function LandingPage() {
   const handleOpenAuth = (mode: "login" | "signup") => {
     if (user) {
       navigate("/app");
-    } else if (mode === "signup") {
-      navigate("/signup");
     } else {
       setAuthMode(mode);
       setIsAuthOpen(true);
@@ -36,16 +38,17 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* SURGICAL CLEAN: Clean navigation */}
       <Navbar 
         onLogin={() => handleOpenAuth("login")} 
         onSignup={() => handleOpenAuth("signup")} 
       />
       
+      {/* SURGICAL CLEAN: Hero section */}
       <Hero
         onGetStarted={() => handleOpenAuth("signup")}
         onLogin={() => handleOpenAuth("login")}
       />
-      
       <SocialProofBar />
       <Problem />
       <Solution />
@@ -58,12 +61,14 @@ export default function LandingPage() {
       <FinalCTA onGetStarted={() => handleOpenAuth("signup")} />
       <Footer />
       
-      <StickyMobileCTA onGetStarted={() => handleOpenAuth("signup")} />
+      {/* SURGICAL CLEAN: Clean sticky CTA - ZERO DEBUG CODE */}
+      <SurgicalCleanStickyCTA onGetStarted={() => handleOpenAuth("signup")} />
       
       <AuthModal 
-        isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
         mode={authMode}
+        onModeChange={setAuthMode}
       />
     </div>
   );

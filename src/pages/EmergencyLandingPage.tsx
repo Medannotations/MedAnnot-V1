@@ -1,4 +1,3 @@
-// EMERGENCY LANDING PAGE OVERRIDE - Complete debug elimination
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";

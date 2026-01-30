@@ -21,7 +21,6 @@ export function encryptPatientData(data: string): string {
     const encrypted = CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
     return encrypted;
   } catch (error) {
-    console.error('Encryption failed:', error);
     throw new Error('Failed to encrypt patient data');
   }
 }
@@ -31,7 +30,6 @@ export function decryptPatientData(encryptedData: string): string {
     const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
     return decrypted.toString(CryptoJS.enc.Utf8);
   } catch (error) {
-    console.error('Decryption failed:', error);
     throw new Error('Failed to decrypt patient data');
   }
 }

@@ -70,7 +70,6 @@ export const decryptData = (encryptedData: string, userId: string): string => {
     
     return decrypted;
   } catch (error) {
-    console.error('Medical-grade decryption failed:', error);
     throw new Error(`SECURITY_BREACH: Decryption failed for user ${userId}`);
   }
 };

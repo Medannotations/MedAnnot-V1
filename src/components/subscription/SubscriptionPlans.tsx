@@ -50,7 +50,6 @@ export function SubscriptionPlans() {
         userId: user.id,
       });
     } catch (error) {
-      console.error('Erreur souscription:', error);
       toast({
         title: 'Erreur',
         description: error instanceof Error ? error.message : 'Impossible de créer la session de paiement',

@@ -70,7 +70,6 @@ export const encryptMedicalData = (data: string, userId: string): string => {
     // Add version prefix for future compatibility
     return `${ENCRYPTION_CONSTANTS.VERSION}:${encrypted}`;
   } catch (error) {
-    console.error('MEDICAL_ENCRYPTION_ERROR:', error);
     throw new Error('MEDICAL_SECURITY_ERROR: Encryption failed - possible security breach');
   }
 };
@@ -105,7 +104,6 @@ export const decryptMedicalData = (encryptedData: string, userId: string): strin
 
     return plaintext;
   } catch (error) {
-    console.error('MEDICAL_DECRYPTION_ERROR:', error);
     throw new Error('MEDICAL_SECURITY_ERROR: Decryption failed - data integrity compromised');
   }
 };
@@ -141,7 +139,6 @@ export const sanitizePatientDataForAI = (text: string, patientName: string, user
 
     return sanitizedText;
   } catch (error) {
-    console.error('MEDICAL_SANITIZATION_ERROR:', error);
     throw new Error('MEDICAL_SECURITY_ERROR: Patient data sanitization failed');
   }
 };
@@ -195,7 +192,6 @@ export const validateMedicalData = (data: any, operation: 'encrypt' | 'decrypt')
     
     return false;
   } catch (error) {
-    console.error('MEDICAL_VALIDATION_ERROR:', error);
     return false;
   }
 };

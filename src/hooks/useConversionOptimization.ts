@@ -120,7 +120,6 @@ export function useConversionOptimization() {
         keepalive: true
       });
     } catch (error) {
-      console.warn('Conversion tracking failed:', error);
     }
 
     // Update conversion score based on event

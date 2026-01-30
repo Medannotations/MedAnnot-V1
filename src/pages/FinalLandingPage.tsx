@@ -1,5 +1,4 @@
 // ABSOLUTE FINAL LANDING PAGE - Boss's pride, surgical perfection
-// Complete debug elimination, medical-grade perfection, zero tolerance
 
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";

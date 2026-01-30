@@ -13,7 +13,7 @@ export function PerformanceMonitor() {
   // Display performance badge in development
   if (process.env.NODE_ENV === 'development' && metrics.lcp) {
     return (
-      <div className="fixed bottom-4 right-4 bg-black text-white px-3 py-2 rounded-lg text-xs font-mono z-50">
+      <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-3 py-2 rounded-lg text-xs font-mono z-50">
         <div>LCP: {Math.round(metrics.lcp)}ms</div>
         <div>FCP: {Math.round(metrics.fcp || 0)}ms</div>
         <div>CLS: {(metrics.cls || 0).toFixed(3)}</div>
@@ -29,23 +29,18 @@ export function reportWebVitals(metric: any) {
   switch (metric.name) {
     case 'FCP':
       // First Contentful Paint
-      console.log(`FCP: ${Math.round(metric.value * 100) / 100}ms`);
       break;
     case 'LCP':
       // Largest Contentful Paint
-      console.log(`LCP: ${Math.round(metric.value * 100) / 100}ms`);
       break;
     case 'CLS':
       // Cumulative Layout Shift
-      console.log(`CLS: ${Math.round(metric.value * 1000) / 1000}`);
       break;
     case 'FID':
       // First Input Delay
-      console.log(`FID: ${Math.round(metric.value * 100) / 100}ms`);
       break;
     case 'TTFB':
       // Time to First Byte
-      console.log(`TTFB: ${Math.round(metric.value * 100) / 100}ms`);
       break;
     default:
       break;

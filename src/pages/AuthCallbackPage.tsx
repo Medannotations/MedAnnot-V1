@@ -40,7 +40,6 @@ export function AuthCallbackPage() {
           return () => clearTimeout(timeout);
         }
       } catch (err) {
-        console.error("Auth callback error:", err);
         setError("An error occurred during confirmation");
         setTimeout(() => navigate("/"), 3000);
       }

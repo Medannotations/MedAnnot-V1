@@ -1,5 +1,4 @@
 // ABSOLUTE FINAL CLEAN VERSION - Zero tolerance for failure
-// Complete debug elimination, surgical perfection, Boss's pride
 
 import React from 'react';
 
@@ -8,7 +7,6 @@ interface FinalStickyCTAProps {
 }
 
 export function FinalStickyCTA({ onGetStarted }: FinalStickyCTAProps) {
-  // ABSOLUTE FINAL: Zero debug, medical-grade, Boss's pride
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
       <div className="bg-white border-t border-gray-200 p-4 shadow-lg">

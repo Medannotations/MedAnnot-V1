@@ -1,4 +1,3 @@
-// PRODUCTION STICKY CTA - Clean version, no debug elements
 import { Button } from "@/components/ui/button";
 
 interface StickyMobileCTAProps {

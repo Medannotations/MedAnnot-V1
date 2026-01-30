@@ -3,9 +3,7 @@
 
 import React from 'react';
 
-// FORCE CLEAN IMPLEMENTATION - No debug code whatsoever
 export function EmergencyStickyCTA({ onGetStarted }: { onGetStarted: () => void }) {
-  // ULTRA-CLEAN: Zero debug, zero complexity, pure production
   return (
     <div style={{
       position: 'fixed',

@@ -49,7 +49,6 @@ export async function transcribeAudio(
 
     return result.transcription;
   } catch (error) {
-    console.error("Transcription error:", error);
     throw error instanceof Error ? error : new Error("Erreur lors de la transcription");
   }
 }
@@ -102,7 +101,6 @@ export async function generateAnnotation(
   onProgress?: (progress: number) => void
 ): Promise<string> {
   try {
-    console.log('🏥 MEDICAL AI SERVICE: Starting annotation generation');
     if (onProgress) onProgress(20);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -110,7 +108,6 @@ export async function generateAnnotation(
       throw new Error("Session utilisateur invalide");
     }
 
-    console.log('🏥 MEDICAL AI SERVICE: User authenticated, proceeding with generation');
     if (onProgress) onProgress(40);
 
     const response = await fetch(
@@ -129,12 +126,10 @@ export async function generateAnnotation(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "Erreur inconnue" }));
-      console.error('🏥 MEDICAL AI SERVICE: Generation failed:', error);
       throw new Error(error.error || "Erreur lors de la génération");
     }
 
     const result = await response.json();
-    console.log('🏥 MEDICAL AI SERVICE: Raw annotation received, processing pseudonym substitution');
 
     if (onProgress) onProgress(90);
 
@@ -143,18 +138,15 @@ export async function generateAnnotation(
     let finalAnnotation = result.annotation;
     
     if (result.pseudonymUsed && params.patientName) {
-      console.log('🏥 MEDICAL AI SERVICE: Substituting pseudonym with real patient name');
       // Case-insensitive replacement of pseudonym with real name
       const pseudonymRegex = new RegExp(escapeRegExp(result.pseudonymUsed), 'gi');
       finalAnnotation = finalAnnotation.replace(pseudonymRegex, params.patientName);
     }
 
     if (onProgress) onProgress(100);
-    console.log('🏥 MEDICAL AI SERVICE: Annotation generation completed successfully');
 
     return finalAnnotation;
   } catch (error) {
-    console.error("🏥 MEDICAL AI SERVICE: Annotation generation failed:", error);
     throw error instanceof Error ? error : new Error("Erreur lors de la génération de l'annotation");
   }
 }

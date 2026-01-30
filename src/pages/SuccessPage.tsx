@@ -200,7 +200,6 @@ export function SuccessPage() {
           </p>
         </div>
 
-        {/* Session ID (for debugging) */}
         {sessionId && (
           <p className="text-center text-xs text-gray-400 mt-8">
             Session: {sessionId.slice(0, 8)}...

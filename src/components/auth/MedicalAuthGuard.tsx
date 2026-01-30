@@ -29,16 +29,13 @@ export function MedicalAuthGuard({ children, requireSubscription = true }: Medic
 
     const checkMedicalAccess = async () => {
       try {
-        console.log('🏥 MEDICAL AUTH CHECK: Starting authentication verification');
 
         if (!user) {
-          console.log('🏥 MEDICAL AUTH CHECK: No user, redirecting to login');
           navigate('/login');
           return;
         }
 
         if (!requireSubscription) {
-          console.log('🏥 MEDICAL AUTH CHECK: Subscription not required, access granted');
           setIsChecking(false);
           return;
         }
@@ -46,7 +43,6 @@ export function MedicalAuthGuard({ children, requireSubscription = true }: Medic
         // Force refresh user profile for latest subscription status
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) {
-          console.log('🏥 MEDICAL AUTH CHECK: No valid session');
           navigate('/login');
           return;
         }
@@ -59,22 +55,18 @@ export function MedicalAuthGuard({ children, requireSubscription = true }: Medic
           .single();
 
         if (profileError) {
-          console.error('🏥 MEDICAL AUTH CHECK: Profile fetch failed:', profileError);
           throw new Error('Impossible de vérifier votre profil');
         }
 
-        console.log('🏥 MEDICAL AUTH CHECK: Profile data:', profileData);
         setSubscriptionStatus(profileData?.subscription_status);
 
         // Check subscription status
         if (profileData?.subscription_status === 'active') {
-          console.log('🏥 MEDICAL AUTH CHECK: Active subscription, access granted');
           setIsChecking(false);
           return;
         }
 
         if (profileData?.subscription_status === 'trialing') {
-          console.log('🏥 MEDICAL AUTH CHECK: Trial active, access granted');
           setIsChecking(false);
           return;
         }
@@ -85,18 +77,15 @@ export function MedicalAuthGuard({ children, requireSubscription = true }: Medic
           const now = new Date();
           
           if (endDate > now) {
-            console.log('🏥 MEDICAL AUTH CHECK: Trial still valid by date, access granted');
             setIsChecking(false);
             return;
           }
         }
 
         // Handle inactive subscription
-        console.log('🏥 MEDICAL AUTH CHECK: No active subscription, redirecting to pricing');
         navigate('/pricing?reason=subscription_required');
 
       } catch (error) {
-        console.error('🏥 MEDICAL AUTH CHECK: Error during verification:', error);
         toast({
           title: "Erreur d'authentification",
           description: "Impossible de vérifier votre accès. Veuillez réessayer.",
@@ -105,13 +94,11 @@ export function MedicalAuthGuard({ children, requireSubscription = true }: Medic
         
         // Retry logic for transient failures
         if (retryCount < MAX_RETRIES) {
-          console.log(`🏥 MEDICAL AUTH CHECK: Retrying in 30 seconds (attempt ${retryCount + 1}/${MAX_RETRIES})`);
           setTimeout(() => {
             setRetryCount(prev => prev + 1);
             checkMedicalAccess();
           }, 30000); // 30 second retry
         } else {
-          console.log('🏥 MEDICAL AUTH CHECK: Max retries reached, showing error');
           setIsChecking(false);
           toast({
             title: "Erreur de connexion",

@@ -111,7 +111,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
       {/* Mobile menu backdrop */}
       {isMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-gray-500/20 backdrop-blur-sm z-40 md:hidden"
           onClick={closeMenu}
           aria-hidden="true"
         />

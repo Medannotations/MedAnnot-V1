@@ -24,13 +24,7 @@ if (container) {
 if (typeof window !== 'undefined') {
   // Import web vitals library dynamically
   import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-    getCLS(console.log);
-    getFID(console.log);
-    getFCP(console.log);
-    getLCP(console.log);
-    getTTFB(console.log);
   }).catch(() => {
     // Web vitals not available, use custom implementation
-    console.log('Web vitals library not available');
   });
 }
