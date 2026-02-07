@@ -57,10 +57,11 @@ export default function PatientsPage() {
 
       setNewPatient({ firstName: "", lastName: "", address: "", pathologies: "" });
       setIsDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error creating patient:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de créer le patient.",
+        description: error.message || "Impossible de créer le patient. Veuillez réessayer.",
         variant: "destructive",
       });
     }
@@ -206,6 +207,7 @@ export default function PatientsPage() {
                       setNewPatient({ ...newPatient, lastName: e.target.value })
                     }
                     placeholder="Dupont"
+                    className="bg-white text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
                 <div className="space-y-2">
@@ -217,6 +219,7 @@ export default function PatientsPage() {
                       setNewPatient({ ...newPatient, firstName: e.target.value })
                     }
                     placeholder="Marie"
+                    className="bg-white text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -229,6 +232,7 @@ export default function PatientsPage() {
                     setNewPatient({ ...newPatient, address: e.target.value })
                   }
                   placeholder="Rue de Lausanne 12, 1000 Lausanne"
+                  className="bg-white text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               <div className="space-y-2">
@@ -240,7 +244,7 @@ export default function PatientsPage() {
                     setNewPatient({ ...newPatient, pathologies: e.target.value })
                   }
                   placeholder="Diabète type 2, Hypertension..."
-                  className="min-h-[80px]"
+                  className="min-h-[80px] bg-white text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               <div className="flex justify-end gap-2">

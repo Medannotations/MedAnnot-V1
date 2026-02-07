@@ -83,36 +83,44 @@ export function useCreatePatient() {
 
   return useMutation({
     mutationFn: async (patient: Omit<PatientInsert, "user_id">) => {
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error("Vous devez être connecté pour créer un patient");
 
-      // Chiffrer les données PII avant insertion
-      const encryptedFirstName = encryptData(patient.first_name, user.id);
-      const encryptedLastName = encryptData(patient.last_name, user.id);
-      const encryptedAddress = patient.address 
-        ? encryptData(patient.address, user.id) 
-        : null;
+      try {
+        // Chiffrer les données PII avant insertion
+        const encryptedFirstName = encryptData(patient.first_name, user.id);
+        const encryptedLastName = encryptData(patient.last_name, user.id);
+        const encryptedAddress = patient.address 
+          ? encryptData(patient.address, user.id) 
+          : null;
 
-      const { data, error } = await supabase
-        .from("patients")
-        .insert({ 
-          ...patient, 
-          user_id: user.id,
-          first_name: encryptedFirstName,
-          last_name: encryptedLastName,
-          address: encryptedAddress,
-        })
-        .select()
-        .single();
+        const { data, error } = await supabase
+          .from("patients")
+          .insert({ 
+            ...patient, 
+            user_id: user.id,
+            first_name: encryptedFirstName,
+            last_name: encryptedLastName,
+            address: encryptedAddress,
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) {
+          console.error("Supabase error creating patient:", error);
+          throw new Error(`Erreur base de données: ${error.message}`);
+        }
 
-      // Retourner les données déchiffrées
-      const patientWithExamples = {
-        ...decryptPatient(data as Patient, user.id),
-        exampleAnnotations: data.example_annotations || [],
-      };
+        // Retourner les données déchiffrées
+        const patientWithExamples = {
+          ...decryptPatient(data as Patient, user.id),
+          exampleAnnotations: data.example_annotations || [],
+        };
 
-      return patientWithExamples as Patient;
+        return patientWithExamples as Patient;
+      } catch (error: any) {
+        console.error("Error in createPatient mutation:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
