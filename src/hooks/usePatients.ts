@@ -66,6 +66,7 @@ export function usePatients(includeArchived = false) {
       return patientsWithExamples as Patient[];
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -94,6 +95,7 @@ export function usePatient(patientId: string | undefined) {
       return patientWithExamples as Patient;
     },
     enabled: !!user && !!patientId,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -158,8 +160,6 @@ export function useCreatePatient() {
       queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
         return old ? [newPatient, ...old] : [newPatient];
       });
-      // Invalidation pour s'assurer de la cohérence
-      queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
   });
 }
@@ -254,9 +254,36 @@ export function useArchivePatient() {
 
       return patientWithExamples as Patient;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["patients"] });
+    // Mise à jour optimiste pour éviter le lag
+    onMutate: async ({ id, isArchived }) => {
+      // Annuler les requêtes en cours
+      await queryClient.cancelQueries({ queryKey: ["patients"] });
+      
+      // Sauvegarder l'état précédent
+      const previousPatients = queryClient.getQueryData<Patient[]>(["patients", user?.id, true]);
+      
+      // Mettre à jour le cache immédiatement
+      queryClient.setQueryData(["patients", user?.id, true], (old: Patient[] | undefined) => {
+        if (!old) return old;
+        return old.map(p => p.id === id ? { ...p, is_archived: isArchived } : p);
+      });
+      
+      queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
+        if (!old) return old;
+        return old.map(p => p.id === id ? { ...p, is_archived: isArchived } : p);
+      });
+      
+      return { previousPatients };
     },
+    onError: (err, variables, context) => {
+      // Restaurer l'état précédent en cas d'erreur
+      if (context?.previousPatients) {
+        queryClient.setQueryData(["patients", user?.id, true], context.previousPatients);
+        queryClient.setQueryData(["patients", user?.id, false], context.previousPatients);
+      }
+    },
+    // Pas de invalidateQueries ici pour éviter le re-fetch complet
+    // Le cache est déjà à jour grâce à onMutate
   });
 }
 

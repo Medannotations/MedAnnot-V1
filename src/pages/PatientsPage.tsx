@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,104 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2, Trash2, AlertTriangle, FolderOpen } from "lucide-react";
 import { usePatients, useCreatePatient, useArchivePatient, useDeletePatient, type Patient } from "@/hooks/usePatients";
 import { GPSNavigationButton } from "@/components/patients/GPSNavigation";
+
+// Composant PatientCard memoïsé pour éviter les re-renders
+const PatientCard = memo(({ 
+  patient, 
+  isArchived, 
+  onArchive, 
+  onRestore, 
+  onDelete,
+  isPending 
+}: { 
+  patient: Patient; 
+  isArchived: boolean;
+  onArchive: (id: string) => void;
+  onRestore: (id: string) => void;
+  onDelete: (patient: Patient) => void;
+  isPending: boolean;
+}) => {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex flex-col gap-4">
+          {/* Info patient */}
+          <div className="min-w-0">
+            <Link
+              to={`/app/patients/${patient.id}`}
+              className="text-lg font-medium text-card-foreground hover:text-primary transition-colors block truncate"
+            >
+              {patient.last_name} {patient.first_name}
+            </Link>
+            {patient.address && (
+              <p className="text-sm text-muted-foreground truncate">{patient.address}</p>
+            )}
+            {patient.pathologies && (
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                Pathologies: {patient.pathologies}
+              </p>
+            )}
+          </div>
+          
+          {/* Actions principales - boutons larges */}
+          <div className="flex items-center gap-3">
+            <Button asChild variant="default" size="default" className="flex-1 h-12 text-base">
+              <Link to={`/app/patients/${patient.id}`}>
+                <FolderOpen className="w-5 h-5 mr-2" />
+                Accéder aux annotations
+              </Link>
+            </Button>
+            <GPSNavigationButton patient={patient} />
+          </div>
+          
+          {/* Bouton archive/restaurer/supprimer - ligne séparée, aligné à droite */}
+          <div className="flex justify-end pt-1">
+            {isArchived ? (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onRestore(patient.id)}
+                  disabled={isPending}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
+                  title="Restaurer"
+                >
+                  <ArchiveRestore className="w-3.5 h-3.5 mr-1" />
+                  Restaurer
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(patient)}
+                  disabled={isPending}
+                  className="h-7 px-2 text-xs text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                  title="Supprimer définitivement"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Supprimer
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onArchive(patient.id)}
+                disabled={isPending}
+                className="h-7 px-2 text-xs text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted"
+                title="Archiver"
+              >
+                <Archive className="w-3.5 h-3.5 mr-1" />
+                Archiver
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+PatientCard.displayName = "PatientCard";
 
 export default function PatientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -162,98 +260,26 @@ export default function PatientsPage() {
     }
   };
 
-  const activePatients = patients.filter(
-    (p) =>
-      !p.is_archived &&
-      (p.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // useMemo pour éviter les re-calculs à chaque render
+  const activePatients = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return patients.filter(
+      (p) =>
+        !p.is_archived &&
+        (p.first_name.toLowerCase().includes(query) ||
+          p.last_name.toLowerCase().includes(query))
+    );
+  }, [patients, searchQuery]);
 
-  const archivedPatients = patients.filter(
-    (p) =>
-      p.is_archived &&
-      (p.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const PatientCard = ({ patient, isArchived }: { patient: Patient; isArchived: boolean }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-4">
-          {/* Info patient */}
-          <div className="min-w-0">
-            <Link
-              to={`/app/patients/${patient.id}`}
-              className="text-lg font-medium text-card-foreground hover:text-primary transition-colors block truncate"
-            >
-              {patient.last_name} {patient.first_name}
-            </Link>
-            {patient.address && (
-              <p className="text-sm text-muted-foreground truncate">{patient.address}</p>
-            )}
-            {patient.pathologies && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                Pathologies: {patient.pathologies}
-              </p>
-            )}
-          </div>
-          
-          {/* Actions principales - boutons larges */}
-          <div className="flex items-center gap-3">
-            <Button asChild variant="default" size="default" className="flex-1 h-12 text-base">
-              <Link to={`/app/patients/${patient.id}`}>
-                <FolderOpen className="w-5 h-5 mr-2" />
-                Accéder aux annotations
-              </Link>
-            </Button>
-            <GPSNavigationButton patient={patient} />
-          </div>
-          
-          {/* Bouton archive/restaurer/supprimer - ligne séparée, aligné à droite */}
-          <div className="flex justify-end pt-1">
-            {isArchived ? (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRestorePatient(patient.id)}
-                  disabled={archivePatient.isPending}
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
-                  title="Restaurer"
-                >
-                  <ArchiveRestore className="w-3.5 h-3.5 mr-1" />
-                  Restaurer
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openDeleteDialog(patient)}
-                  disabled={deletePatient.isPending}
-                  className="h-7 px-2 text-xs text-destructive/60 hover:text-destructive hover:bg-destructive/10"
-                  title="Supprimer définitivement"
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Supprimer
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleArchivePatient(patient.id)}
-                disabled={archivePatient.isPending}
-                className="h-7 px-2 text-xs text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted"
-                title="Archiver"
-              >
-                <Archive className="w-3.5 h-3.5 mr-1" />
-                Archiver
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const archivedPatients = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return patients.filter(
+      (p) =>
+        p.is_archived &&
+        (p.first_name.toLowerCase().includes(query) ||
+          p.last_name.toLowerCase().includes(query))
+    );
+  }, [patients, searchQuery]);
 
   if (isLoading) {
     return (
@@ -422,7 +448,15 @@ export default function PatientsPage() {
           ) : (
             <div className="space-y-4">
               {activePatients.map((patient) => (
-                <PatientCard key={patient.id} patient={patient} isArchived={false} />
+                <PatientCard 
+                  key={patient.id} 
+                  patient={patient} 
+                  isArchived={false}
+                  onArchive={handleArchivePatient}
+                  onRestore={handleRestorePatient}
+                  onDelete={openDeleteDialog}
+                  isPending={archivePatient.isPending}
+                />
               ))}
             </div>
           )}
@@ -437,7 +471,15 @@ export default function PatientsPage() {
           ) : (
             <div className="space-y-4">
               {archivedPatients.map((patient) => (
-                <PatientCard key={patient.id} patient={patient} isArchived={true} />
+                <PatientCard 
+                  key={patient.id} 
+                  patient={patient} 
+                  isArchived={true}
+                  onArchive={handleArchivePatient}
+                  onRestore={handleRestorePatient}
+                  onDelete={openDeleteDialog}
+                  isPending={archivePatient.isPending}
+                />
               ))}
             </div>
           )}
@@ -475,7 +517,7 @@ export default function PatientsPage() {
             <AlertDialogCancel className="w-full sm:w-auto">Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeletePatient}
-              disabled={deleteConfirmation !== "supprimer ce patient" || deletePatient.isPending}
+              disabled={deleteConfirmation.toLowerCase().trim() !== "supprimer ce patient" || deletePatient.isPending}
               className="bg-destructive hover:bg-destructive/90 w-full sm:w-auto"
             >
               {deletePatient.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
