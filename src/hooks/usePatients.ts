@@ -259,3 +259,24 @@ export function useArchivePatient() {
     },
   });
 }
+
+export function useDeletePatient() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from("patients")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
+    },
+  });
+}

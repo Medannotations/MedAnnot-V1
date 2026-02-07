@@ -249,14 +249,13 @@ export function GPSNavigationButton({ patient, variant = "outline" }: { patient:
     <>
       <Button
         variant={hasAddress ? "default" : "outline"}
-        size="sm"
+        size="icon"
         onClick={() => setIsOpen(true)}
         disabled={!hasAddress}
         title={hasAddress ? "Naviguer vers ce patient" : "Adresse non renseignée"}
-        className={hasAddress ? "bg-blue-600 hover:bg-blue-700" : ""}
+        className={hasAddress ? "bg-blue-600 hover:bg-blue-700 shrink-0" : "shrink-0"}
       >
-        <Navigation className="w-4 h-4 mr-1" />
-        {hasAddress ? "GPS" : "Pas d'adresse"}
+        <Navigation className="w-4 h-4" />
       </Button>
       <GPSNavigation 
         patient={patient} 

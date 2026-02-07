@@ -13,10 +13,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2 } from "lucide-react";
-import { usePatients, useCreatePatient, useArchivePatient, type Patient } from "@/hooks/usePatients";
+import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { usePatients, useCreatePatient, useArchivePatient, useDeletePatient, type Patient } from "@/hooks/usePatients";
 import { GPSNavigationButton } from "@/components/patients/GPSNavigation";
 
 export default function PatientsPage() {
@@ -31,9 +42,15 @@ export default function PatientsPage() {
     pathologies: "",
   });
 
+  // Dialog de suppression définitive
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+
   const { data: patients = [], isLoading } = usePatients(true);
   const createPatient = useCreatePatient();
   const archivePatient = useArchivePatient();
+  const deletePatient = useDeletePatient();
 
   const handleCreatePatient = async () => {
     if (!newPatient.firstName.trim() || !newPatient.lastName.trim()) {
@@ -46,7 +63,6 @@ export default function PatientsPage() {
     }
 
     try {
-      // Construire l'adresse complète
       const fullAddress = [newPatient.street, newPatient.postalCode, newPatient.city]
         .filter(Boolean)
         .join(", ");
@@ -110,6 +126,42 @@ export default function PatientsPage() {
     }
   };
 
+  const openDeleteDialog = (patient: Patient) => {
+    setPatientToDelete(patient);
+    setDeleteConfirmation("");
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeletePatient = async () => {
+    if (!patientToDelete) return;
+    
+    if (deleteConfirmation !== "supprimer ce patient") {
+      toast({
+        title: "Erreur",
+        description: "Vous devez écrire exactement 'supprimer ce patient' pour confirmer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deletePatient.mutateAsync(patientToDelete.id);
+      toast({
+        title: "Patient supprimé",
+        description: `${patientToDelete.first_name} ${patientToDelete.last_name} a été définitivement supprimé.`,
+      });
+      setDeleteDialogOpen(false);
+      setPatientToDelete(null);
+      setDeleteConfirmation("");
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le patient.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const activePatients = patients.filter(
     (p) =>
       !p.is_archived &&
@@ -127,11 +179,12 @@ export default function PatientsPage() {
   const PatientCard = ({ patient, isArchived }: { patient: Patient; isArchived: boolean }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          {/* Info patient - prend tout l'espace disponible */}
           <div className="flex-1 min-w-0">
             <Link
               to={`/app/patients/${patient.id}`}
-              className="text-lg font-medium text-card-foreground hover:text-primary transition-colors"
+              className="text-lg font-medium text-card-foreground hover:text-primary transition-colors block truncate"
             >
               {patient.last_name} {patient.first_name}
             </Link>
@@ -144,29 +197,45 @@ export default function PatientsPage() {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 ml-4">
+          
+          {/* Actions - wrap sur mobile */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <GPSNavigationButton patient={patient} />
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="shrink-0">
               <Link to={`/app/annotations/new?patientId=${patient.id}`}>
-                <FileText className="w-4 h-4 mr-1" />
-                Annotation
+                <FileText className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Annotation</span>
               </Link>
             </Button>
+            
             {isArchived ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRestorePatient(patient.id)}
-                disabled={archivePatient.isPending}
-              >
-                <ArchiveRestore className="w-4 h-4" />
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRestorePatient(patient.id)}
+                  disabled={archivePatient.isPending}
+                  className="shrink-0"
+                >
+                  <ArchiveRestore className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openDeleteDialog(patient)}
+                  disabled={deletePatient.isPending}
+                  className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
             ) : (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => handleArchivePatient(patient.id)}
                 disabled={archivePatient.isPending}
+                className="shrink-0"
               >
                 <Archive className="w-4 h-4" />
               </Button>
@@ -187,6 +256,7 @@ export default function PatientsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
+      {/* Header responsive */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mes patients</h1>
@@ -196,7 +266,7 @@ export default function PatientsPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Nouveau patient
             </Button>
@@ -210,7 +280,7 @@ export default function PatientsPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               {/* Nom et Prénom */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-sm font-medium">Nom *</Label>
                   <Input
@@ -291,13 +361,14 @@ export default function PatientsPage() {
                   className="min-h-[100px] resize-none"
                 />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">
                   Annuler
                 </Button>
                 <Button 
                   onClick={handleCreatePatient}
                   disabled={createPatient.isPending}
+                  className="w-full sm:w-auto"
                 >
                   {createPatient.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Créer le patient
@@ -321,14 +392,14 @@ export default function PatientsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="active" className="w-full">
-        <TabsList>
-          <TabsTrigger value="active" className="flex items-center gap-2">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="active" className="flex items-center gap-2 flex-1 sm:flex-none">
             <Users className="w-4 h-4" />
-            Actifs ({activePatients.length})
+            <span>Actifs ({activePatients.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="archived" className="flex items-center gap-2">
+          <TabsTrigger value="archived" className="flex items-center gap-2 flex-1 sm:flex-none">
             <Archive className="w-4 h-4" />
-            Archivés ({archivedPatients.length})
+            <span>Archivés ({archivedPatients.length})</span>
           </TabsTrigger>
         </TabsList>
 
@@ -363,6 +434,47 @@ export default function PatientsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Suppression définitive
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Vous êtes sur le point de supprimer définitivement <strong>{patientToDelete?.first_name} {patientToDelete?.last_name}</strong>.
+              </p>
+              <p className="text-destructive font-medium">
+                Cette action est irréversible. Toutes les annotations associées seront également supprimées.
+              </p>
+              <div className="bg-muted p-3 rounded-lg text-sm">
+                <p className="font-medium mb-1">Pour confirmer, écrivez exactement :</p>
+                <code className="bg-background px-2 py-1 rounded text-destructive">supprimer ce patient</code>
+              </div>
+              <Input
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="Écrivez 'supprimer ce patient'"
+                className="mt-2"
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePatient}
+              disabled={deleteConfirmation !== "supprimer ce patient" || deletePatient.isPending}
+              className="bg-destructive hover:bg-destructive/90 w-full sm:w-auto"
+            >
+              {deletePatient.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
