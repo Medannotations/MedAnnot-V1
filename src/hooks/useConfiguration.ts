@@ -28,7 +28,7 @@ export function useUserConfiguration() {
   });
 }
 
-const DEFAULT_STRUCTURE = `Date et heure de la visite:
+export const DEFAULT_STRUCTURE = `Date et heure de la visite:
 Motif et contexte:
 Observations cliniques:
 - Constantes:
