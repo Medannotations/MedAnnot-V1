@@ -1,6 +1,7 @@
-import { Settings, FileText, Users, Home, LogOut, BarChart3, CreditCard, User } from "lucide-react";
+import { Settings, FileText, Users, Home, LogOut, BarChart3, User, Moon, Monitor, Sun } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/components/theme-provider";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navigationItems = [
   {
@@ -40,9 +40,17 @@ const navigationItems = [
   },
 ];
 
+// Options de thème
+const themeOptions = [
+  { value: "light", label: "Clair", icon: Sun },
+  { value: "dark", label: "Sombre", icon: Moon },
+  { value: "system", label: "Auto", icon: Monitor },
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const isActive = (path: string) => {
     if (path === "/app") {
@@ -58,6 +66,8 @@ export function AppSidebar() {
     }
   };
 
+  const currentTheme = themeOptions.find((t) => t.value === theme) || themeOptions[2];
+
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
@@ -66,6 +76,30 @@ export function AppSidebar() {
             <FileText className="w-4 h-4 text-sidebar-primary-foreground" />
           </div>
           <span className="text-lg font-bold text-sidebar-foreground">Medannot</span>
+        </div>
+        
+        {/* Sélecteur de thème dans le header */}
+        <div className="mt-3 flex items-center gap-1 p-1 bg-sidebar-accent/50 rounded-lg">
+          {themeOptions.map((option) => {
+            const Icon = option.icon;
+            const isActive = theme === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => setTheme(option.value as "light" | "dark" | "system")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                )}
+                title={option.label}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">{option.label}</span>
+              </button>
+            );
+          })}
         </div>
       </SidebarHeader>
 
@@ -100,8 +134,24 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <ThemeToggle variant="sidebar" />
-        
+        {/* Info utilisateur */}
+        <div className="flex items-center gap-3 mb-3 px-3 py-2 bg-sidebar-accent/30 rounded-lg">
+          <div className="w-10 h-10 rounded-full bg-sidebar-primary flex items-center justify-center">
+            <span className="text-sm font-bold text-sidebar-primary-foreground">
+              {user?.email?.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">
+              {(user as any)?.user_metadata?.full_name || user?.email?.split('@')[0]}
+            </p>
+            <p className="text-xs text-sidebar-foreground/60 truncate">
+              {user?.email}
+            </p>
+          </div>
+        </div>
+
+        {/* Mon compte */}
         <SidebarMenuButton asChild className="mb-2">
           <NavLink
             to="/app/settings"
@@ -116,23 +166,11 @@ export function AppSidebar() {
             <span>Mon compte</span>
           </NavLink>
         </SidebarMenuButton>
-
-        <div className="flex items-center gap-3 mb-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-            <span className="text-sm font-medium text-sidebar-accent-foreground">
-              {user?.email?.charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">
-              {(user as any)?.user_metadata?.full_name || user?.email}
-            </p>
-          </div>
-        </div>
         
+        {/* Déconnexion */}
         <Button
           variant="ghost"
-          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
+          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 mr-2" />
