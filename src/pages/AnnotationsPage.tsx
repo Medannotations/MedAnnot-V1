@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,9 +50,13 @@ import {
   Square,
   Download,
   ClipboardList,
+  AlertCircle,
+  Edit3,
+  Trash,
 } from "lucide-react";
 import { useAnnotations, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
 import { usePatients } from "@/hooks/usePatients";
+import { useHasDraft, clearAnnotationDraft, getDraftSummary } from "@/hooks/usePersistedAnnotationState";
 import { format, startOfMonth, endOfMonth, subMonths, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,6 +64,18 @@ import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModa
 import { Separator } from "@/components/ui/separator";
 
 type PeriodFilter = "today" | "week" | "month" | "3months" | "custom" | "all";
+
+const STEP_LABELS: Record<string, string> = {
+  patient: "Sélection patient",
+  visit: "Détails visite",
+  record: "Enregistrement audio",
+  transcription: "Transcription",
+  result: "Annotation",
+};
+
+function getStepLabel(step: string): string {
+  return STEP_LABELS[step] || step;
+}
 
 export default function AnnotationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,8 +92,23 @@ export default function AnnotationsPage() {
   const [selectedAnnotations, setSelectedAnnotations] = useState<Set<string>>(new Set());
   const [showBatchCopyDialog, setShowBatchCopyDialog] = useState(false);
   const [batchCopySeparator, setBatchCopySeparator] = useState("---");
+  
+  // Brouillon
+  const hasDraft = useHasDraft();
+  const [draftSummary, setDraftSummary] = useState<{ patientId: string | null; step: string; date: string } | null>(null);
+  const [showDraftCard, setShowDraftCard] = useState(false);
 
   const { data: patients, isLoading: patientsLoading } = usePatients();
+  
+  // Charger le résumé du brouillon
+  useEffect(() => {
+    if (hasDraft) {
+      setDraftSummary(getDraftSummary());
+      setShowDraftCard(true);
+    } else {
+      setShowDraftCard(false);
+    }
+  }, [hasDraft]);
   const deleteAnnotation = useDeleteAnnotation();
 
   // Calculate date range based on period filter
@@ -250,6 +281,51 @@ export default function AnnotationsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Brouillon en cours */}
+      {showDraftCard && draftSummary && (
+        <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Brouillon en cours</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Vous avez une annotation non terminée du {draftSummary.date} 
+                    {draftSummary.step && ` (étape: ${getStepLabel(draftSummary.step)})`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    clearAnnotationDraft();
+                    setShowDraftCard(false);
+                  }}
+                >
+                  <Trash className="w-4 h-4 mr-2" />
+                  Supprimer
+                </Button>
+                <Button 
+                  asChild
+                  size="sm" 
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  <Link to="/app/annotations/new">
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    Continuer
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Mode Soirée Banner */}
       {batchMode && (

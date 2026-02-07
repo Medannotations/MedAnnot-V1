@@ -61,14 +61,13 @@ export default function CreateAnnotationPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
-  const [hasHandledDraft, setHasHandledDraft] = useState(false);
 
   const { data: patients } = usePatients();
   const { data: config, isDefault: isDefaultConfig } = useUserConfigurationWithDefault();
   const { data: examples } = useExampleAnnotations();
   const { data: patientAnnotations } = useAnnotationsByPatient(selectedPatient?.id);
   const createAnnotation = useCreateAnnotation();
-  const { saveState, loadState, clearState, hasPersistedState, isRestored } = usePersistedAnnotationState();
+  const { saveState, loadState, clearState, markHandled, hasDraft, isReady } = usePersistedAnnotationState();
 
   // Auto-select patient from URL parameter
   useEffect(() => {
@@ -84,14 +83,14 @@ export default function CreateAnnotationPage() {
 
   // Check for persisted state on mount (ONLY ONCE)
   useEffect(() => {
-    if (!hasHandledDraft && isRestored && hasPersistedState()) {
+    if (isReady && hasDraft) {
       setShowRestoreDialog(true);
     }
-  }, [hasHandledDraft, isRestored, hasPersistedState]);
+  }, [isReady, hasDraft]);
 
   // Save state whenever important fields change
   useEffect(() => {
-    if (isRestored && (transcription || annotation)) {
+    if (isReady && (transcription || annotation)) {
       saveState({
         selectedPatientId: selectedPatient?.id || null,
         visitDate,
@@ -103,7 +102,7 @@ export default function CreateAnnotationPage() {
         step,
       });
     }
-  }, [transcription, annotation, step, selectedPatient, visitDate, visitTime, visitDuration, audioDuration, isRestored, saveState]);
+  }, [transcription, annotation, step, selectedPatient, visitDate, visitTime, visitDuration, audioDuration, isReady, saveState]);
 
   const handleRestoreState = () => {
     const state = loadState();
@@ -123,7 +122,7 @@ export default function CreateAnnotationPage() {
     setAnnotation(state.annotation);
     setStep(state.step);
     setShowRestoreDialog(false);
-    setHasHandledDraft(true);
+    markHandled();
 
     toast({
       title: "Brouillon restauré",
@@ -132,9 +131,17 @@ export default function CreateAnnotationPage() {
   };
 
   const handleDiscardState = () => {
-    clearState();
+    clearState(); // Ceci supprime aussi le sessionStorage flag
     setShowRestoreDialog(false);
-    setHasHandledDraft(true);
+    // Réinitialiser tous les états
+    setSelectedPatient(null);
+    setStep("patient");
+    setVisitDate(format(new Date(), "yyyy-MM-dd"));
+    setVisitTime(format(new Date(), "HH:mm"));
+    setVisitDuration(undefined);
+    setAudioDuration(0);
+    setTranscription("");
+    setAnnotation("");
     toast({
       title: "Brouillon supprimé",
       description: "Vous repartez de zéro.",
@@ -242,7 +249,31 @@ export default function CreateAnnotationPage() {
   };
 
   const handleSave = async () => {
-    if (!selectedPatient) return;
+    if (!selectedPatient) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un patient",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!annotation?.trim()) {
+      toast({
+        title: "Erreur",
+        description: "L'annotation est vide",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("[handleSave] Saving annotation:", {
+      patient_id: selectedPatient.id,
+      annotation_length: annotation.length,
+      visit_date: visitDate,
+      visit_time: visitTime,
+      visit_duration: visitDuration,
+    });
     
     setIsSaving(true);
     try {
@@ -250,11 +281,11 @@ export default function CreateAnnotationPage() {
         patient_id: selectedPatient.id,
         visit_date: visitDate,
         visit_time: visitTime,
-        visit_duration: visitDuration,
+        visit_duration: visitDuration || 30, // Valeur par défaut si non définie
         transcription: "", // ⚠️ SÉCURITÉ: Transcription NON sauvegardée (secret médical)
         content: annotation,
         structure_used: config?.annotation_structure,
-        audio_duration: audioDuration,
+        audio_duration: audioDuration || 0,
         was_transcription_edited: false,
         was_content_edited: false,
       });
@@ -265,9 +296,10 @@ export default function CreateAnnotationPage() {
       });
       navigate("/app/annotations");
     } catch (error: any) {
+      console.error("[handleSave] Error:", error);
       toast({ 
-        title: "Erreur", 
-        description: error.message, 
+        title: "Erreur de sauvegarde", 
+        description: error.message || "Impossible de créer l'annotation. Vérifiez la console pour plus de détails.", 
         variant: "destructive" 
       });
     } finally {

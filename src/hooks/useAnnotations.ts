@@ -166,22 +166,40 @@ export function useCreateAnnotation() {
     mutationFn: async (annotation: Omit<AnnotationInsert, "user_id">) => {
       if (!user) throw new Error("User not authenticated");
 
+      console.log("[useCreateAnnotation] Creating annotation:", {
+        patient_id: annotation.patient_id,
+        visit_date: annotation.visit_date,
+        has_content: !!annotation.content,
+        content_length: annotation.content?.length,
+      });
+
       // Chiffrer les données PII avant insertion
       const encryptedContent = encryptData(annotation.content, user.id);
-      const encryptedTranscription = encryptData(annotation.transcription, user.id);
+      const encryptedTranscription = encryptData(annotation.transcription || "", user.id);
+
+      const insertData = { 
+        ...annotation, 
+        user_id: user.id,
+        content: encryptedContent,
+        transcription: encryptedTranscription,
+        // S'assurer que visit_duration a une valeur par défaut si undefined
+        visit_duration: annotation.visit_duration || 30,
+      };
+
+      console.log("[useCreateAnnotation] Inserting data:", insertData);
 
       const { data, error } = await supabase
         .from("annotations")
-        .insert({ 
-          ...annotation, 
-          user_id: user.id,
-          content: encryptedContent,
-          transcription: encryptedTranscription,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("[useCreateAnnotation] Supabase error:", error);
+        throw new Error(`Erreur création annotation: ${error.message} (${error.code})`);
+      }
+
+      console.log("[useCreateAnnotation] Success:", data);
 
       // Retourner les données déchiffrées
       return decryptAnnotation(data as Annotation, user.id);
