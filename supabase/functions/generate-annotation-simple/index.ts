@@ -39,7 +39,7 @@ ${transcription || "Aucune observation enregistrée."}
 
 ---
 *Annotation générée automatiquement - Mode démonstration*
-*Pour la génération IA complète, configurez ANTHROPIC_API_KEY dans Supabase*`,
+*Pour la génération IA complète, configurez ANTHROPIC_API_KEY dans Supabase*`;
 
     return new Response(
       JSON.stringify({
