@@ -328,7 +328,7 @@ export function SignupCheckoutPage() {
                       onChange={(e) => setName(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                      className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
 
@@ -344,7 +344,7 @@ export function SignupCheckoutPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                      className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
 
@@ -362,7 +362,7 @@ export function SignupCheckoutPage() {
                         required
                         disabled={isLoading}
                         minLength={6}
-                        className="h-12 pr-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                        className="h-12 pr-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                       />
                       <button
                         type="button"

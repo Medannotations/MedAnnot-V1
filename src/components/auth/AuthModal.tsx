@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, User, ArrowRight } from "lucide-react";
+import { Loader2, Lock, Mail, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,6 +26,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const { login, signup } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -103,7 +105,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     if (onModeChange) {
       onModeChange(newMode);
     } else {
-      // Si pas de onModeChange (depuis LandingPage), naviguer
       if (newMode === "signup") {
         navigate("/signup");
         onClose();
@@ -145,7 +146,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
+                  className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -156,13 +157,20 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
+                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-400"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -204,7 +212,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                   placeholder="Marie Dupont"
                   value={signupName}
                   onChange={(e) => setSignupName(e.target.value)}
-                  className="pl-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50/50"
+                  className="pl-10 h-12 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 bg-white text-gray-900 placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -220,7 +228,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50/50"
+                  className="pl-10 h-12 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 bg-white text-gray-900 placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -231,13 +239,20 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="signup-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50/50"
+                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 bg-white text-gray-900 placeholder:text-gray-400"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -247,13 +262,20 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="confirm-password"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50/50"
+                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 bg-white text-gray-900 placeholder:text-gray-400"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
