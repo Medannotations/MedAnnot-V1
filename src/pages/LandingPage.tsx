@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/landing/Navbar";
-import { Hero } from "@/components/landing/Hero";
+import { HeroPremium } from "@/components/landing/HeroPremium";
 import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA-PRODUCTION";
 import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { Problem } from "@/components/landing/Problem";
@@ -138,9 +138,12 @@ export default function LandingPage() {
       />
       
       <main>
-        <Hero
+        <HeroPremium
           onGetStarted={() => handleOpenAuth("signup")}
-          onLogin={() => handleOpenAuth("login")}
+          onWatchDemo={() => {
+            const demoSection = document.getElementById('how-it-works');
+            demoSection?.scrollIntoView({ behavior: 'smooth' });
+          }}
         />
         
         <SocialProofBar />

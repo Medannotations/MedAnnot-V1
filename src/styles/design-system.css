@@ -1,0 +1,61 @@
+/* =============================================================================
+   MEDANNOT DESIGN SYSTEM v2 - Premium Medical Aesthetic
+   ============================================================================= */
+
+:root {
+  /* Primary - Bleu médical profond */
+  --medical-blue: #1e40af;
+  --medical-blue-light: #3b82f6;
+  --medical-blue-dark: #1e3a8a;
+  
+  /* Secondary - Sarcelle médical */
+  --medical-teal: #0f766e;
+  --medical-teal-light: #14b8a6;
+  
+  /* Accent - Or subtil */
+  --premium-gold: #d97706;
+  --premium-gold-light: #f59e0b;
+  
+  /* Shadows Premium */
+  --shadow-glow-blue: 0 0 30px rgba(30, 64, 175, 0.3);
+  --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.08);
+  
+  /* Radius */
+  --radius-premium: 16px;
+}
+
+/* Gradient Hero Premium */
+.gradient-hero-premium {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 40%, #134e4a 100%);
+}
+
+/* Glass Card */
+.glass-premium {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-premium {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button Premium */
+.btn-premium {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+/* Text Gradient */
+.text-gradient-premium {
+  background: linear-gradient(135deg, #1e40af 0%, #0f766e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
