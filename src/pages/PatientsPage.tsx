@@ -177,11 +177,11 @@ export default function PatientsPage() {
   );
 
   const PatientCard = ({ patient, isArchived }: { patient: Patient; isArchived: boolean }) => (
-    <Card className="hover:shadow-md transition-shadow relative">
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex flex-col gap-4">
           {/* Info patient */}
-          <div className="min-w-0 pr-8">
+          <div className="min-w-0">
             <Link
               to={`/app/patients/${patient.id}`}
               className="text-lg font-medium text-card-foreground hover:text-primary transition-colors block truncate"
@@ -208,45 +208,48 @@ export default function PatientsPage() {
             </Button>
             <GPSNavigationButton patient={patient} />
           </div>
-        </div>
-
-        {/* Bouton archive/restaurer/supprimer - coin inférieur droit, petit et discret */}
-        <div className="absolute bottom-2 right-2">
-          {isArchived ? (
-            <div className="flex items-center gap-1">
+          
+          {/* Bouton archive/restaurer/supprimer - ligne séparée, aligné à droite */}
+          <div className="flex justify-end pt-1">
+            {isArchived ? (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRestorePatient(patient.id)}
+                  disabled={archivePatient.isPending}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
+                  title="Restaurer"
+                >
+                  <ArchiveRestore className="w-3.5 h-3.5 mr-1" />
+                  Restaurer
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openDeleteDialog(patient)}
+                  disabled={deletePatient.isPending}
+                  className="h-7 px-2 text-xs text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                  title="Supprimer définitivement"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Supprimer
+                </Button>
+              </div>
+            ) : (
               <Button
                 variant="ghost"
-                size="icon"
-                onClick={() => handleRestorePatient(patient.id)}
+                size="sm"
+                onClick={() => handleArchivePatient(patient.id)}
                 disabled={archivePatient.isPending}
-                className="h-8 w-8 text-muted-foreground hover:text-primary"
-                title="Restaurer"
+                className="h-7 px-2 text-xs text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted"
+                title="Archiver"
               >
-                <ArchiveRestore className="w-4 h-4" />
+                <Archive className="w-3.5 h-3.5 mr-1" />
+                Archiver
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => openDeleteDialog(patient)}
-                disabled={deletePatient.isPending}
-                className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                title="Supprimer définitivement"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleArchivePatient(patient.id)}
-              disabled={archivePatient.isPending}
-              className="h-8 w-8 text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted"
-              title="Archiver"
-            >
-              <Archive className="w-4 h-4" />
-            </Button>
-          )}
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
