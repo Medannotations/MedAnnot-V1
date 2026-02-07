@@ -1,12 +1,12 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { registerServiceWorker } from "./utils/serviceWorker";
+import { unregisterServiceWorker } from "./utils/serviceWorker";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
 import { ThemeProvider } from "./components/theme-provider";
 
-// Register service worker for caching and offline functionality
-registerServiceWorker();
+// UNREGISTER service worker to fix infinite refresh bug on mobile
+unregisterServiceWorker();
 
 // Create root and render app
 const container = document.getElementById("root");
