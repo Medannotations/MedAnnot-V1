@@ -177,11 +177,11 @@ export default function PatientsPage() {
   );
 
   const PatientCard = ({ patient, isArchived }: { patient: Patient; isArchived: boolean }) => (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow relative">
       <CardContent className="p-4">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-          {/* Info patient - prend tout l'espace disponible */}
-          <div className="flex-1 min-w-0">
+        <div className="flex flex-col gap-4">
+          {/* Info patient */}
+          <div className="min-w-0 pr-8">
             <Link
               to={`/app/patients/${patient.id}`}
               className="text-lg font-medium text-card-foreground hover:text-primary transition-colors block truncate"
@@ -198,49 +198,55 @@ export default function PatientsPage() {
             )}
           </div>
           
-          {/* Actions - wrap sur mobile */}
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <GPSNavigationButton patient={patient} />
-            <Button asChild variant="outline" size="sm" className="shrink-0">
+          {/* Actions principales - boutons larges */}
+          <div className="flex items-center gap-3">
+            <Button asChild variant="default" size="default" className="flex-1 h-12 text-base">
               <Link to={`/app/annotations/new?patientId=${patient.id}`}>
-                <FileText className="w-4 h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Annotation</span>
+                <FileText className="w-5 h-5 mr-2" />
+                Nouvelle annotation
               </Link>
             </Button>
-            
-            {isArchived ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRestorePatient(patient.id)}
-                  disabled={archivePatient.isPending}
-                  className="shrink-0"
-                >
-                  <ArchiveRestore className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => openDeleteDialog(patient)}
-                  disabled={deletePatient.isPending}
-                  className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </>
-            ) : (
+            <GPSNavigationButton patient={patient} />
+          </div>
+        </div>
+
+        {/* Bouton archive/restaurer/supprimer - coin inférieur droit, petit et discret */}
+        <div className="absolute bottom-2 right-2">
+          {isArchived ? (
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleArchivePatient(patient.id)}
+                onClick={() => handleRestorePatient(patient.id)}
                 disabled={archivePatient.isPending}
-                className="shrink-0"
+                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                title="Restaurer"
               >
-                <Archive className="w-4 h-4" />
+                <ArchiveRestore className="w-4 h-4" />
               </Button>
-            )}
-          </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => openDeleteDialog(patient)}
+                disabled={deletePatient.isPending}
+                className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                title="Supprimer définitivement"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleArchivePatient(patient.id)}
+              disabled={archivePatient.isPending}
+              className="h-8 w-8 text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted"
+              title="Archiver"
+            >
+              <Archive className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

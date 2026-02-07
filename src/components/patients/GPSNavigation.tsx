@@ -253,9 +253,9 @@ export function GPSNavigationButton({ patient, variant = "outline" }: { patient:
         onClick={() => setIsOpen(true)}
         disabled={!hasAddress}
         title={hasAddress ? "Naviguer vers ce patient" : "Adresse non renseignée"}
-        className={hasAddress ? "bg-blue-600 hover:bg-blue-700 shrink-0" : "shrink-0"}
+        className={hasAddress ? "bg-blue-600 hover:bg-blue-700 shrink-0 h-12 w-12" : "shrink-0 h-12 w-12"}
       >
-        <Navigation className="w-4 h-4" />
+        <Navigation className="w-5 h-5" />
       </Button>
       <GPSNavigation 
         patient={patient} 
