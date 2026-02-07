@@ -1,4 +1,4 @@
-import { Settings, FileText, Users, Home, LogOut, Moon, Sun } from "lucide-react";
+import { Settings, FileText, Users, Home, LogOut, Moon, Sun, BarChart3 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
