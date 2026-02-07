@@ -67,7 +67,7 @@ export default function CreateAnnotationPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
 
-  const { data: patients } = usePatients();
+  const { data: patients, isLoading: patientsLoading } = usePatients();
   const { data: config, isDefault: isDefaultConfig } = useUserConfigurationWithDefault();
   const { data: examples } = useExampleAnnotations();
   const { data: patientAnnotations } = useAnnotationsByPatient(selectedPatient?.id);
@@ -424,13 +424,19 @@ export default function CreateAnnotationPage() {
               onChange={(e) => setSearchQuery(e.target.value)} 
             />
             
-            {!filteredPatients || filteredPatients.length === 0 ? (
+            {patientsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : !filteredPatients || filteredPatients.length === 0 ? (
               <EmptyState
                 icon={User}
-                title="Aucun patient trouvé"
-                description="Créez d'abord un patient pour pouvoir enregistrer une annotation"
-                actionLabel="Créer un patient"
-                actionHref="/app/patients"
+                title={searchQuery ? "Aucun patient trouvé" : "Aucun patient"}
+                description={searchQuery 
+                  ? "Aucun patient ne correspond à votre recherche" 
+                  : "Créez d'abord un patient pour pouvoir enregistrer une annotation"}
+                actionLabel={searchQuery ? undefined : "Créer un patient"}
+                actionHref={searchQuery ? undefined : "/app/patients"}
               />
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -526,8 +532,8 @@ export default function CreateAnnotationPage() {
               />
             </div>
             
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep("patient")}>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="outline" onClick={() => setStep("patient")} className="w-full sm:w-auto">
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Retour
               </Button>
@@ -600,7 +606,7 @@ export default function CreateAnnotationPage() {
               onChange={setVitalSigns} 
             />
             
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button variant="outline" onClick={() => setStep("transcription")} className="flex-1">
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Retour

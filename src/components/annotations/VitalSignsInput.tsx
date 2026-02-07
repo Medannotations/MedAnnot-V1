@@ -286,7 +286,7 @@ export function VitalSignsInput({ value, onChange, className }: VitalSignsInputP
               max="10"
               value={value.painLevel || 0}
               onChange={(e) => updateSign("painLevel", parseInt(e.target.value))}
-              className="w-48"
+              className="flex-1 max-w-[200px]"
             />
             <span className={cn(
               "font-bold w-8 text-center",
@@ -301,7 +301,7 @@ export function VitalSignsInput({ value, onChange, className }: VitalSignsInputP
         {/* État de conscience */}
         <div className="space-y-2">
           <Label>État de conscience</Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {CONSCIOUSNESS_LEVELS.map((level) => (
               <Button
                 key={level.value}
