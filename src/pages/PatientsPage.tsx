@@ -25,7 +25,9 @@ export default function PatientsPage() {
   const [newPatient, setNewPatient] = useState({
     firstName: "",
     lastName: "",
-    address: "",
+    street: "",
+    postalCode: "",
+    city: "",
     pathologies: "",
   });
 
@@ -44,10 +46,18 @@ export default function PatientsPage() {
     }
 
     try {
+      // Construire l'adresse complète
+      const fullAddress = [newPatient.street, newPatient.postalCode, newPatient.city]
+        .filter(Boolean)
+        .join(", ");
+
       await createPatient.mutateAsync({
         first_name: newPatient.firstName.trim(),
         last_name: newPatient.lastName.trim(),
-        address: newPatient.address.trim() || null,
+        address: fullAddress || null,
+        street: newPatient.street.trim() || null,
+        postal_code: newPatient.postalCode.trim() || null,
+        city: newPatient.city.trim() || null,
         pathologies: newPatient.pathologies.trim() || null,
       });
 
@@ -56,7 +66,7 @@ export default function PatientsPage() {
         description: `${newPatient.firstName} ${newPatient.lastName} a été ajouté.`,
       });
 
-      setNewPatient({ firstName: "", lastName: "", address: "", pathologies: "" });
+      setNewPatient({ firstName: "", lastName: "", street: "", postalCode: "", city: "", pathologies: "" });
       setIsDialogOpen(false);
     } catch (error: any) {
       console.error("Error creating patient:", error);
@@ -191,17 +201,18 @@ export default function PatientsPage() {
               Nouveau patient
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nouveau patient</DialogTitle>
+              <DialogTitle className="text-xl">Nouveau patient</DialogTitle>
               <DialogDescription>
-                Ajoutez les informations du patient
+                Ajoutez les informations du patient pour la navigation GPS et les visites
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 py-4">
+              {/* Nom et Prénom */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Nom *</Label>
+                  <Label htmlFor="lastName" className="text-sm font-medium">Nom *</Label>
                   <Input
                     id="lastName"
                     value={newPatient.lastName}
@@ -209,11 +220,11 @@ export default function PatientsPage() {
                       setNewPatient({ ...newPatient, lastName: e.target.value })
                     }
                     placeholder="Dupont"
-                    className="bg-white text-gray-900 placeholder:text-gray-400"
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom *</Label>
+                  <Label htmlFor="firstName" className="text-sm font-medium">Prénom *</Label>
                   <Input
                     id="firstName"
                     value={newPatient.firstName}
@@ -221,24 +232,55 @@ export default function PatientsPage() {
                       setNewPatient({ ...newPatient, firstName: e.target.value })
                     }
                     placeholder="Marie"
-                    className="bg-white text-gray-900 placeholder:text-gray-400"
+                    className="h-11"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Adresse</Label>
-                <Input
-                  id="address"
-                  value={newPatient.address}
-                  onChange={(e) =>
-                    setNewPatient({ ...newPatient, address: e.target.value })
-                  }
-                  placeholder="Rue de Lausanne 12, 1000 Lausanne"
-                  className="bg-white text-gray-900 placeholder:text-gray-400"
-                />
+
+              {/* Adresse détaillée */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  Adresse complète
+                  <span className="text-xs text-muted-foreground font-normal">(pour la navigation GPS)</span>
+                </Label>
+                
+                <div className="space-y-2">
+                  <Input
+                    id="street"
+                    value={newPatient.street}
+                    onChange={(e) =>
+                      setNewPatient({ ...newPatient, street: e.target.value })
+                    }
+                    placeholder="Rue et numéro"
+                    className="h-11"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    id="postalCode"
+                    value={newPatient.postalCode}
+                    onChange={(e) =>
+                      setNewPatient({ ...newPatient, postalCode: e.target.value })
+                    }
+                    placeholder="Code postal"
+                    className="h-11"
+                  />
+                  <Input
+                    id="city"
+                    value={newPatient.city}
+                    onChange={(e) =>
+                      setNewPatient({ ...newPatient, city: e.target.value })
+                    }
+                    placeholder="Ville"
+                    className="h-11"
+                  />
+                </div>
               </div>
+
+              {/* Pathologies */}
               <div className="space-y-2">
-                <Label htmlFor="pathologies">Pathologies connues</Label>
+                <Label htmlFor="pathologies" className="text-sm font-medium">Pathologies connues</Label>
                 <Textarea
                   id="pathologies"
                   value={newPatient.pathologies}
@@ -246,7 +288,7 @@ export default function PatientsPage() {
                     setNewPatient({ ...newPatient, pathologies: e.target.value })
                   }
                   placeholder="Diabète type 2, Hypertension..."
-                  className="min-h-[80px] bg-white text-gray-900 placeholder:text-gray-400"
+                  className="min-h-[100px] resize-none"
                 />
               </div>
               <div className="flex justify-end gap-2">
