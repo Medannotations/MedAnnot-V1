@@ -110,7 +110,8 @@ export async function generateAnnotation(
 
     if (onProgress) onProgress(40);
 
-    const response = await fetch(
+    // Essayer la fonction principale d'abord
+    let response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-annotation`,
       {
         method: "POST",
@@ -122,6 +123,22 @@ export async function generateAnnotation(
       }
     );
 
+    // Si échec, essayer la fonction de secours (mode démo)
+    if (!response.ok) {
+      console.log("Fonction principale échouée, tentative avec fonction de secours...");
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-annotation-simple`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(params),
+        }
+      );
+    }
+
     if (onProgress) onProgress(80);
 
     if (!response.ok) {
@@ -132,6 +149,11 @@ export async function generateAnnotation(
     const result = await response.json();
 
     if (onProgress) onProgress(90);
+    
+    // Log si mode démo
+    if (result.demo) {
+      console.log("Mode démonstration actif:", result.message);
+    }
 
     // MEDICAL-GRADE SECURITY: Substitute pseudonym with real patient name locally
     // The AI only saw the pseudonym, never the real name - this is critical for LPD compliance
