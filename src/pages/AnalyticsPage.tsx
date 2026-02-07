@@ -1,33 +1,41 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAnalyticsData } from "@/hooks/useAnalytics";
-import { useAnnotationStats } from "@/hooks/useAnnotations";
+import { useAnnotationStats, useAnnotations } from "@/hooks/useAnnotations";
 import { usePatients } from "@/hooks/usePatients";
-import { Trash2, BarChart3, FileText, Users, Clock, TrendingUp, Activity } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { format, parseISO, subDays, isAfter } from "date-fns";
+import { BarChart3, FileText, Users, Clock, TrendingUp, Activity, Calendar } from "lucide-react";
+import { format, parseISO, subDays, isAfter, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export default function AnalyticsPage() {
-  const { getStats, clearEvents } = useAnalyticsData();
-  const stats = getStats();
-  
   const { data: patients } = usePatients();
   const { data: annotationStats } = useAnnotationStats();
+  const { data: annotations } = useAnnotations();
 
-  const handleClear = () => {
-    clearEvents();
-    toast({
-      title: "Données effacées",
-      description: "Les statistiques de session ont été réinitialisées.",
-    });
-  };
-
-  const recentAnnotations = annotationStats?.monthlyCount || 0;
-  const totalAnnotations = annotationStats?.totalCount || 0;
+  // Calculs basés sur les vraies données
+  const totalAnnotations = annotations?.length || 0;
   const totalPatients = patients?.length || 0;
-  const timeSaved = annotationStats?.timeSavedMinutes || 0;
+  
+  // Annotations du mois en cours
+  const startOfCurrentMonth = startOfMonth(new Date());
+  const monthlyAnnotations = annotations?.filter(a => 
+    isAfter(new Date(a.created_at), startOfCurrentMonth)
+  ).length || 0;
+  
+  // Patients créés récemment (7 derniers jours)
+  const sevenDaysAgo = subDays(new Date(), 7);
+  const recentPatients = patients?.filter(p => 
+    isAfter(new Date(p.created_at), sevenDaysAgo)
+  ).length || 0;
+  
+  // Annotations récentes (7 derniers jours)
+  const recentAnnotations = annotations?.filter(a => 
+    isAfter(new Date(a.created_at), sevenDaysAgo)
+  ).length || 0;
+
+  // Temps économisé : estimation de 10 min par annotation (plus réaliste)
+  const timeSavedMinutes = totalAnnotations * 10;
+  const timeSavedHours = Math.floor(timeSavedMinutes / 60);
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -39,10 +47,6 @@ export default function AnalyticsPage() {
             Aperçu de votre activité sur Medannot
           </p>
         </div>
-        <Button variant="outline" onClick={handleClear} size="sm">
-          <Trash2 className="w-4 h-4 mr-2" />
-          Réinitialiser
-        </Button>
       </div>
 
       {/* Main Stats */}
@@ -55,7 +59,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{totalAnnotations}</div>
             <p className="text-xs text-muted-foreground">
-              +{recentAnnotations} ce mois
+              +{monthlyAnnotations} ce mois
             </p>
           </CardContent>
         </Card>
@@ -115,20 +119,32 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Annotations créées</span>
-                <Badge variant="secondary">{stats.annotationsCreated}</Badge>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Annotations (7 jours)
+                </span>
+                <Badge variant="secondary">+{recentAnnotations}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Patients créés</span>
-                <Badge variant="secondary">{stats.patientsCreated}</Badge>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Patients ajoutés (7 jours)
+                </span>
+                <Badge variant="secondary">+{recentPatients}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Templates utilisés</span>
-                <Badge variant="secondary">{stats.templatesUsed}</Badge>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Ce mois
+                </span>
+                <Badge variant="outline">{monthlyAnnotations} annotations</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total événements</span>
-                <Badge variant="outline">{stats.totalEvents}</Badge>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Temps estimé économisé
+                </span>
+                <Badge variant="outline">{timeSavedHours}h</Badge>
               </div>
             </div>
           </CardContent>
@@ -148,20 +164,26 @@ export default function AnalyticsPage() {
             <div className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-3xl font-bold text-primary">
-                  {Math.floor(timeSaved / 60)}h {timeSaved % 60}min
+                  {timeSavedHours}h {timeSavedMinutes % 60}min
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Temps économisé ce mois
+                  Temps économisé au total
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Basé sur une estimation de <strong>15 minutes</strong> économisées par annotation 
-                par rapport à une rédaction manuelle.
-              </p>
-              {annotationStats?.lastAnnotationDate && (
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  💡 <strong>En moyenne</strong>, une annotation prend :
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li><strong>12-15 min</strong> en rédaction manuelle</li>
+                  <li><strong>2-3 min</strong> avec Medannot</li>
+                  <li><strong>~10 min économisées</strong> par annotation</li>
+                </ul>
+              </div>
+              {annotations && annotations.length > 0 && (
                 <p className="text-sm">
                   <strong>Dernière annotation :</strong>{" "}
-                  {format(parseISO(annotationStats.lastAnnotationDate), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                  {format(parseISO(annotations[0].created_at), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
                 </p>
               )}
             </div>

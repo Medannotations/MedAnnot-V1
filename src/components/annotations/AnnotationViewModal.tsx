@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Copy, FileText, Mic, Info } from "lucide-react";
+import { Calendar, Clock, Copy, FileText, Info, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { AnnotationWithPatient } from "@/hooks/useAnnotations";
@@ -64,10 +64,7 @@ export function AnnotationViewModal({
               <FileText className="w-4 h-4" />
               Annotation
             </TabsTrigger>
-            <TabsTrigger value="transcription" className="flex items-center gap-2">
-              <Mic className="w-4 h-4" />
-              Transcription
-            </TabsTrigger>
+            {/* Transcription retirée pour confidentialité médicale */}
             <TabsTrigger value="info" className="flex items-center gap-2">
               <Info className="w-4 h-4" />
               Informations
@@ -81,13 +78,7 @@ export function AnnotationViewModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="transcription" className="m-0 h-full">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {annotation.transcription}
-                </p>
-              </div>
-            </TabsContent>
+            {/* Onglet transcription supprimé - les transcriptions ne sont pas conservées pour protéger le secret médical */}
 
             <TabsContent value="info" className="m-0 h-full">
               <div className="space-y-4">
@@ -147,6 +138,19 @@ export function AnnotationViewModal({
                   {annotation.was_content_edited && (
                     <Badge variant="secondary">Annotation modifiée</Badge>
                   )}
+                </div>
+
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Shield className="w-4 h-4 text-blue-600 mt-0.5" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium">Protection des données</p>
+                      <p className="mt-1">
+                        La transcription vocale brute n'est pas conservée pour protéger le secret médical. 
+                        Seule l'annotation professionnelle structurée est stockée de manière sécurisée.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
