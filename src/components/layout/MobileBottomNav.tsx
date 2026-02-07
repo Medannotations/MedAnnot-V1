@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Plus, User, BarChart3, MoreHorizontal, LogOut, Moon, Sun, Monitor, UserCircle } from "lucide-react";
+import { Home, Settings, Plus, User, MoreHorizontal, LogOut, Moon, Sun, Monitor, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/components/theme-provider";
@@ -17,11 +17,10 @@ const mainNavItems = [
   { to: "/app", icon: Home, label: "Accueil" },
   { to: "/app/patients", icon: User, label: "Patients" },
   { to: "/app/annotations/new", icon: Plus, label: "Nouvelle", isAction: true },
-  { to: "/app/analytics", icon: BarChart3, label: "Stats" },
+  { to: "/app/configuration", icon: Settings, label: "Config" },
 ];
 
 const moreMenuItems = [
-  { to: "/app/configuration", icon: Settings, label: "Configuration" },
   { to: "/app/settings", icon: UserCircle, label: "Mon compte" },
 ];
 

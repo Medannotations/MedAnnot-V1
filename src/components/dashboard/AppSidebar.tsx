@@ -34,7 +34,6 @@ const navigationItems = [
   {
     group: "Outils",
     items: [
-      { title: "Statistiques", url: "/app/analytics", icon: BarChart3 },
       { title: "Configuration", url: "/app/configuration", icon: Settings },
     ],
   },

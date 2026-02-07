@@ -14,7 +14,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import ConfigurationPage from "./pages/ConfigurationPage";
 import SettingsPage from "./pages/SettingsPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+
 import PatientsPage from "./pages/PatientsPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
 import AnnotationsPage from "./pages/AnnotationsPage";
@@ -72,7 +72,7 @@ const App = () => (
               <Route index element={<DashboardHome />} />
               <Route path="configuration" element={<ConfigurationPage />} />
               <Route path="settings" element={<SettingsPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
+
               <Route path="patients" element={<PatientsPage />} />
               <Route path="patients/:patientId" element={<PatientDetailPage />} />
               <Route path="annotations" element={<AnnotationsPage />} />
