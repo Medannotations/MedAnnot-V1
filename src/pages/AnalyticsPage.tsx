@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.batchCopies}</div>
             <p className="text-xs text-muted-foreground">
-              Mode soirée utilisé
+              Copies multiples
             </p>
           </CardContent>
         </Card>
@@ -201,8 +201,8 @@ export default function AnalyticsPage() {
             <div>
               <h3 className="font-semibold text-lg">Conseil pour optimiser votre flux</h3>
               <p className="text-muted-foreground mt-1">
-                Utilisez le <strong>Mode Soirée</strong> pour copier toutes vos annotations du jour d'un coup. 
-                Cela vous permet de tout transférer sur votre logiciel infirmier en quelques secondes seulement.
+                Utilisez le bouton de copie sur chaque annotation pour transférer rapidement 
+                vos notes sur votre logiciel infirmier en quelques secondes seulement.
               </p>
             </div>
           </div>

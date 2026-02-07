@@ -26,7 +26,6 @@ export type AnalyticsEvent =
   | "phrase_template_used"
   // Navigation events
   | "page_view"
-  | "mode_evening_activated"
   // Subscription events
   | "subscription_started"
   | "subscription_cancelled";
