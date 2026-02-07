@@ -11,10 +11,10 @@ import {
   Wind,
   Save,
   Edit3,
-  AlertTriangle,
   X,
+  Calendar,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
@@ -26,8 +26,6 @@ import { toast } from "@/hooks/use-toast";
 
 interface PatientVitalSignsPanelProps {
   patientId: string;
-  selectedDate?: string;
-  onDateChange?: (date: string) => void;
 }
 
 // Validation des valeurs impossibles
@@ -78,24 +76,17 @@ function VitalSignBadge({
   icon: Icon,
   value,
   unit,
-  label,
   colorClass,
 }: {
   icon: React.ElementType;
   value?: number;
   unit: string;
-  label: string;
   colorClass: string;
 }) {
   if (value === undefined || value === null) return null;
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg border",
-        colorClass
-      )}
-    >
+    <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border", colorClass)}>
       <Icon className="w-4 h-4" />
       <div>
         <span className="font-semibold">{value}</span>
@@ -105,16 +96,12 @@ function VitalSignBadge({
   );
 }
 
-export function PatientVitalSignsPanel({
-  patientId,
-  selectedDate = format(new Date(), "yyyy-MM-dd"),
-  onDateChange,
-}: PatientVitalSignsPanelProps) {
+export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProps) {
+  // Date par défaut = aujourd'hui
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [isEditing, setIsEditing] = useState(false);
-  const { data: todayVitals, isLoading } = useTodayVitalSigns(
-    patientId,
-    selectedDate
-  );
+  
+  const { data: todayVitals, isLoading } = useTodayVitalSigns(patientId, selectedDate);
   const saveVitalSigns = useSaveVitalSigns();
 
   const [formData, setFormData] = useState<VitalSigns>({
@@ -128,6 +115,7 @@ export function PatientVitalSignsPanel({
   });
 
   const hasVitalSigns = todayVitals && Object.keys(todayVitals).length > 0;
+  const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
   const handleEdit = () => {
     setFormData({
@@ -170,7 +158,7 @@ export function PatientVitalSignsPanel({
       });
       toast({
         title: "Signes vitaux enregistrés",
-        description: "Les constantes ont été sauvegardées pour ce jour.",
+        description: `Les constantes ont été sauvegardées pour le ${format(parseISO(selectedDate), "d MMMM", { locale: fr })}.`,
       });
       setIsEditing(false);
     } catch (error) {
@@ -205,11 +193,10 @@ export function PatientVitalSignsPanel({
     return (
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Activity className="w-5 h-5" />
-              Signes vitaux du{" "}
-              {format(new Date(selectedDate), "d MMMM", { locale: fr })}
+              Signes vitaux
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
               <X className="w-4 h-4" />
@@ -217,6 +204,31 @@ export function PatientVitalSignsPanel({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Sélecteur de date */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pb-3 border-b">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-sm font-medium">Date des constantes :</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-auto"
+              />
+              {!isToday && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}
+                >
+                  Aujourd'hui
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {/* Température */}
             <div className="space-y-1.5">
@@ -299,9 +311,7 @@ export function PatientVitalSignsPanel({
                 type="number"
                 placeholder="98"
                 value={formData.oxygenSaturation ?? ""}
-                onChange={(e) =>
-                  updateField("oxygenSaturation", e.target.value)
-                }
+                onChange={(e) => updateField("oxygenSaturation", e.target.value)}
                 className="h-9"
               />
             </div>
@@ -324,28 +334,14 @@ export function PatientVitalSignsPanel({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(false)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
               Annuler
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saveVitalSigns.isPending}
-            >
+            <Button size="sm" onClick={handleSave} disabled={saveVitalSigns.isPending}>
               {saveVitalSigns.isPending ? (
-                <>
-                  <Activity className="w-4 h-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
+                <><Activity className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</>
               ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Enregistrer
-                </>
+                <><Save className="w-4 h-4 mr-2" /> Enregistrer</>
               )}
             </Button>
           </div>
@@ -358,20 +354,30 @@ export function PatientVitalSignsPanel({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Activity className="w-5 h-5" />
             Signes vitaux
             {hasVitalSigns && (
               <Badge variant="secondary" className="text-xs">
-                {format(new Date(selectedDate), "d MMM", { locale: fr })}
+                {format(parseISO(selectedDate), "d MMM", { locale: fr })}
+                {isToday && " · Aujourd'hui"}
               </Badge>
             )}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <Edit3 className="w-4 h-4 mr-2" />
-            {hasVitalSigns ? "Modifier" : "Ajouter"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Sélecteur de date rapide */}
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full sm:w-auto h-8 text-sm"
+            />
+            <Button variant="ghost" size="sm" onClick={handleEdit}>
+              <Edit3 className="w-4 h-4 mr-2" />
+              {hasVitalSigns ? "Modifier" : "Ajouter"}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -381,14 +387,12 @@ export function PatientVitalSignsPanel({
               icon={Thermometer}
               value={todayVitals?.temperature}
               unit="°C"
-              label="Temp"
               colorClass="bg-orange-50 border-orange-200 text-orange-700"
             />
             <VitalSignBadge
               icon={Heart}
               value={todayVitals?.heartRate}
               unit="bpm"
-              label="Pouls"
               colorClass="bg-red-50 border-red-200 text-red-700"
             />
             {(todayVitals?.systolicBP || todayVitals?.diastolicBP) && (
@@ -396,8 +400,7 @@ export function PatientVitalSignsPanel({
                 <Activity className="w-4 h-4" />
                 <div>
                   <span className="font-semibold">
-                    {todayVitals?.systolicBP || "-"}/
-                    {todayVitals?.diastolicBP || "-"}
+                    {todayVitals?.systolicBP || "-"}/{todayVitals?.diastolicBP || "-"}
                   </span>
                   <span className="text-xs ml-1">mmHg</span>
                 </div>
@@ -407,31 +410,29 @@ export function PatientVitalSignsPanel({
               icon={Wind}
               value={todayVitals?.respiratoryRate}
               unit="rpm"
-              label="FR"
               colorClass="bg-green-50 border-green-200 text-green-700"
             />
             <VitalSignBadge
               icon={Wind}
               value={todayVitals?.oxygenSaturation}
               unit="%"
-              label="SaO₂"
               colorClass="bg-cyan-50 border-cyan-200 text-cyan-700"
             />
             <VitalSignBadge
               icon={Activity}
               value={todayVitals?.bloodSugar}
               unit="g/L"
-              label="Gly"
               colorClass="bg-purple-50 border-purple-200 text-purple-700"
             />
           </div>
         ) : (
           <div className="text-center py-6 text-muted-foreground">
             <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Aucun signe vital enregistré pour ce jour</p>
-            <p className="text-xs mt-1">
-              Cliquez sur "Ajouter" pour les renseigner
+            <p className="text-sm">
+              Aucun signe vital enregistré pour le{" "}
+              <strong>{format(parseISO(selectedDate), "d MMMM", { locale: fr })}</strong>
             </p>
+            <p className="text-xs mt-1">Cliquez sur "Ajouter" pour les renseigner</p>
           </div>
         )}
       </CardContent>

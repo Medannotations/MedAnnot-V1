@@ -327,9 +327,7 @@ export default function PatientDetailPage() {
         <TabsContent value="annotations" className="mt-6 space-y-6">
           {/* Signes vitaux du jour */}
           {patientId && (
-            <PatientVitalSignsPanel 
-              patientId={patientId} 
-            />
+            <PatientVitalSignsPanel patientId={patientId} />
           )}
 
           {/* New Annotation Section */}
