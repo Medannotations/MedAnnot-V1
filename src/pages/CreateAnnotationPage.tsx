@@ -21,7 +21,9 @@ import {
   User,
   ChevronRight,
   ChevronLeft,
-  AlertCircle
+  AlertCircle,
+  Activity,
+  Sparkles
 } from "lucide-react";
 import { usePatients, type Patient } from "@/hooks/usePatients";
 import { useUserConfigurationWithDefault, useExampleAnnotations } from "@/hooks/useConfiguration";
@@ -32,18 +34,19 @@ import { cn } from "@/lib/utils";
 import { VoiceRecorderDual } from "@/components/annotations/VoiceRecorderDual";
 import { TranscriptionReview } from "@/components/annotations/TranscriptionReview";
 import { AnnotationResult } from "@/components/annotations/AnnotationResult";
-import { VitalSignsInput, type VitalSigns } from "@/components/annotations/VitalSignsInput";
+import { VitalSignsInput, type VitalSigns, formatVitalSigns, validateVitalSigns } from "@/components/annotations/VitalSignsInput";
 import { EmptyState } from "@/components/ui/empty-state";
 import { usePersistedAnnotationState } from "@/hooks/usePersistedAnnotationState";
 
-type Step = "patient" | "visit" | "record" | "transcription" | "result";
+type Step = "patient" | "visit" | "record" | "transcription" | "vitals" | "result";
 
 const STEPS: { key: Step; label: string; number: number }[] = [
   { key: "patient", label: "Patient", number: 1 },
   { key: "visit", label: "Visite", number: 2 },
   { key: "record", label: "Audio", number: 3 },
   { key: "transcription", label: "Transcription", number: 4 },
-  { key: "result", label: "Annotation", number: 5 },
+  { key: "vitals", label: "Constantes", number: 5 },
+  { key: "result", label: "Annotation", number: 6 },
 ];
 
 export default function CreateAnnotationPage() {
@@ -222,10 +225,20 @@ export default function CreateAnnotationPage() {
     setIsGenerating(true);
 
     try {
+      // Formater les signes vitaux pour l'IA
+      const vitalSignsText = Object.keys(vitalSigns).length > 0 
+        ? formatVitalSigns(vitalSigns) 
+        : "";
+      
+      // Combiner transcription + signes vitaux
+      const enrichedTranscription = vitalSignsText 
+        ? `${editedTranscription}\n\n[CONSTANTES]: ${vitalSignsText}` 
+        : editedTranscription;
+      
       const result = await generateAnnotation({
-        transcription: editedTranscription,
+        transcription: enrichedTranscription,
         patientName: `${selectedPatient.last_name} ${selectedPatient.first_name}`,
-        patientId: selectedPatient.id,  // SECURITY: Used for pseudonymization (LPD compliance)
+        patientId: selectedPatient.id,
         patientAddress: selectedPatient.address || "",
         patientPathologies: selectedPatient.pathologies || "",
         visitDate,
@@ -233,6 +246,7 @@ export default function CreateAnnotationPage() {
         visitDuration,
         userStructure: config.annotation_structure,
         userExamples: examples?.map((e) => e.content) || [],
+        vitalSigns,
 
         // Pass patient-specific examples (only active ones)
         patientExamples: selectedPatient.exampleAnnotations
@@ -285,6 +299,16 @@ export default function CreateAnnotationPage() {
         variant: "destructive",
       });
       return;
+    }
+    
+    // Vérifier les signes vitaux anormaux avant sauvegarde
+    const { alerts } = validateVitalSigns(vitalSigns);
+    if (alerts.length > 0) {
+      const confirmSave = window.confirm(
+        `⚠️ Valeurs vitales anormales détectées :\n\n${alerts.join('\n')}\n\n` +
+        `Voulez-vous quand même sauvegarder cette annotation ?`
+      );
+      if (!confirmSave) return;
     }
     
     console.log("[handleSave] Saving annotation:", {
@@ -502,12 +526,6 @@ export default function CreateAnnotationPage() {
               />
             </div>
             
-            {/* Signes vitaux */}
-            <VitalSignsInput 
-              value={vitalSigns} 
-              onChange={setVitalSigns} 
-            />
-            
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("patient")}>
                 <ChevronLeft className="w-4 h-4 mr-2" />
@@ -553,13 +571,63 @@ export default function CreateAnnotationPage() {
       {step === "transcription" && (
         <TranscriptionReview
           transcription={transcription}
-          onConfirm={handleGenerateAnnotation}
+          onConfirm={(edited) => {
+            setTranscription(edited);
+            setStep("vitals");
+          }}
           onCancel={() => setStep("record")}
-          isGenerating={isGenerating}
+          isGenerating={false}
         />
       )}
 
-      {/* Step 5: Result */}
+      {/* Step 5: Vital Signs */}
+      {step === "vitals" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              Signes vitaux
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Renseignez les constantes pour enrichir l'annotation. 
+              L'IA en tiendra compte et vous serez alerté en cas de valeurs anormales.
+            </p>
+            
+            <VitalSignsInput 
+              value={vitalSigns} 
+              onChange={setVitalSigns} 
+            />
+            
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep("transcription")} className="flex-1">
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Retour
+              </Button>
+              <Button 
+                onClick={() => handleGenerateAnnotation(transcription)} 
+                className="flex-1"
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Générer l'annotation
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 6: Result */}
       {step === "result" && (
         <AnnotationResult
           transcription={transcription}

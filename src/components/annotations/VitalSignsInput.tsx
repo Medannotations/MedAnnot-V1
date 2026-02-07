@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Activity, Thermometer, Heart, Wind, Scale, Ruler } from "lucide-react";
+import { Activity, Thermometer, Heart, Wind, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface VitalSigns {
@@ -13,8 +13,7 @@ export interface VitalSigns {
   diastolicBP?: number; // mmHg
   respiratoryRate?: number; // rpm
   oxygenSaturation?: number; // %
-  weight?: number; // kg
-  height?: number; // cm
+
   bloodSugar?: number; // g/L
   painLevel?: number; // 0-10
   consciousness?: "alert" | "verbal" | "pain" | "unresponsive";
@@ -32,6 +31,61 @@ const CONSCIOUSNESS_LEVELS = [
   { value: "pain", label: "Réponse à la douleur", color: "text-orange-600" },
   { value: "unresponsive", label: "Non réactif", color: "text-red-600" },
 ] as const;
+
+// Fonction de validation des signes vitaux
+export function validateVitalSigns(signs: VitalSigns): { isValid: boolean; alerts: string[] } {
+  const alerts: string[] = [];
+  
+  if (signs.temperature !== undefined) {
+    if (signs.temperature < 35) alerts.push("🌡️ Hypothermie sévère (< 35°C)");
+    else if (signs.temperature > 40) alerts.push("🌡️ Hyperthermie sévère (> 40°C)");
+    else if (signs.temperature > 38.5) alerts.push("🌡️ Fièvre élevée");
+  }
+  
+  if (signs.heartRate !== undefined) {
+    if (signs.heartRate < 40) alerts.push("❤️ Bradycardie sévère (< 40 bpm)");
+    else if (signs.heartRate > 150) alerts.push("❤️ Tachycardie sévère (> 150 bpm)");
+    else if (signs.heartRate > 120) alerts.push("❤️ Tachycardie modérée");
+  }
+  
+  if (signs.systolicBP !== undefined && signs.diastolicBP !== undefined) {
+    if (signs.systolicBP < 90 || signs.diastolicBP < 60) {
+      alerts.push("🩸 Hypotension");
+    } else if (signs.systolicBP > 180 || signs.diastolicBP > 110) {
+      alerts.push("🩸 Hypertension sévère - Risque d'urgence");
+    }
+  }
+  
+  if (signs.respiratoryRate !== undefined) {
+    if (signs.respiratoryRate < 8) alerts.push("🫁 Bradypnée sévère (< 8 rpm)");
+    else if (signs.respiratoryRate > 30) alerts.push("🫁 Tachypnée sévère (> 30 rpm)");
+  }
+  
+  if (signs.oxygenSaturation !== undefined) {
+    if (signs.oxygenSaturation < 90) alerts.push("🫁 Hypoxémie sévère (< 90%) - URGENCE");
+    else if (signs.oxygenSaturation < 95) alerts.push("🫁 Hypoxémie modérée (< 95%)");
+  }
+  
+  if (signs.bloodSugar !== undefined) {
+    if (signs.bloodSugar < 0.6) alerts.push("🍯 Hypoglycémie sévère (< 0.6 g/L)");
+    else if (signs.bloodSugar > 2.5) alerts.push("🍯 Hyperglycémie sévère (> 2.5 g/L)");
+  }
+  
+  if (signs.painLevel !== undefined && signs.painLevel >= 8) {
+    alerts.push("😰 Douleur intense (≥ 8/10)");
+  }
+  
+  if (signs.consciousness && signs.consciousness !== "alert") {
+    const labels: Record<string, string> = {
+      verbal: "Altération de conscience - Réponse verbale",
+      pain: "Altération de conscience - Réponse à la douleur",
+      unresponsive: "⚠️ INCONSCIENCE - URGENCE VITALE"
+    };
+    alerts.push(`🧠 ${labels[signs.consciousness]}`);
+  }
+  
+  return { isValid: alerts.length === 0, alerts };
+}
 
 export function VitalSignsInput({ value, onChange, className }: VitalSignsInputProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -263,34 +317,26 @@ export function VitalSignsInput({ value, onChange, className }: VitalSignsInputP
           </div>
         </div>
 
-        {/* Poids et taille */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Scale className="w-4 h-4" />
-              Poids (kg)
-            </Label>
-            <Input
-              type="number"
-              step="0.1"
-              placeholder="70.0"
-              value={value.weight || ""}
-              onChange={(e) => updateSign("weight", e.target.value ? parseFloat(e.target.value) : undefined)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Ruler className="w-4 h-4" />
-              Taille (cm)
-            </Label>
-            <Input
-              type="number"
-              placeholder="170"
-              value={value.height || ""}
-              onChange={(e) => updateSign("height", e.target.value ? parseInt(e.target.value) : undefined)}
-            />
-          </div>
-        </div>
+        {/* Alertes si valeurs anormales */}
+        {(() => {
+          const { alerts } = validateVitalSigns(value);
+          if (alerts.length === 0) return null;
+          return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-800">⚠️ Valeurs vitales anormales détectées</p>
+                  <ul className="mt-2 space-y-1">
+                    {alerts.map((alert, idx) => (
+                      <li key={idx} className="text-sm text-red-700">{alert}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );
@@ -318,8 +364,6 @@ export function formatVitalSigns(signs: VitalSigns): string {
     };
     parts.push(`Conscience: ${labels[signs.consciousness]}`);
   }
-  if (signs.weight) parts.push(`Poids ${signs.weight} kg`);
-  if (signs.height) parts.push(`Taille ${signs.height} cm`);
   
   return parts.join(" | ");
 }

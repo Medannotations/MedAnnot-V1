@@ -240,7 +240,7 @@ export function GPSNavigation({ patient, isOpen, onClose }: GPSNavigationProps) 
 }
 
 // Composant bouton pour la liste des patients
-export function GPSNavigationButton({ patient, variant = "ghost" }: { patient: Patient; variant?: "ghost" | "outline" }) {
+export function GPSNavigationButton({ patient, variant = "outline" }: { patient: Patient; variant?: "ghost" | "outline" | "default" }) {
   const [isOpen, setIsOpen] = useState(false);
   
   const hasAddress = patient.street || patient.address || patient.city;
@@ -248,13 +248,15 @@ export function GPSNavigationButton({ patient, variant = "ghost" }: { patient: P
   return (
     <>
       <Button
-        variant={variant}
-        size="icon"
+        variant={hasAddress ? "default" : "outline"}
+        size="sm"
         onClick={() => setIsOpen(true)}
         disabled={!hasAddress}
         title={hasAddress ? "Naviguer vers ce patient" : "Adresse non renseignée"}
+        className={hasAddress ? "bg-blue-600 hover:bg-blue-700" : ""}
       >
-        <Navigation className="w-4 h-4" />
+        <Navigation className="w-4 h-4 mr-1" />
+        {hasAddress ? "GPS" : "Pas d'adresse"}
       </Button>
       <GPSNavigation 
         patient={patient} 

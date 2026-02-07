@@ -75,6 +75,7 @@ export interface GenerateAnnotationParams {
   }>;
   patientCity?: string;
   patientPostalCode?: string;
+  vitalSigns?: Record<string, any>;
 }
 
 /**
