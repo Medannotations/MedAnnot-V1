@@ -8,14 +8,32 @@ export type Patient = Tables<"patients">;
 export type PatientInsert = TablesInsert<"patients">;
 export type PatientUpdate = TablesUpdate<"patients">;
 
+// Vérifie si une chaîne est chiffrée (format CryptoJS)
+const isEncrypted = (data: string): boolean => {
+  return data.startsWith('U2FsdGVkX1') || data.startsWith('U2F');
+};
+
+// Helper pour déchiffrer en toute sécurité (gère les données non chiffrées legacy)
+const safeDecrypt = (data: string | null, userId: string): string | null => {
+  if (!data) return null;
+  // Si ce n'est pas chiffré, retourner tel quel (compatibilité legacy)
+  if (!isEncrypted(data)) return data;
+  try {
+    return decryptData(data, userId);
+  } catch {
+    // En cas d'erreur de déchiffrement, retourner la donnée brute
+    return data;
+  }
+};
+
 // Helper pour déchiffrer un patient
 const decryptPatient = (patient: Patient, userId: string): Patient => ({
   ...patient,
   first_name: decryptData(patient.first_name, userId),
   last_name: decryptData(patient.last_name, userId),
-  address: patient.address ? decryptData(patient.address, userId) : null,
-  street: patient.street ? decryptData(patient.street, userId) : null,
-  city: patient.city ? decryptData(patient.city, userId) : null,
+  address: safeDecrypt(patient.address, userId),
+  street: safeDecrypt(patient.street, userId),
+  city: safeDecrypt(patient.city, userId),
 });
 
 export function usePatients(includeArchived = false) {
@@ -94,6 +112,12 @@ export function useCreatePatient() {
         const encryptedAddress = patient.address 
           ? encryptData(patient.address, user.id) 
           : null;
+        const encryptedStreet = patient.street
+          ? encryptData(patient.street, user.id)
+          : null;
+        const encryptedCity = patient.city
+          ? encryptData(patient.city, user.id)
+          : null;
 
         const { data, error } = await supabase
           .from("patients")
@@ -103,6 +127,8 @@ export function useCreatePatient() {
             first_name: encryptedFirstName,
             last_name: encryptedLastName,
             address: encryptedAddress,
+            street: encryptedStreet,
+            city: encryptedCity,
           })
           .select()
           .single();
@@ -158,6 +184,16 @@ export function useUpdatePatient() {
       if (updates.address !== undefined) {
         encryptedUpdates.address = updates.address 
           ? encryptData(updates.address, user.id) 
+          : null;
+      }
+      if (updates.street !== undefined) {
+        encryptedUpdates.street = updates.street
+          ? encryptData(updates.street, user.id)
+          : null;
+      }
+      if (updates.city !== undefined) {
+        encryptedUpdates.city = updates.city
+          ? encryptData(updates.city, user.id)
           : null;
       }
 
