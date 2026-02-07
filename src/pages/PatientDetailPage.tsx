@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -13,395 +14,485 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen } from "lucide-react";
 import { VoiceRecorder } from "@/components/annotations/VoiceRecorder";
-import { AnnotationEditor } from "@/components/annotations/AnnotationEditor";
-import type { Patient, Annotation } from "@/types";
+import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
+import { PatientExamplesTab } from "@/components/patient/PatientExamplesTab";
+import { usePatient, useUpdatePatient, useArchivePatient } from "@/hooks/usePatients";
+import { useAnnotationsByPatient, useCreateAnnotation, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
+import { useUserConfiguration, useExampleAnnotations } from "@/hooks/useConfiguration";
+import { transcribeAudio, generateAnnotation } from "@/services/aiService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-
-const PATIENTS_KEY = "nursevoice_patients";
-const ANNOTATIONS_KEY = "nursevoice_annotations";
 
 export default function PatientDetailPage() {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  
+  // Récupération des données depuis Supabase
+  const { data: patient, isLoading: patientLoading } = usePatient(patientId);
+  const { data: annotations, isLoading: annotationsLoading } = useAnnotationsByPatient(patientId);
+  const { data: config } = useUserConfiguration();
+  const { data: globalExamples = [] } = useExampleAnnotations();
+  
+  // Mutations
+  const updatePatient = useUpdatePatient();
+  const archivePatient = useArchivePatient();
+  const createAnnotation = useCreateAnnotation();
+  const deleteAnnotation = useDeleteAnnotation();
+  
+  // États UI
   const [isEditing, setIsEditing] = useState(false);
   const [isNewAnnotation, setIsNewAnnotation] = useState(false);
-  const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null);
+  const [viewAnnotation, setViewAnnotation] = useState<AnnotationWithPatient | null>(null);
+  const [deleteAnnotationId, setDeleteAnnotationId] = useState<string | null>(null);
+  
+  // Formulaire d'édition patient
   const [editForm, setEditForm] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     address: "",
+    postal_code: "",
+    city: "",
     pathologies: "",
+    notes: "",
   });
-  const [newAnnotationDate, setNewAnnotationDate] = useState(
-    format(new Date(), "yyyy-MM-dd")
-  );
-  const [newAnnotationTime, setNewAnnotationTime] = useState(
-    format(new Date(), "HH:mm")
-  );
+  
+  // Formulaire nouvelle annotation
+  const [newAnnotationDate, setNewAnnotationDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [newAnnotationTime, setNewAnnotationTime] = useState(format(new Date(), "HH:mm"));
   const [transcription, setTranscription] = useState("");
   const [generatedContent, setGeneratedContent] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  useEffect(() => {
-    const savedPatients = localStorage.getItem(PATIENTS_KEY);
-    const savedAnnotations = localStorage.getItem(ANNOTATIONS_KEY);
-
-    if (savedPatients) {
-      const patients: Patient[] = JSON.parse(savedPatients);
-      const foundPatient = patients.find((p) => p.id === patientId);
-      if (foundPatient) {
-        setPatient(foundPatient);
-        setEditForm({
-          firstName: foundPatient.firstName,
-          lastName: foundPatient.lastName,
-          address: foundPatient.address,
-          pathologies: foundPatient.pathologies,
-        });
-      }
-    }
-
-    if (savedAnnotations) {
-      const allAnnotations: Annotation[] = JSON.parse(savedAnnotations);
-      setAnnotations(
-        allAnnotations
-          .filter((a) => a.patientId === patientId)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      );
-    }
-  }, [patientId]);
-
-  const savePatient = (updatedPatient: Patient) => {
-    const savedPatients = localStorage.getItem(PATIENTS_KEY);
-    if (savedPatients) {
-      const patients: Patient[] = JSON.parse(savedPatients);
-      const updatedPatients = patients.map((p) =>
-        p.id === updatedPatient.id ? updatedPatient : p
-      );
-      localStorage.setItem(PATIENTS_KEY, JSON.stringify(updatedPatients));
-      setPatient(updatedPatient);
+  // Initialiser le formulaire d'édition quand on ouvre le dialog
+  const handleOpenEdit = () => {
+    if (patient) {
+      setEditForm({
+        first_name: patient.first_name,
+        last_name: patient.last_name,
+        address: patient.address || "",
+        postal_code: patient.postal_code || "",
+        city: patient.city || "",
+        pathologies: patient.pathologies || "",
+        notes: patient.notes || "",
+      });
+      setIsEditing(true);
     }
   };
 
-  const saveAnnotations = (updatedAnnotations: Annotation[]) => {
-    const savedAnnotations = localStorage.getItem(ANNOTATIONS_KEY);
-    let allAnnotations: Annotation[] = savedAnnotations
-      ? JSON.parse(savedAnnotations)
-      : [];
-    
-    // Remove annotations for this patient
-    allAnnotations = allAnnotations.filter((a) => a.patientId !== patientId);
-    // Add updated annotations
-    allAnnotations = [...allAnnotations, ...updatedAnnotations];
-    
-    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(allAnnotations));
-    setAnnotations(
-      updatedAnnotations.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      )
-    );
-  };
-
-  const handleUpdatePatient = () => {
+  const handleUpdatePatient = async () => {
     if (!patient) return;
 
-    const updatedPatient: Patient = {
-      ...patient,
-      ...editForm,
-      updatedAt: new Date(),
-    };
-
-    savePatient(updatedPatient);
-    setIsEditing(false);
-    toast({
-      title: "Patient mis à jour",
-      description: "Les informations ont été sauvegardées.",
-    });
+    try {
+      await updatePatient.mutateAsync({
+        id: patient.id,
+        ...editForm,
+      });
+      setIsEditing(false);
+      toast({
+        title: "Patient mis à jour",
+        description: "Les informations ont été sauvegardées.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de mettre à jour le patient.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleTranscriptionComplete = (text: string) => {
+  const handleArchivePatient = async (archive: boolean) => {
+    if (!patient) return;
+    try {
+      await archivePatient.mutateAsync({ id: patient.id, isArchived: archive });
+      toast({
+        title: archive ? "Patient archivé" : "Patient restauré",
+        description: archive 
+          ? "Le patient a été archivé." 
+          : "Le patient a été restauré.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTranscriptionComplete = async (text: string) => {
     setTranscription(text);
-    handleGenerateAnnotation(text);
+    await handleGenerateAnnotation(text);
   };
 
   const handleGenerateAnnotation = async (text: string) => {
-    if (!patient) return;
+    if (!patient || !config) {
+      toast({
+        title: "Configuration manquante",
+        description: "Veuillez configurer votre structure d'annotation",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsGenerating(true);
     
-    // Simulate AI generation (in production, this would call an API)
-    const structure = localStorage.getItem("nursevoice_annotation_structure") || "";
-    const examples = localStorage.getItem("nursevoice_example_annotations") || "[]";
-    
-    // Simulated generation with a delay
-    setTimeout(() => {
-      const generatedAnnotation = `**Date de visite:** ${format(new Date(newAnnotationDate), "d MMMM yyyy", { locale: fr })} à ${newAnnotationTime}
-**Patient:** ${patient.lastName} ${patient.firstName}
-${patient.pathologies ? `**Pathologies connues:** ${patient.pathologies}` : ""}
-
----
-
-**1. Motif de la visite**
-${text.split(".").slice(0, 2).join(". ")}.
-
-**2. Observations cliniques**
-- État général: Patient conscient et orienté
-- Signes vitaux: À compléter
-- Observations spécifiques: ${text}
-
-**3. Soins prodigués**
-Soins infirmiers effectués selon prescription.
-
-**4. Évaluation**
-État stable, surveillance à poursuivre.
-
-**5. Plan de soins**
-Prochaine visite à planifier.`;
-
-      setGeneratedContent(generatedAnnotation);
+    try {
+      const result = await generateAnnotation({
+        transcription: text,
+        patientName: `${patient.last_name} ${patient.first_name}`,
+        patientAddress: patient.address || "",
+        patientPostalCode: patient.postal_code || "",
+        patientCity: patient.city || "",
+        patientPathologies: patient.pathologies || "",
+        visitDate: newAnnotationDate,
+        visitTime: newAnnotationTime,
+        userStructure: config.annotation_structure,
+        userExamples: globalExamples.map(e => e.content),
+        patientExamples: (patient.example_annotations as any[])?.filter(ex => ex?.isLearningExample).map(ex => ({
+          content: ex.content,
+          visitDate: ex.visitDate,
+          context: ex.context,
+        })) || [],
+        recentAnnotations: annotations?.slice(0, 5).map(a => ({
+          date: a.visit_date,
+          content: a.content,
+        })) || [],
+      });
+      
+      setGeneratedContent(result);
+    } catch (error: any) {
+      toast({
+        title: "Erreur de génération",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
   };
 
-  const handleSaveAnnotation = () => {
-    if (!generatedContent.trim()) return;
+  const handleSaveAnnotation = async () => {
+    if (!generatedContent.trim() || !patient) return;
 
-    const newAnnotation: Annotation = {
-      id: crypto.randomUUID(),
-      patientId: patientId!,
-      date: new Date(newAnnotationDate),
-      time: newAnnotationTime,
-      content: generatedContent,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    try {
+      await createAnnotation.mutateAsync({
+        patient_id: patient.id,
+        visit_date: newAnnotationDate,
+        visit_time: newAnnotationTime,
+        content: generatedContent,
+        transcription: "", // Ne pas sauvegarder la transcription (secret médical)
+        structure_used: config?.annotation_structure,
+      });
+      
+      toast({
+        title: "Annotation sauvegardée",
+        description: "L'annotation a été ajoutée au dossier du patient.",
+      });
 
-    saveAnnotations([...annotations, newAnnotation]);
-    
-    toast({
-      title: "Annotation sauvegardée",
-      description: "L'annotation a été ajoutée au dossier du patient.",
-    });
-
-    setIsNewAnnotation(false);
-    setTranscription("");
-    setGeneratedContent("");
+      setIsNewAnnotation(false);
+      setTranscription("");
+      setGeneratedContent("");
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateAnnotation = (updatedAnnotation: Annotation) => {
-    const updatedAnnotations = annotations.map((a) =>
-      a.id === updatedAnnotation.id ? { ...updatedAnnotation, updatedAt: new Date() } : a
+  const handleDeleteAnnotation = async () => {
+    if (!deleteAnnotationId) return;
+    try {
+      await deleteAnnotation.mutateAsync(deleteAnnotationId);
+      toast({
+        title: "Annotation supprimée",
+        description: "L'annotation a été supprimée.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteAnnotationId(null);
+    }
+  };
+
+  if (patientLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
     );
-    saveAnnotations(updatedAnnotations);
-    setSelectedAnnotation(null);
-    toast({
-      title: "Annotation mise à jour",
-      description: "Les modifications ont été sauvegardées.",
-    });
-  };
-
-  const handleDeleteAnnotation = (id: string) => {
-    const updatedAnnotations = annotations.filter((a) => a.id !== id);
-    saveAnnotations(updatedAnnotations);
-    toast({
-      title: "Annotation supprimée",
-      description: "L'annotation a été supprimée.",
-    });
-  };
+  }
 
   if (!patient) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-muted-foreground">Patient non trouvé</p>
+        <Button asChild variant="outline">
+          <Link to="/app/patients">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour aux patients
+          </Link>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/app/patients">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">
-            {patient.lastName} {patient.firstName}
-          </h1>
-          <div className="flex items-center gap-4 mt-1 text-muted-foreground text-sm">
-            {patient.address && <span>{patient.address}</span>}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/app/patients">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              {patient.last_name} {patient.first_name}
+            </h1>
+            <div className="flex items-center gap-4 mt-1 text-muted-foreground text-sm">
+              {patient.address && <span>{patient.address}</span>}
+              {(patient.postal_code || patient.city) && (
+                <span>{patient.postal_code} {patient.city}</span>
+              )}
+            </div>
           </div>
         </div>
-        <Button variant="outline" onClick={() => setIsEditing(true)}>
-          <Pencil className="w-4 h-4 mr-2" />
-          Modifier
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleOpenEdit}>
+            <Pencil className="w-4 h-4 mr-2" />
+            Modifier
+          </Button>
+          {patient.is_archived ? (
+            <Button variant="outline" onClick={() => handleArchivePatient(false)}>
+              <ArchiveRestore className="w-4 h-4 mr-2" />
+              Restaurer
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => handleArchivePatient(true)}>
+              <Archive className="w-4 h-4 mr-2" />
+              Archiver
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Patient info */}
-      {patient.pathologies && (
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="font-medium text-card-foreground mb-2">Pathologies connues</h3>
-            <p className="text-muted-foreground">{patient.pathologies}</p>
-          </CardContent>
-        </Card>
+      {/* Info cards */}
+      {(patient.pathologies || patient.notes) && (
+        <div className="grid md:grid-cols-2 gap-4">
+          {patient.pathologies && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-medium text-card-foreground mb-2">Pathologies connues</h3>
+                <p className="text-muted-foreground">{patient.pathologies}</p>
+              </CardContent>
+            </Card>
+          )}
+          {patient.notes && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-medium text-card-foreground mb-2">Notes</h3>
+                <p className="text-muted-foreground">{patient.notes}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
-      {/* New Annotation Section */}
-      {!isNewAnnotation ? (
-        <Button onClick={() => setIsNewAnnotation(true)} className="w-full" size="lg">
-          <Plus className="w-5 h-5 mr-2" />
-          Nouvelle annotation
-        </Button>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Nouvelle annotation</CardTitle>
-            <CardDescription>
-              Enregistrez votre observation vocale et laissez l'IA générer l'annotation
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Date de visite
-                </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={newAnnotationDate}
-                  onChange={(e) => setNewAnnotationDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time" className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Heure
-                </Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={newAnnotationTime}
-                  onChange={(e) => setNewAnnotationTime(e.target.value)}
-                />
-              </div>
-            </div>
+      {/* Tabs */}
+      <Tabs defaultValue="annotations" className="w-full">
+        <TabsList>
+          <TabsTrigger value="annotations" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Annotations ({annotations?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="examples" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Exemples
+          </TabsTrigger>
+        </TabsList>
 
-            <VoiceRecorder 
-              onTranscriptionComplete={handleTranscriptionComplete}
-              isGenerating={isGenerating}
-            />
-
-            {transcription && (
-              <div className="space-y-2">
-                <Label>Transcription</Label>
-                <p className="p-3 bg-muted rounded-lg text-sm">{transcription}</p>
-              </div>
-            )}
-
-            {generatedContent && (
-              <div className="space-y-2">
-                <Label>Annotation générée</Label>
-                <Textarea
-                  value={generatedContent}
-                  onChange={(e) => setGeneratedContent(e.target.value)}
-                  className="min-h-[300px]"
-                />
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveAnnotation}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Enregistrer
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleGenerateAnnotation(transcription)}
-                  >
-                    Régénérer
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setIsNewAnnotation(false);
-                      setTranscription("");
-                      setGeneratedContent("");
-                    }}
-                  >
-                    Annuler
-                  </Button>
+        <TabsContent value="annotations" className="mt-6 space-y-6">
+          {/* New Annotation Section */}
+          {!isNewAnnotation ? (
+            <Button onClick={() => setIsNewAnnotation(true)} className="w-full" size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              Nouvelle annotation
+            </Button>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Nouvelle annotation</CardTitle>
+                <CardDescription>
+                  Enregistrez votre observation vocale et laissez l'IA générer l'annotation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Date de visite
+                    </Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={newAnnotationDate}
+                      onChange={(e) => setNewAnnotationDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="time" className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Heure
+                    </Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={newAnnotationTime}
+                      onChange={(e) => setNewAnnotationTime(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Annotations List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">Historique des annotations</h2>
-        {annotations.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <p>Aucune annotation pour ce patient</p>
-              <p className="text-sm">Créez votre première annotation ci-dessus</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {annotations.map((annotation) => (
-              <Card key={annotation.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <Calendar className="w-4 h-4" />
-                        {format(new Date(annotation.date), "d MMMM yyyy", { locale: fr })}
-                        {annotation.time && (
-                          <>
-                            <Clock className="w-4 h-4 ml-2" />
-                            {annotation.time}
-                          </>
-                        )}
-                      </div>
-                      <p className="text-card-foreground line-clamp-3 whitespace-pre-line">
-                        {annotation.content.substring(0, 200)}...
-                      </p>
-                    </div>
+                <VoiceRecorder 
+                  onTranscriptionComplete={handleTranscriptionComplete}
+                  isGenerating={isTranscribing || isGenerating}
+                />
+
+                {transcription && (
+                  <div className="space-y-2">
+                    <Label>Transcription</Label>
+                    <p className="p-3 bg-muted rounded-lg text-sm">{transcription}</p>
+                  </div>
+                )}
+
+                {generatedContent && (
+                  <div className="space-y-2">
+                    <Label>Annotation générée</Label>
+                    <Textarea
+                      value={generatedContent}
+                      onChange={(e) => setGeneratedContent(e.target.value)}
+                      className="min-h-[300px]"
+                    />
                     <div className="flex gap-2">
+                      <Button onClick={handleSaveAnnotation} disabled={createAnnotation.isPending}>
+                        {createAnnotation.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Enregistrer
+                      </Button>
                       <Button
                         variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedAnnotation(annotation)}
+                        onClick={() => handleGenerateAnnotation(transcription)}
+                        disabled={isGenerating}
                       >
-                        Voir / Éditer
+                        {isGenerating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Régénérer
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteAnnotation(annotation.id)}
+                        onClick={() => {
+                          setIsNewAnnotation(false);
+                          setTranscription("");
+                          setGeneratedContent("");
+                        }}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        Annuler
                       </Button>
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Annotations List */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">Historique des annotations</h2>
+            {annotationsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : annotations?.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>Aucune annotation pour ce patient</p>
+                  <p className="text-sm">Créez votre première annotation ci-dessus</p>
                 </CardContent>
               </Card>
-            ))}
+            ) : (
+              <div className="space-y-4">
+                {annotations?.map((annotation) => (
+                  <Card key={annotation.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            <Calendar className="w-4 h-4" />
+                            {format(new Date(annotation.visit_date), "d MMMM yyyy", { locale: fr })}
+                            {annotation.visit_time && (
+                              <>
+                                <Clock className="w-4 h-4 ml-2" />
+                                {annotation.visit_time.slice(0, 5)}
+                              </>
+                            )}
+                          </div>
+                          <p className="text-card-foreground line-clamp-3 whitespace-pre-line">
+                            {annotation.content.substring(0, 200)}...
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setViewAnnotation(annotation as AnnotationWithPatient)}
+                          >
+                            Voir
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteAnnotationId(annotation.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="examples" className="mt-6">
+          <PatientExamplesTab 
+            patient={patient} 
+            onUpdate={(updatedPatient) => {
+              // Le hook se charge du refresh automatique
+            }}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Patient Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Modifier le patient</DialogTitle>
             <DialogDescription>
@@ -411,22 +502,22 @@ Prochaine visite à planifier.`;
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-lastName">Nom</Label>
+                <Label htmlFor="edit-last_name">Nom *</Label>
                 <Input
-                  id="edit-lastName"
-                  value={editForm.lastName}
+                  id="edit-last_name"
+                  value={editForm.last_name}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, lastName: e.target.value })
+                    setEditForm({ ...editForm, last_name: e.target.value })
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-firstName">Prénom</Label>
+                <Label htmlFor="edit-first_name">Prénom *</Label>
                 <Input
-                  id="edit-firstName"
-                  value={editForm.firstName}
+                  id="edit-first_name"
+                  value={editForm.first_name}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, firstName: e.target.value })
+                    setEditForm({ ...editForm, first_name: e.target.value })
                   }
                 />
               </div>
@@ -441,6 +532,28 @@ Prochaine visite à planifier.`;
                 }
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-postal_code">Code postal</Label>
+                <Input
+                  id="edit-postal_code"
+                  value={editForm.postal_code}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, postal_code: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-city">Ville</Label>
+                <Input
+                  id="edit-city"
+                  value={editForm.city}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, city: e.target.value })
+                  }
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-pathologies">Pathologies connues</Label>
               <Textarea
@@ -451,25 +564,70 @@ Prochaine visite à planifier.`;
                 }
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                value={editForm.notes}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, notes: e.target.value })
+                }
+                placeholder="Notes internes..."
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsEditing(false)}>
                 Annuler
               </Button>
-              <Button onClick={handleUpdatePatient}>Sauvegarder</Button>
+              <Button 
+                onClick={handleUpdatePatient}
+                disabled={updatePatient.isPending}
+              >
+                {updatePatient.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Sauvegarder
+              </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* View/Edit Annotation Dialog */}
-      {selectedAnnotation && (
-        <AnnotationEditor
-          annotation={selectedAnnotation}
-          isOpen={!!selectedAnnotation}
-          onClose={() => setSelectedAnnotation(null)}
-          onSave={handleUpdateAnnotation}
+      {/* View Annotation Modal */}
+      {viewAnnotation && (
+        <AnnotationViewModal
+          annotation={viewAnnotation}
+          isOpen={!!viewAnnotation}
+          onClose={() => setViewAnnotation(null)}
+          onCopy={() => {
+            navigator.clipboard.writeText(viewAnnotation.content);
+            toast({ title: "Annotation copiée" });
+          }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteAnnotationId} onOpenChange={() => setDeleteAnnotationId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer cette annotation ?</DialogTitle>
+            <DialogDescription>
+              Cette action est irréversible. L'annotation sera définitivement supprimée.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteAnnotationId(null)}>
+              Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAnnotation}
+              disabled={deleteAnnotation.isPending}
+            >
+              {deleteAnnotation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Supprimer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

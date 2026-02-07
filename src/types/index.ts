@@ -1,9 +1,16 @@
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-}
+// Types alignés avec la base de données Supabase
+// Ces types sont des alias pour faciliter l'import, mais utilisez préférablement ceux de @/integrations/supabase/types
 
+import type { Tables } from "@/integrations/supabase/types";
+
+// Re-export des types principaux depuis Supabase
+export type User = Tables<"profiles">;
+export type Patient = Tables<"patients">;
+export type Annotation = Tables<"annotations">;
+export type UserConfiguration = Tables<"user_configurations">;
+export type ExampleAnnotation = Tables<"example_annotations">;
+
+// Types étendus pour l'UI
 export interface PatientExampleAnnotation {
   id: string;
   content: string;
@@ -13,41 +20,35 @@ export interface PatientExampleAnnotation {
   createdAt: string;
 }
 
-export interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  address: string;
-  pathologies: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isArchived: boolean;
-  exampleAnnotations?: PatientExampleAnnotation[];
-  postalCode?: string;
-  city?: string;
+// Type pour les annotations avec les infos patient (pour l'affichage)
+export interface AnnotationWithPatient extends Annotation {
+  patients: {
+    first_name: string;
+    last_name: string;
+    pathologies: string | null;
+  };
 }
 
-export interface Annotation {
+// Type pour le mode batch/soirée
+export interface BatchAction {
   id: string;
-  patientId: string;
-  date: Date;
-  time?: string;
+  label: string;
+  icon: string;
+  action: (selectedIds: string[]) => void;
+}
+
+// Type pour les templates de phrases
+export interface PhraseTemplate {
+  id: string;
+  category: string;
+  label: string;
   content: string;
-  audioUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  shortcut?: string;
 }
 
-export interface UserConfiguration {
+// Type pour les tags patients
+export interface PatientTag {
   id: string;
-  userId: string;
-  annotationStructure: string;
-  exampleAnnotations: ExampleAnnotation[];
-}
-
-export interface ExampleAnnotation {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: Date;
+  name: string;
+  color: string;
 }

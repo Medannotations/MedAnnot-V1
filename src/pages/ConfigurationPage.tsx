@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Save, FileText, Loader2, Lightbulb } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, FileText, Loader2, Lightbulb, MessageSquare, Tag, Palette } from "lucide-react";
 import {
   useUserConfiguration,
   useUpdateConfiguration,
@@ -21,7 +23,16 @@ import {
   useCreateExample,
   useUpdateExample,
   useDeleteExample,
+  usePhraseTemplates,
+  useCreatePhraseTemplate,
+  useUpdatePhraseTemplate,
+  useDeletePhraseTemplate,
+  usePatientTags,
+  useCreatePatientTag,
+  useDeletePatientTag,
   type ExampleAnnotation,
+  type PhraseTemplate,
+  type PatientTag,
 } from "@/hooks/useConfiguration";
 
 const DEFAULT_STRUCTURE = `1. Motif de la visite
@@ -117,25 +128,73 @@ Plan de soins
   }
 ];
 
+const DEFAULT_PHRASE_CATEGORIES = [
+  "État général",
+  "Observations",
+  "Soins",
+  "Évaluation",
+  "Plan de soins",
+  "Autre"
+];
+
+const TAG_COLORS = [
+  { name: "Rouge", value: "#ef4444" },
+  { name: "Orange", value: "#f97316" },
+  { name: "Jaune", value: "#eab308" },
+  { name: "Vert", value: "#22c55e" },
+  { name: "Bleu", value: "#3b82f6" },
+  { name: "Indigo", value: "#6366f1" },
+  { name: "Violet", value: "#a855f7" },
+  { name: "Rose", value: "#ec4899" },
+  { name: "Gris", value: "#6b7280" },
+];
+
 export default function ConfigurationPage() {
   const [structure, setStructure] = useState(DEFAULT_STRUCTURE);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Dialog states
+  const [isExampleDialogOpen, setIsExampleDialogOpen] = useState(false);
+  const [isPhraseDialogOpen, setIsPhraseDialogOpen] = useState(false);
+  const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
+  
+  // Form states
   const [editingExample, setEditingExample] = useState<ExampleAnnotation | null>(null);
-  const [newTitle, setNewTitle] = useState("");
-  const [newContent, setNewContent] = useState("");
+  const [exampleForm, setExampleForm] = useState({ title: "", content: "" });
+  
+  const [editingPhrase, setEditingPhrase] = useState<PhraseTemplate | null>(null);
+  const [phraseForm, setPhraseForm] = useState({ 
+    category: "", 
+    label: "", 
+    content: "",
+    shortcut: "" 
+  });
+  
+  const [tagForm, setTagForm] = useState({ name: "", color: "#3b82f6" });
 
+  // Data fetching
   const { data: config, isLoading: configLoading } = useUserConfiguration();
   const { data: examples = [], isLoading: examplesLoading } = useExampleAnnotations();
+  const { data: phrases = [], isLoading: phrasesLoading } = usePhraseTemplates();
+  const { data: tags = [], isLoading: tagsLoading } = usePatientTags();
+  
+  // Mutations
   const updateConfiguration = useUpdateConfiguration();
   const createExample = useCreateExample();
   const updateExample = useUpdateExample();
   const deleteExample = useDeleteExample();
+  const createPhrase = useCreatePhraseTemplate();
+  const updatePhrase = useUpdatePhraseTemplate();
+  const deletePhrase = useDeletePhraseTemplate();
+  const createTag = useCreatePatientTag();
+  const deleteTag = useDeletePatientTag();
 
   useEffect(() => {
     if (config?.annotation_structure) {
       setStructure(config.annotation_structure);
     }
   }, [config]);
+
+  // ==================== Structure ====================
 
   const handleSaveStructure = async () => {
     try {
@@ -153,8 +212,22 @@ export default function ConfigurationPage() {
     }
   };
 
+  // ==================== Examples ====================
+
+  const openNewExample = () => {
+    setEditingExample(null);
+    setExampleForm({ title: "", content: "" });
+    setIsExampleDialogOpen(true);
+  };
+
+  const openEditExample = (example: ExampleAnnotation) => {
+    setEditingExample(example);
+    setExampleForm({ title: example.title, content: example.content });
+    setIsExampleDialogOpen(true);
+  };
+
   const handleSaveExample = async () => {
-    if (!newTitle.trim() || !newContent.trim()) {
+    if (!exampleForm.title.trim() || !exampleForm.content.trim()) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs.",
@@ -167,28 +240,14 @@ export default function ConfigurationPage() {
       if (editingExample) {
         await updateExample.mutateAsync({
           id: editingExample.id,
-          title: newTitle.trim(),
-          content: newContent.trim(),
+          ...exampleForm,
         });
-        toast({
-          title: "Exemple modifié",
-          description: "Votre exemple d'annotation a été mis à jour.",
-        });
+        toast({ title: "Exemple modifié" });
       } else {
-        await createExample.mutateAsync({
-          title: newTitle.trim(),
-          content: newContent.trim(),
-        });
-        toast({
-          title: "Exemple ajouté",
-          description: "Votre exemple d'annotation a été sauvegardé.",
-        });
+        await createExample.mutateAsync(exampleForm);
+        toast({ title: "Exemple ajouté" });
       }
-
-      setIsDialogOpen(false);
-      setEditingExample(null);
-      setNewTitle("");
-      setNewContent("");
+      setIsExampleDialogOpen(false);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -198,20 +257,10 @@ export default function ConfigurationPage() {
     }
   };
 
-  const handleEditExample = (example: ExampleAnnotation) => {
-    setEditingExample(example);
-    setNewTitle(example.title);
-    setNewContent(example.content);
-    setIsDialogOpen(true);
-  };
-
   const handleDeleteExample = async (id: string) => {
     try {
       await deleteExample.mutateAsync(id);
-      toast({
-        title: "Exemple supprimé",
-        description: "L'exemple d'annotation a été supprimé.",
-      });
+      toast({ title: "Exemple supprimé" });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -221,15 +270,118 @@ export default function ConfigurationPage() {
     }
   };
 
-  const handleOpenNewDialog = () => {
-    setEditingExample(null);
-    setNewTitle("");
-    setNewContent("");
-    setIsDialogOpen(true);
+  // ==================== Phrases ====================
+
+  const openNewPhrase = () => {
+    setEditingPhrase(null);
+    setPhraseForm({ category: "", label: "", content: "", shortcut: "" });
+    setIsPhraseDialogOpen(true);
   };
 
-  const isLoading = configLoading || examplesLoading;
-  const isSavingExample = createExample.isPending || updateExample.isPending;
+  const openEditPhrase = (phrase: PhraseTemplate) => {
+    setEditingPhrase(phrase);
+    setPhraseForm({
+      category: phrase.category,
+      label: phrase.label,
+      content: phrase.content,
+      shortcut: phrase.shortcut || "",
+    });
+    setIsPhraseDialogOpen(true);
+  };
+
+  const handleSavePhrase = async () => {
+    if (!phraseForm.category.trim() || !phraseForm.label.trim() || !phraseForm.content.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      if (editingPhrase) {
+        await updatePhrase.mutateAsync({
+          id: editingPhrase.id,
+          ...phraseForm,
+        });
+        toast({ title: "Phrase modifiée" });
+      } else {
+        await createPhrase.mutateAsync(phraseForm);
+        toast({ title: "Phrase ajoutée" });
+      }
+      setIsPhraseDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la phrase.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePhrase = async (id: string) => {
+    try {
+      await deletePhrase.mutateAsync(id);
+      toast({ title: "Phrase supprimée" });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la phrase.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ==================== Tags ====================
+
+  const handleCreateTag = async () => {
+    if (!tagForm.name.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer un nom pour le tag.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createTag.mutateAsync(tagForm);
+      toast({ title: "Tag créé" });
+      setTagForm({ name: "", color: "#3b82f6" });
+      setIsTagDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le tag.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTag = async (id: string) => {
+    try {
+      await deleteTag.mutateAsync(id);
+      toast({ title: "Tag supprimé" });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le tag.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ==================== Group phrases by category ====================
+
+  const phrasesByCategory = phrases.reduce((acc, phrase) => {
+    const cat = phrase.category || "Autre";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(phrase);
+    return acc;
+  }, {} as Record<string, PhraseTemplate[]>);
+
+  const isLoading = configLoading || examplesLoading || phrasesLoading || tagsLoading;
 
   if (isLoading) {
     return (
@@ -244,187 +396,431 @@ export default function ConfigurationPage() {
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Configuration</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-2">
-          Personnalisez votre structure d'annotation et ajoutez des exemples pour améliorer l'IA.
+          Personnalisez votre expérience et optimisez vos annotations
         </p>
       </div>
 
-      {/* Structure Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Ma structure d'annotation
-          </CardTitle>
-          <CardDescription>
-            Définissez la structure que l'IA doit suivre pour toutes vos annotations.
-            Utilisez des numéros, tirets ou autres marqueurs pour organiser les sections.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Textarea
-            value={structure}
-            onChange={(e) => setStructure(e.target.value)}
-            className="min-h-[200px] font-mono text-sm"
-            placeholder="Définissez votre structure d'annotation..."
-          />
-          <Button 
-            onClick={handleSaveStructure}
-            disabled={updateConfiguration.isPending}
-          >
-            {updateConfiguration.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            <Save className="w-4 h-4 mr-2" />
-            Enregistrer la structure
-          </Button>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="structure" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="structure" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            <span className="hidden sm:inline">Structure</span>
+          </TabsTrigger>
+          <TabsTrigger value="examples" className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            <span className="hidden sm:inline">Exemples</span>
+          </TabsTrigger>
+          <TabsTrigger value="phrases" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            <span className="hidden sm:inline">Phrases</span>
+          </TabsTrigger>
+          <TabsTrigger value="tags" className="flex items-center gap-2">
+            <Tag className="w-4 h-4" />
+            <span className="hidden sm:inline">Tags</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Example Structures Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5" />
-            Exemples de structures
-          </CardTitle>
-          <CardDescription>
-            Inspirez-vous de ces exemples pour créer votre propre structure d'annotation
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {EXAMPLE_STRUCTURES.map((example, idx) => (
-            <Card key={idx} className="bg-muted/30">
-              <CardHeader>
-                <CardTitle className="text-base">{example.title}</CardTitle>
-                <CardDescription className="text-sm">{example.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <pre className="text-xs bg-background p-3 rounded-md whitespace-pre-wrap font-mono max-h-48 overflow-y-auto">
-                  {example.content}
-                </pre>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => {
-                    setStructure(example.content);
-                    toast({
-                      title: "Structure copiée",
-                      description: "Vous pouvez maintenant la personnaliser"
-                    });
-                  }}
-                >
-                  Utiliser cette structure
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Examples Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Exemples d'annotations</CardTitle>
+        {/* Structure Tab */}
+        <TabsContent value="structure" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Ma structure d'annotation
+              </CardTitle>
               <CardDescription>
-                Ajoutez des exemples d'annotations rédigées selon votre style pour améliorer la précision de l'IA.
+                Définissez la structure que l'IA doit suivre pour toutes vos annotations.
               </CardDescription>
-            </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={handleOpenNewDialog}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter un exemple
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingExample ? "Modifier l'exemple" : "Nouvel exemple d'annotation"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    Ajoutez un exemple d'annotation bien rédigée pour que l'IA apprenne votre style.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="example-title">Titre de l'exemple</Label>
-                    <Input
-                      id="example-title"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      placeholder="Ex: Visite de contrôle diabétique"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="example-content">Contenu de l'annotation</Label>
-                    <Textarea
-                      id="example-content"
-                      value={newContent}
-                      onChange={(e) => setNewContent(e.target.value)}
-                      className="min-h-[250px]"
-                      placeholder="Rédigez un exemple complet d'annotation..."
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Annuler
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                value={structure}
+                onChange={(e) => setStructure(e.target.value)}
+                className="min-h-[200px] font-mono text-sm"
+              />
+              <Button 
+                onClick={handleSaveStructure}
+                disabled={updateConfiguration.isPending}
+              >
+                {updateConfiguration.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Save className="w-4 h-4 mr-2" />
+                Enregistrer la structure
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5" />
+                Exemples de structures
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {EXAMPLE_STRUCTURES.map((example, idx) => (
+                <Card key={idx} className="bg-muted/30">
+                  <CardHeader>
+                    <CardTitle className="text-base">{example.title}</CardTitle>
+                    <CardDescription className="text-sm">{example.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <pre className="text-xs bg-background p-3 rounded-md whitespace-pre-wrap font-mono max-h-48 overflow-y-auto">
+                      {example.content}
+                    </pre>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => {
+                        setStructure(example.content);
+                        toast({
+                          title: "Structure copiée",
+                          description: "Vous pouvez maintenant la personnaliser"
+                        });
+                      }}
+                    >
+                      Utiliser cette structure
                     </Button>
-                    <Button onClick={handleSaveExample} disabled={isSavingExample}>
-                      {isSavingExample && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      <Save className="w-4 h-4 mr-2" />
-                      Sauvegarder
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {examples.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
-              <p>Aucun exemple d'annotation pour le moment.</p>
-              <p className="text-sm">Ajoutez des exemples pour améliorer la qualité des annotations générées.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {examples.map((example) => (
-                <Card key={example.id} className="bg-muted/30">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-card-foreground">{example.title}</h4>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
-                          {example.content}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditExample(example)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteExample(example.id)}
-                          disabled={deleteExample.isPending}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Examples Tab */}
+        <TabsContent value="examples" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Exemples d'annotations</CardTitle>
+                  <CardDescription>
+                    Ajoutez des exemples pour que l'IA apprenne votre style de rédaction.
+                  </CardDescription>
+                </div>
+                <Button onClick={openNewExample}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {examples.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>Aucun exemple pour le moment.</p>
+                  <p className="text-sm">Ajoutez des exemples pour améliorer la qualité des annotations.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {examples.map((example) => (
+                    <Card key={example.id} className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-card-foreground">{example.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
+                              {example.content}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditExample(example)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteExample(example.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Phrases Tab */}
+        <TabsContent value="phrases" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Templates de phrases</CardTitle>
+                  <CardDescription>
+                    Créez des phrases récurrentes pour les insérer rapidement dans vos annotations.
+                  </CardDescription>
+                </div>
+                <Button onClick={openNewPhrase}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {phrases.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>Aucune phrase enregistrée.</p>
+                  <p className="text-sm">Créez des templates pour accélérer votre saisie.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(phrasesByCategory).map(([category, categoryPhrases]) => (
+                    <div key={category}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">{category}</h4>
+                      <div className="space-y-2">
+                        {categoryPhrases.map((phrase) => (
+                          <Card key={phrase.id} className="bg-muted/30">
+                            <CardContent className="p-3">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">{phrase.label}</span>
+                                    {phrase.shortcut && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {phrase.shortcut}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground line-clamp-2">
+                                    {phrase.content}
+                                  </p>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => openEditPhrase(phrase)}
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleDeletePhrase(phrase.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tags Tab */}
+        <TabsContent value="tags" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Tags patients</CardTitle>
+                  <CardDescription>
+                    Créez des tags pour organiser et catégoriser vos patients.
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setIsTagDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {tags.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Tag className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>Aucun tag créé.</p>
+                  <p className="text-sm">Les tags vous aident à organiser vos patients.</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      style={{ backgroundColor: tag.color }}
+                      className="text-white px-3 py-1.5 text-sm cursor-pointer hover:opacity-80"
+                    >
+                      {tag.name}
+                      <button
+                        onClick={() => handleDeleteTag(tag.id)}
+                        className="ml-2 hover:text-white/80"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Example Dialog */}
+      <Dialog open={isExampleDialogOpen} onOpenChange={setIsExampleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingExample ? "Modifier l'exemple" : "Nouvel exemple d'annotation"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Titre</Label>
+              <Input
+                value={exampleForm.title}
+                onChange={(e) => setExampleForm({ ...exampleForm, title: e.target.value })}
+                placeholder="Ex: Visite de contrôle diabétique"
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label>Contenu</Label>
+              <Textarea
+                value={exampleForm.content}
+                onChange={(e) => setExampleForm({ ...exampleForm, content: e.target.value })}
+                className="min-h-[250px]"
+                placeholder="Rédigez un exemple complet d'annotation..."
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsExampleDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveExample}>
+                <Save className="w-4 h-4 mr-2" />
+                Sauvegarder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phrase Dialog */}
+      <Dialog open={isPhraseDialogOpen} onOpenChange={setIsPhraseDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingPhrase ? "Modifier la phrase" : "Nouvelle phrase"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Catégorie *</Label>
+                <Input
+                  value={phraseForm.category}
+                  onChange={(e) => setPhraseForm({ ...phraseForm, category: e.target.value })}
+                  placeholder="Ex: État général"
+                  list="phrase-categories"
+                />
+                <datalist id="phrase-categories">
+                  {DEFAULT_PHRASE_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="space-y-2">
+                <Label>Label *</Label>
+                <Input
+                  value={phraseForm.label}
+                  onChange={(e) => setPhraseForm({ ...phraseForm, label: e.target.value })}
+                  placeholder="Ex: Patient collaboratif"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Contenu *</Label>
+              <Textarea
+                value={phraseForm.content}
+                onChange={(e) => setPhraseForm({ ...phraseForm, content: e.target.value })}
+                className="min-h-[150px]"
+                placeholder="Le texte qui sera inséré..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Raccourci (optionnel)</Label>
+              <Input
+                value={phraseForm.shortcut}
+                onChange={(e) => setPhraseForm({ ...phraseForm, shortcut: e.target.value })}
+                placeholder="Ex: /collab"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsPhraseDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSavePhrase}>
+                <Save className="w-4 h-4 mr-2" />
+                Sauvegarder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tag Dialog */}
+      <Dialog open={isTagDialogOpen} onOpenChange={setIsTagDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nouveau tag</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nom *</Label>
+              <Input
+                value={tagForm.name}
+                onChange={(e) => setTagForm({ ...tagForm, name: e.target.value })}
+                placeholder="Ex: Urgent"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Couleur</Label>
+              <div className="flex flex-wrap gap-2">
+                {TAG_COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => setTagForm({ ...tagForm, color: color.value })}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      tagForm.color === color.value ? "border-foreground" : "border-transparent"
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsTagDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleCreateTag}>
+                <Plus className="w-4 h-4 mr-2" />
+                Créer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

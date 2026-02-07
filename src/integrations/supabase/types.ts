@@ -181,6 +181,60 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      phrase_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          label: string
+          shortcut: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          label: string
+          shortcut?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          label?: string
+          shortcut?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_configurations: {
         Row: {
           annotation_structure: string

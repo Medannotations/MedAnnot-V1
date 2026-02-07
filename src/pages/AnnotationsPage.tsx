@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,6 +23,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   Plus,
@@ -35,13 +45,19 @@ import {
   Trash2,
   Filter,
   X,
+  Moon,
+  CheckSquare,
+  Square,
+  Download,
+  ClipboardList,
 } from "lucide-react";
 import { useAnnotations, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
 import { usePatients } from "@/hooks/usePatients";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
+import { Separator } from "@/components/ui/separator";
 
 type PeriodFilter = "today" | "week" | "month" | "3months" | "custom" | "all";
 
@@ -54,6 +70,12 @@ export default function AnnotationsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewAnnotation, setViewAnnotation] = useState<AnnotationWithPatient | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Mode "Soirée" - Batch actions
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedAnnotations, setSelectedAnnotations] = useState<Set<string>>(new Set());
+  const [showBatchCopyDialog, setShowBatchCopyDialog] = useState(false);
+  const [batchCopySeparator, setBatchCopySeparator] = useState("---");
 
   const { data: patients, isLoading: patientsLoading } = usePatients();
   const deleteAnnotation = useDeleteAnnotation();
@@ -101,6 +123,12 @@ export default function AnnotationsPage() {
     searchQuery: searchQuery || undefined,
   });
 
+  // Filtrer pour n'afficher que les annotations d'aujourd'hui en mode batch par défaut
+  const todayAnnotations = useMemo(() => {
+    if (!annotations) return [];
+    return annotations.filter(a => isToday(parseISO(a.visit_date)));
+  }, [annotations]);
+
   const handleCopy = async (content: string) => {
     await navigator.clipboard.writeText(content);
     toast({
@@ -143,6 +171,58 @@ export default function AnnotationsPage() {
 
   const isLoading = annotationsLoading || patientsLoading;
 
+  // Mode Batch functions
+  const toggleBatchMode = () => {
+    setBatchMode(!batchMode);
+    setSelectedAnnotations(new Set());
+  };
+
+  const toggleAnnotationSelection = (id: string) => {
+    const newSelected = new Set(selectedAnnotations);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedAnnotations(newSelected);
+  };
+
+  const selectAllToday = () => {
+    if (!todayAnnotations) return;
+    const allIds = new Set(todayAnnotations.map(a => a.id));
+    setSelectedAnnotations(allIds);
+  };
+
+  const clearSelection = () => {
+    setSelectedAnnotations(new Set());
+  };
+
+  const handleBatchCopy = async () => {
+    if (!annotations) return;
+    
+    const selectedData = annotations.filter(a => selectedAnnotations.has(a.id));
+    // Trier par date de visite
+    selectedData.sort((a, b) => new Date(a.visit_date).getTime() - new Date(b.visit_date).getTime());
+    
+    const combined = selectedData.map(a => {
+      const patientName = `${a.patients.last_name} ${a.patients.first_name}`;
+      const date = format(parseISO(a.visit_date), "d MMMM yyyy", { locale: fr });
+      const time = a.visit_time ? ` à ${a.visit_time.slice(0, 5)}` : "";
+      return `**${patientName}** - ${date}${time}\n\n${a.content}`;
+    }).join(`\n\n${batchCopySeparator}\n\n`);
+
+    await navigator.clipboard.writeText(combined);
+    
+    toast({
+      title: "✓ Annotations copiées !",
+      description: `${selectedData.length} annotation(s) copiées dans le presse-papier.`,
+    });
+    
+    setShowBatchCopyDialog(false);
+    setBatchMode(false);
+    setSelectedAnnotations(new Set());
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -153,13 +233,76 @@ export default function AnnotationsPage() {
             Gérez toutes vos annotations infirmières
           </p>
         </div>
-        <Button asChild size="lg">
-          <Link to="/app/annotations/new">
-            <Plus className="w-5 h-5 mr-2" />
-            Nouvelle annotation
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant={batchMode ? "secondary" : "outline"} 
+            onClick={toggleBatchMode}
+            size="sm"
+          >
+            <Moon className="w-4 h-4 mr-2" />
+            {batchMode ? "Quitter mode Soirée" : "Mode Soirée"}
+          </Button>
+          <Button asChild size="lg">
+            <Link to="/app/annotations/new">
+              <Plus className="w-5 h-5 mr-2" />
+              Nouvelle annotation
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {/* Mode Soirée Banner */}
+      {batchMode && (
+        <Card className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-indigo-200">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                  <Moon className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Mode Soirée</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Sélectionnez les annotations à copier en une seule fois
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {todayAnnotations.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={selectAllToday}>
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Tout le jour
+                  </Button>
+                )}
+                {selectedAnnotations.size > 0 && (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={clearSelection}>
+                      <Square className="w-4 h-4 mr-2" />
+                      Désélectionner
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowBatchCopyDialog(true)}
+                      className="bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      <ClipboardList className="w-4 h-4 mr-2" />
+                      Copier {selectedAnnotations.size} annotation{selectedAnnotations.size > 1 ? "s" : ""}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            {selectedAnnotations.size > 0 && (
+              <div className="mt-4 pt-4 border-t border-indigo-200/50">
+                <p className="text-sm text-muted-foreground">
+                  {selectedAnnotations.size} annotation{selectedAnnotations.size > 1 ? "s" : ""} sélectionnée{selectedAnnotations.size > 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Stats */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -172,7 +315,7 @@ export default function AnnotationsPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant={showFilters ? "secondary" : "outline"}
             size="sm"
@@ -317,40 +460,58 @@ export default function AnnotationsPage() {
       ) : (
         <div className="space-y-4">
           {annotations?.map((annotation) => (
-            <Card key={annotation.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={annotation.id} 
+              className={`hover:shadow-md transition-shadow ${
+                batchMode && selectedAnnotations.has(annotation.id) 
+                  ? "ring-2 ring-indigo-500 border-indigo-500" 
+                  : ""
+              }`}
+            >
               <CardContent className="p-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-semibold text-lg">
-                        {annotation.patients.last_name} {annotation.patients.first_name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {format(new Date(annotation.visit_date), "EEEE d MMMM yyyy", { locale: fr })}
-                      </span>
-                      {annotation.visit_time && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {annotation.visit_time.slice(0, 5)}
+                  <div className="flex items-center gap-3">
+                    {batchMode && (
+                      <Checkbox 
+                        checked={selectedAnnotations.has(annotation.id)}
+                        onCheckedChange={() => toggleAnnotationSelection(annotation.id)}
+                        className="mt-1"
+                      />
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold text-lg">
+                          {annotation.patients.last_name} {annotation.patients.first_name}
                         </span>
-                      )}
-                      {annotation.visit_duration && (
-                        <Badge variant="outline">{annotation.visit_duration} min</Badge>
-                      )}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(parseISO(annotation.visit_date), "EEEE d MMMM yyyy", { locale: fr })}
+                        </span>
+                        {annotation.visit_time && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {annotation.visit_time.slice(0, 5)}
+                          </span>
+                        )}
+                        {annotation.visit_duration && (
+                          <Badge variant="outline">{annotation.visit_duration} min</Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleCopy(annotation.content)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
+                  {!batchMode && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCopy(annotation.content)}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
 
                 {/* Content Preview */}
@@ -360,30 +521,32 @@ export default function AnnotationsPage() {
                 </p>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-3 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewAnnotation(annotation)}
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    Voir détails
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/app/annotations/${annotation.id}/edit`}>
-                      <Pencil className="w-4 h-4 mr-1" />
-                      Éditer
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive ml-auto"
-                    onClick={() => setDeleteId(annotation.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {!batchMode && (
+                  <div className="flex items-center gap-2 pt-3 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setViewAnnotation(annotation)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Voir détails
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/app/annotations/${annotation.id}/edit`}>
+                        <Pencil className="w-4 h-4 mr-1" />
+                        Éditer
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive ml-auto"
+                      onClick={() => setDeleteId(annotation.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -420,6 +583,60 @@ export default function AnnotationsPage() {
           onCopy={() => handleCopy(viewAnnotation.content)}
         />
       )}
+
+      {/* Batch Copy Dialog */}
+      <Dialog open={showBatchCopyDialog} onOpenChange={setShowBatchCopyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Copier les annotations
+            </DialogTitle>
+            <DialogDescription>
+              {selectedAnnotations.size} annotation{selectedAnnotations.size > 1 ? "s" : ""} seront copiées dans le presse-papier
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Séparateur entre les annotations</Label>
+              <Select value={batchCopySeparator} onValueChange={setBatchCopySeparator}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="---">Ligne de tirets (---)</SelectItem>
+                  <SelectItem value="\n\n">Double saut de ligne</SelectItem>
+                  <SelectItem value="\n==========\n">Ligne d'égal (=)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="bg-muted p-3 rounded-lg text-sm">
+              <p className="font-medium mb-1">Aperçu du format :</p>
+              <p className="text-muted-foreground">
+                <strong>Nom Patient</strong> - Date<br/>
+                Contenu de l'annotation...<br/><br/>
+                {batchCopySeparator === "\n\n" ? "(saut de ligne)" : 
+                 batchCopySeparator === "\n==========\n" ? "==========" : 
+                 batchCopySeparator}<br/><br/>
+                <strong>Nom Patient 2</strong> - Date<br/>
+                Contenu de l'annotation...
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchCopyDialog(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleBatchCopy}>
+              <Copy className="w-4 h-4 mr-2" />
+              Copier tout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

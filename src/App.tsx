@@ -17,13 +17,21 @@ import PatientsPage from "./pages/PatientsPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
 import AnnotationsPage from "./pages/AnnotationsPage";
 import CreateAnnotationPage from "./pages/CreateAnnotationPage";
+import EditAnnotationPage from "./pages/EditAnnotationPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import TermsOfSalePage from "./pages/TermsOfSalePage";
 import LegalNoticePage from "./pages/LegalNoticePage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -55,10 +63,12 @@ const App = () => (
             >
               <Route index element={<DashboardHome />} />
               <Route path="configuration" element={<ConfigurationPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="patients" element={<PatientsPage />} />
               <Route path="patients/:patientId" element={<PatientDetailPage />} />
               <Route path="annotations" element={<AnnotationsPage />} />
               <Route path="annotations/new" element={<CreateAnnotationPage />} />
+              <Route path="annotations/:id/edit" element={<EditAnnotationPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
