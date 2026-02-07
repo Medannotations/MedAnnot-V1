@@ -178,10 +178,9 @@ export default function CreateAnnotationPage() {
       return;
     }
     
-    // Utiliser la structure par défaut si aucune n'est configurée
-    const structureToUse = config?.annotation_structure || isDefaultConfig 
-      ? config?.annotation_structure 
-      : null;
+    // Utiliser la structure - le hook useUserConfigurationWithDefault garantit
+    // qu'on a toujours une structure (celle de l'utilisateur ou la défaut)
+    const structureToUse = config?.annotation_structure?.trim();
       
     if (!structureToUse) {
       toast({
