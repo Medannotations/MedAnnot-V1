@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -35,102 +36,299 @@ import {
   Trash2,
   Filter,
   X,
+  Activity,
+  Heart,
+  Wind,
+  Thermometer,
   AlertCircle,
-  Edit3,
-  Trash,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useAnnotations, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
 import { usePatients } from "@/hooks/usePatients";
-import { useHasDraft, clearAnnotationDraft, getDraftSummary } from "@/hooks/usePersistedAnnotationState";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, isToday, parseISO, subDays, subWeeks, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
+import { cn } from "@/lib/utils";
 
-type PeriodFilter = "today" | "week" | "month" | "3months" | "custom" | "all";
+// Type pour les signes vitaux
+interface VitalSigns {
+  temperature?: number;
+  heartRate?: number;
+  systolicBP?: number;
+  diastolicBP?: number;
+  respiratoryRate?: number;
+  oxygenSaturation?: number;
+  bloodSugar?: number;
+  painLevel?: number;
+  consciousness?: string;
+}
 
-const STEP_LABELS: Record<string, string> = {
-  patient: "Sélection patient",
-  visit: "Détails visite",
-  record: "Enregistrement audio",
-  transcription: "Transcription",
-  result: "Annotation",
-};
+// Composant pour afficher les signes vitaux
+function VitalSignsBadge({ signs }: { signs: VitalSigns | null | undefined }) {
+  if (!signs) return null;
+  
+  const hasAnySign = Object.values(signs).some(v => v !== undefined && v !== null && v !== "");
+  if (!hasAnySign) return null;
 
-function getStepLabel(step: string): string {
-  return STEP_LABELS[step] || step;
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {signs.temperature && (
+        <Badge variant="outline" className="text-xs bg-orange-50 border-orange-200 text-orange-700">
+          <Thermometer className="w-3 h-3 mr-1" />
+          {signs.temperature}°C
+        </Badge>
+      )}
+      {signs.heartRate && (
+        <Badge variant="outline" className="text-xs bg-red-50 border-red-200 text-red-700">
+          <Heart className="w-3 h-3 mr-1" />
+          {signs.heartRate} bpm
+        </Badge>
+      )}
+      {(signs.systolicBP || signs.diastolicBP) && (
+        <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
+          <Activity className="w-3 h-3 mr-1" />
+          {signs.systolicBP}/{signs.diastolicBP}
+        </Badge>
+      )}
+      {signs.oxygenSaturation && (
+        <Badge variant="outline" className="text-xs bg-cyan-50 border-cyan-200 text-cyan-700">
+          <Wind className="w-3 h-3 mr-1" />
+          {signs.oxygenSaturation}%
+        </Badge>
+      )}
+      {signs.respiratoryRate && (
+        <Badge variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
+          {signs.respiratoryRate} rpm
+        </Badge>
+      )}
+      {signs.painLevel !== undefined && signs.painLevel > 0 && (
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-xs",
+            signs.painLevel >= 7 ? "bg-red-50 border-red-300 text-red-700" :
+            signs.painLevel >= 4 ? "bg-yellow-50 border-yellow-200 text-yellow-700" :
+            "bg-green-50 border-green-200 text-green-700"
+          )}
+        >
+          Douleur: {signs.painLevel}/10
+        </Badge>
+      )}
+      {signs.consciousness && signs.consciousness !== "alert" && (
+        <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200 text-purple-700">
+          ⚠️ {signs.consciousness === "unresponsive" ? "Inconscient" : 
+               signs.consciousness === "pain" ? "Réponse douleur" : 
+               signs.consciousness === "verbal" ? "Réponse verbale" : signs.consciousness}
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+// Composant carte d'annotation
+function AnnotationCard({ 
+  annotation, 
+  onView, 
+  onCopy, 
+  onDelete 
+}: { 
+  annotation: AnnotationWithPatient; 
+  onView: (a: AnnotationWithPatient) => void;
+  onCopy: (content: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasVitalSigns = annotation.vital_signs && Object.keys(annotation.vital_signs).length > 0;
+  
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        {/* Header avec info patient et date */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <User className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="font-semibold text-lg">
+                {annotation.patients.last_name} {annotation.patients.first_name}
+              </span>
+              {hasVitalSigns && (
+                <Badge variant="secondary" className="text-xs">
+                  <Activity className="w-3 h-3 mr-1" />
+                  Constantes
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1 flex-wrap">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {format(parseISO(annotation.visit_date), "EEEE d MMMM yyyy", { locale: fr })}
+              </span>
+              {annotation.visit_time && (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {annotation.visit_time.slice(0, 5)}
+                </span>
+              )}
+              {annotation.visit_duration && (
+                <Badge variant="outline" className="text-xs">
+                  {annotation.visit_duration} min
+                </Badge>
+              )}
+            </div>
+          </div>
+          
+          {/* Actions rapides */}
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onCopy(annotation.content)}
+              className="h-8 w-8"
+              title="Copier"
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onView(annotation)}
+              className="h-8 w-8"
+              title="Voir détails"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(annotation.id)}
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              title="Supprimer"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Signes vitaux */}
+        <VitalSignsBadge signs={annotation.vital_signs as VitalSigns} />
+
+        {/* Contenu de l'annotation */}
+        <div className="mt-3">
+          <p className={cn(
+            "text-muted-foreground whitespace-pre-line text-sm",
+            !expanded && "line-clamp-3"
+          )}>
+            {annotation.content}
+          </p>
+          {annotation.content.length > 200 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(!expanded)}
+              className="mt-2 h-7 text-xs"
+            >
+              {expanded ? (
+                <><ChevronUp className="w-3 h-3 mr-1" /> Voir moins</>
+              ) : (
+                <><ChevronDown className="w-3 h-3 mr-1" /> Voir plus</>
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* Footer avec actions secondaires */}
+        <div className="flex items-center justify-between pt-3 mt-3 border-t">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              asChild
+              className="h-8"
+            >
+              <Link to={`/app/annotations/${annotation.id}/edit`}>
+                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                Modifier
+              </Link>
+            </Button>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Créée le {format(parseISO(annotation.created_at), "d/MM/yyyy à HH:mm", { locale: fr })}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function AnnotationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [patientFilter, setPatientFilter] = useState<string>("all");
-  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
-  const [customStartDate, setCustomStartDate] = useState("");
-  const [customEndDate, setCustomEndDate] = useState("");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewAnnotation, setViewAnnotation] = useState<AnnotationWithPatient | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Brouillon
-  const hasDraft = useHasDraft();
-  const [draftSummary, setDraftSummary] = useState<{ patientId: string | null; step: string; date: string } | null>(null);
-  const [showDraftCard, setShowDraftCard] = useState(false);
+  const [activeTab, setActiveTab] = useState("today");
 
   const { data: patients, isLoading: patientsLoading } = usePatients();
-  
-  // Charger le résumé du brouillon
-  useEffect(() => {
-    if (hasDraft) {
-      setDraftSummary(getDraftSummary());
-      setShowDraftCard(true);
-    } else {
-      setShowDraftCard(false);
-    }
-  }, [hasDraft]);
+  const { data: annotations, isLoading: annotationsLoading } = useAnnotations();
   const deleteAnnotation = useDeleteAnnotation();
 
-  // Calculate date range based on period filter
-  const dateRange = useMemo(() => {
-    const now = new Date();
-    switch (periodFilter) {
-      case "today":
-        return {
-          startDate: format(now, "yyyy-MM-dd"),
-          endDate: format(now, "yyyy-MM-dd"),
-        };
-      case "week":
-        const weekAgo = new Date(now);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return {
-          startDate: format(weekAgo, "yyyy-MM-dd"),
-          endDate: format(now, "yyyy-MM-dd"),
-        };
-      case "month":
-        return {
-          startDate: format(startOfMonth(now), "yyyy-MM-dd"),
-          endDate: format(endOfMonth(now), "yyyy-MM-dd"),
-        };
-      case "3months":
-        return {
-          startDate: format(subMonths(now, 3), "yyyy-MM-dd"),
-          endDate: format(now, "yyyy-MM-dd"),
-        };
-      case "custom":
-        return {
-          startDate: customStartDate || undefined,
-          endDate: customEndDate || undefined,
-        };
-      default:
-        return {};
-    }
-  }, [periodFilter, customStartDate, customEndDate]);
+  const isLoading = annotationsLoading || patientsLoading;
 
-  const { data: annotations, isLoading: annotationsLoading } = useAnnotations({
-    patientId: patientFilter !== "all" ? patientFilter : undefined,
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-    searchQuery: searchQuery || undefined,
-  });
+  // Filtrer les annotations
+  const filteredAnnotations = useMemo(() => {
+    if (!annotations) return [];
+    
+    return annotations.filter((annotation) => {
+      // Filtre recherche texte
+      const matchesSearch = !searchQuery || 
+        annotation.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        annotation.patients.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        annotation.patients.last_name.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Filtre patient
+      const matchesPatient = patientFilter === "all" || annotation.patient_id === patientFilter;
+      
+      // Filtre date
+      let matchesDate = true;
+      const annotationDate = parseISO(annotation.visit_date);
+      const now = new Date();
+      
+      switch (dateFilter) {
+        case "today":
+          matchesDate = isToday(annotationDate);
+          break;
+        case "yesterday":
+          matchesDate = annotationDate >= subDays(now, 1) && annotationDate < now;
+          break;
+        case "week":
+          matchesDate = annotationDate >= subWeeks(now, 1);
+          break;
+        case "month":
+          matchesDate = annotationDate >= subMonths(now, 1);
+          break;
+        case "3months":
+          matchesDate = annotationDate >= subMonths(now, 3);
+          break;
+      }
+      
+      return matchesSearch && matchesPatient && matchesDate;
+    }).sort((a, b) => 
+      new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime()
+    );
+  }, [annotations, searchQuery, patientFilter, dateFilter]);
+
+  // Annotations du jour
+  const todayAnnotations = useMemo(() => {
+    return filteredAnnotations.filter(a => isToday(parseISO(a.visit_date)));
+  }, [filteredAnnotations]);
+
+  // Annotations historique (pas aujourd'hui)
+  const historyAnnotations = useMemo(() => {
+    return filteredAnnotations.filter(a => !isToday(parseISO(a.visit_date)));
+  }, [filteredAnnotations]);
 
   const handleCopy = async (content: string) => {
     await navigator.clipboard.writeText(content);
@@ -160,196 +358,22 @@ export default function AnnotationsPage() {
   };
 
   const clearFilters = () => {
-    setPatientFilter("all");
-    setPeriodFilter("all");
-    setCustomStartDate("");
-    setCustomEndDate("");
     setSearchQuery("");
+    setPatientFilter("all");
+    setDateFilter("all");
   };
 
-  const hasActiveFilters =
-    patientFilter !== "all" ||
-    periodFilter !== "all" ||
-    searchQuery.length > 0;
+  const hasActiveFilters = searchQuery || patientFilter !== "all" || dateFilter !== "all";
 
-  const isLoading = annotationsLoading || patientsLoading;
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Mes Annotations</h1>
-          <p className="text-muted-foreground mt-1">
-            Gérez toutes vos annotations infirmières
-          </p>
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-6xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Mes Annotations</h1>
+            <p className="text-muted-foreground mt-1">Chargement...</p>
+          </div>
         </div>
-        <Button asChild size="lg">
-          <Link to="/app/annotations/new">
-            <Plus className="w-5 h-5 mr-2" />
-            Nouvelle annotation
-          </Link>
-        </Button>
-      </div>
-
-      {/* Brouillon en cours */}
-      {showDraftCard && draftSummary && (
-        <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start sm:items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                  <AlertCircle className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Brouillon en cours</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Vous avez une annotation non terminée du {draftSummary.date} 
-                    {draftSummary.step && ` (étape: ${getStepLabel(draftSummary.step)})`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => {
-                    clearAnnotationDraft();
-                    setShowDraftCard(false);
-                  }}
-                >
-                  <Trash className="w-4 h-4 mr-2" />
-                  Supprimer
-                </Button>
-                <Button 
-                  asChild
-                  size="sm" 
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  <Link to="/app/annotations/new">
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Continuer
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Search and Stats */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher dans les annotations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant={showFilters ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtres
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2">
-                {[patientFilter !== "all", periodFilter !== "all", searchQuery.length > 0].filter(Boolean).length}
-              </Badge>
-            )}
-          </Button>
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X className="w-4 h-4 mr-1" />
-              Effacer
-            </Button>
-          )}
-          <Badge variant="outline" className="text-muted-foreground">
-            <FileText className="w-3 h-3 mr-1" />
-            {annotations?.length || 0} annotation{(annotations?.length || 0) > 1 ? "s" : ""}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Patient Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Patient
-                </label>
-                <Select value={patientFilter} onValueChange={setPatientFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tous les patients" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les patients</SelectItem>
-                    {patients?.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.last_name} {patient.first_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Period Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Période
-                </label>
-                <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Toutes les dates" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes les dates</SelectItem>
-                    <SelectItem value="today">Aujourd'hui</SelectItem>
-                    <SelectItem value="week">Cette semaine</SelectItem>
-                    <SelectItem value="month">Ce mois-ci</SelectItem>
-                    <SelectItem value="3months">3 derniers mois</SelectItem>
-                    <SelectItem value="custom">Personnalisé</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Custom Date Range */}
-              {periodFilter === "custom" && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Du</label>
-                    <Input
-                      type="date"
-                      value={customStartDate}
-                      onChange={(e) => setCustomStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Au</label>
-                    <Input
-                      type="date"
-                      value={customEndDate}
-                      onChange={(e) => setCustomEndDate(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Annotations List */}
-      {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
@@ -361,115 +385,238 @@ export default function AnnotationsPage() {
             </Card>
           ))}
         </div>
-      ) : annotations?.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            {hasActiveFilters ? (
-              <>
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p className="text-lg font-medium">Aucune annotation ne correspond</p>
-                <p className="text-sm mb-4">Modifiez vos critères de recherche</p>
-                <Button variant="outline" onClick={clearFilters}>
-                  Réinitialiser les filtres
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-6xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Mes Annotations</h1>
+          <p className="text-muted-foreground mt-1">
+            {annotations?.length || 0} annotation{annotations?.length !== 1 ? "s" : ""} au total
+          </p>
+        </div>
+        <Button asChild size="lg" className="w-full sm:w-auto">
+          <Link to="/app/annotations/new">
+            <Plus className="w-5 h-5 mr-2" />
+            Nouvelle annotation
+          </Link>
+        </Button>
+      </div>
+
+      {/* Filtres */}
+      <div className="space-y-4">
+        {/* Barre de recherche principale */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher dans les annotations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            variant={showFilters ? "secondary" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full sm:w-auto"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filtres
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="ml-2">
+                {[searchQuery, patientFilter !== "all", dateFilter !== "all"].filter(Boolean).length}
+              </Badge>
+            )}
+          </Button>
+        </div>
+
+        {/* Filtres avancés */}
+        {showFilters && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Filtre patient */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Patient
+                  </label>
+                  <Select value={patientFilter} onValueChange={setPatientFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tous les patients" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les patients</SelectItem>
+                      {patients?.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.last_name} {patient.first_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtre date */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Période
+                  </label>
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Toutes les dates" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les dates</SelectItem>
+                      <SelectItem value="today">Aujourd'hui</SelectItem>
+                      <SelectItem value="yesterday">Hier</SelectItem>
+                      <SelectItem value="week">Cette semaine</SelectItem>
+                      <SelectItem value="month">Ce mois</SelectItem>
+                      <SelectItem value="3months">3 derniers mois</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {hasActiveFilters && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="mt-4"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Effacer les filtres
                 </Button>
-              </>
-            ) : (
-              <>
-                <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p className="text-lg font-medium">Aucune annotation pour le moment</p>
-                <p className="text-sm mb-4">
-                  Créez votre première annotation pour documenter vos visites
-                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Résumé des filtres actifs */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap gap-2">
+            {searchQuery && (
+              <Badge variant="secondary" className="gap-1">
+                <Search className="w-3 h-3" />
+                "{searchQuery}"
+                <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSearchQuery("")} />
+              </Badge>
+            )}
+            {patientFilter !== "all" && (
+              <Badge variant="secondary" className="gap-1">
+                <User className="w-3 h-3" />
+                {patients?.find(p => p.id === patientFilter)?.last_name}
+                <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setPatientFilter("all")} />
+              </Badge>
+            )}
+            {dateFilter !== "all" && (
+              <Badge variant="secondary" className="gap-1">
+                <Calendar className="w-3 h-3" />
+                {dateFilter === "today" ? "Aujourd'hui" :
+                 dateFilter === "yesterday" ? "Hier" :
+                 dateFilter === "week" ? "Cette semaine" :
+                 dateFilter === "month" ? "Ce mois" : "3 mois"}
+                <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setDateFilter("all")} />
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="today" className="gap-2">
+            <Calendar className="w-4 h-4" />
+            Aujourd'hui
+            {todayAnnotations.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {todayAnnotations.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <FileText className="w-4 h-4" />
+            Historique
+            {historyAnnotations.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {historyAnnotations.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab Aujourd'hui */}
+        <TabsContent value="today" className="mt-6 space-y-4">
+          {todayAnnotations.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p className="text-lg font-medium">Aucune annotation aujourd'hui</p>
+                <p className="text-sm mb-4">Créez votre première annotation de la journée</p>
                 <Button asChild>
                   <Link to="/app/annotations/new">
                     <Plus className="w-4 h-4 mr-2" />
-                    Créer ma première annotation
+                    Nouvelle annotation
                   </Link>
                 </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {annotations?.map((annotation) => (
-            <Card 
-              key={annotation.id} 
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-4">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-lg">
-                          {annotation.patients.last_name} {annotation.patients.first_name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {format(new Date(annotation.visit_date), "EEEE d MMMM yyyy", { locale: fr })}
-                        </span>
-                        {annotation.visit_time && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {annotation.visit_time.slice(0, 5)}
-                          </span>
-                        )}
-                        {annotation.visit_duration && (
-                          <Badge variant="outline">{annotation.visit_duration} min</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleCopy(annotation.content)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {/* Content Preview */}
-                <p className="text-muted-foreground line-clamp-3 whitespace-pre-line mb-4">
-                  {annotation.content.substring(0, 300)}
-                  {annotation.content.length > 300 && "..."}
-                </p>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-3 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewAnnotation(annotation)}
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    Voir détails
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/app/annotations/${annotation.id}/edit`}>
-                      <Pencil className="w-4 h-4 mr-1" />
-                      Éditer
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive ml-auto"
-                    onClick={() => setDeleteId(annotation.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="space-y-4">
+              {todayAnnotations.map((annotation) => (
+                <AnnotationCard
+                  key={annotation.id}
+                  annotation={annotation}
+                  onView={setViewAnnotation}
+                  onCopy={handleCopy}
+                  onDelete={setDeleteId}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Tab Historique */}
+        <TabsContent value="history" className="mt-6 space-y-4">
+          {historyAnnotations.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p className="text-lg font-medium">Aucune annotation dans l'historique</p>
+                <p className="text-sm">
+                  {hasActiveFilters 
+                    ? "Modifiez vos filtres pour voir plus de résultats" 
+                    : "Les annotations passées apparaîtront ici"}
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="outline" onClick={clearFilters} className="mt-4">
+                    Réinitialiser les filtres
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {historyAnnotations.map((annotation) => (
+                <AnnotationCard
+                  key={annotation.id}
+                  annotation={annotation}
+                  onView={setViewAnnotation}
+                  onCopy={handleCopy}
+                  onDelete={setDeleteId}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
