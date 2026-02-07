@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,26 @@ import { supabase } from "@/integrations/supabase/client";
 export function SubscriptionSettings() {
   const { profile, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [localStatus, setLocalStatus] = useState<string | null>(null);
 
-  const subscriptionStatus = profile?.subscription_status || "none";
+  // Récupérer le statut frais depuis la base
+  useEffect(() => {
+    const fetchFreshStatus = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("subscription_status, subscription_current_period_end")
+        .eq("user_id", user.id)
+        .single();
+      if (data) {
+        setLocalStatus(data.subscription_status);
+      }
+    };
+    fetchFreshStatus();
+  }, [user?.id]);
+
+  // Utiliser le statut frais ou celui du profil
+  const subscriptionStatus = localStatus || profile?.subscription_status || "none";
   const isActive = subscriptionStatus === "active";
   const isTrialing = subscriptionStatus === "trialing";
   const isCanceled = subscriptionStatus === "canceled";
