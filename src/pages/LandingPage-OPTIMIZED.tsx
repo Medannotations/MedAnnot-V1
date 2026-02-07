@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
-import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA-DEBUG";
+import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA-PRODUCTION";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
