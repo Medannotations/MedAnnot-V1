@@ -24,7 +24,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { usePatients, type Patient } from "@/hooks/usePatients";
-import { useUserConfiguration, useExampleAnnotations } from "@/hooks/useConfiguration";
+import { useUserConfigurationWithDefault, useExampleAnnotations } from "@/hooks/useConfiguration";
 import { useCreateAnnotation, useAnnotationsByPatient } from "@/hooks/useAnnotations";
 import { transcribeAudio, generateAnnotation } from "@/services/aiService";
 import { format } from "date-fns";
@@ -64,7 +64,7 @@ export default function CreateAnnotationPage() {
   const [hasHandledDraft, setHasHandledDraft] = useState(false);
 
   const { data: patients } = usePatients();
-  const { data: config } = useUserConfiguration();
+  const { data: config, isDefault: isDefaultConfig } = useUserConfigurationWithDefault();
   const { data: examples } = useExampleAnnotations();
   const { data: patientAnnotations } = useAnnotationsByPatient(selectedPatient?.id);
   const createAnnotation = useCreateAnnotation();
@@ -169,10 +169,24 @@ export default function CreateAnnotationPage() {
   };
 
   const handleGenerateAnnotation = async (editedTranscription: string) => {
-    if (!selectedPatient || !config) {
+    if (!selectedPatient) {
+      toast({
+        title: "Patient manquant",
+        description: "Veuillez sélectionner un patient",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Utiliser la structure par défaut si aucune n'est configurée
+    const structureToUse = config?.annotation_structure || isDefaultConfig 
+      ? config?.annotation_structure 
+      : null;
+      
+    if (!structureToUse) {
       toast({
         title: "Configuration manquante",
-        description: "Veuillez configurer votre structure d'annotation",
+        description: "Veuillez configurer votre structure d'annotation dans les paramètres",
         variant: "destructive",
       });
       return;

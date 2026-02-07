@@ -28,6 +28,19 @@ export function useUserConfiguration() {
   });
 }
 
+const DEFAULT_STRUCTURE = `Date et heure de la visite:
+Motif et contexte:
+Observations cliniques:
+- Constantes:
+- Etat général:
+- Examen physique:
+Soins réalisés:
+- Traitements administrés:
+- Soins infirmiers:
+Conseils et éducation:
+Prochaine visite:
+Signature:`;
+
 export function useUpdateConfiguration() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -36,20 +49,64 @@ export function useUpdateConfiguration() {
     mutationFn: async (structure: string) => {
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      // Vérifier si une configuration existe déjà
+      const { data: existing } = await supabase
         .from("user_configurations")
-        .update({ annotation_structure: structure })
+        .select("id")
         .eq("user_id", user.id)
-        .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      return data as UserConfiguration;
+      let result;
+      if (existing) {
+        // Mettre à jour
+        result = await supabase
+          .from("user_configurations")
+          .update({ 
+            annotation_structure: structure,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", user.id)
+          .select()
+          .single();
+      } else {
+        // Créer nouvelle configuration
+        result = await supabase
+          .from("user_configurations")
+          .insert({ 
+            user_id: user.id,
+            annotation_structure: structure,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+      }
+
+      if (result.error) throw result.error;
+      return result.data as UserConfiguration;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-configuration"] });
     },
   });
+}
+
+// Hook pour obtenir la configuration avec fallback par défaut
+export function useUserConfigurationWithDefault() {
+  const { data, isLoading, error } = useUserConfiguration();
+  
+  return {
+    data: data || {
+      annotation_structure: DEFAULT_STRUCTURE,
+      id: "default",
+      user_id: "default",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as UserConfiguration,
+    isLoading,
+    error,
+    isDefault: !data
+  };
 }
 
 // ==================== Example Annotations ====================

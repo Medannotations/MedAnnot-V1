@@ -122,7 +122,15 @@ export function useCreatePatient() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (newPatient) => {
+      // Mise à jour immédiate du cache pour éviter le délai
+      queryClient.setQueryData(["patients", user?.id, true], (old: Patient[] | undefined) => {
+        return old ? [newPatient, ...old] : [newPatient];
+      });
+      queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
+        return old ? [newPatient, ...old] : [newPatient];
+      });
+      // Invalidation pour s'assurer de la cohérence
       queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
   });
