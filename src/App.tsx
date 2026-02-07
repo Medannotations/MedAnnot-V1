@@ -13,6 +13,7 @@ import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import ConfigurationPage from "./pages/ConfigurationPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import PatientsPage from "./pages/PatientsPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
 import AnnotationsPage from "./pages/AnnotationsPage";
