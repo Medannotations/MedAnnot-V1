@@ -82,11 +82,29 @@ export default function CreateAnnotationPage() {
   }, [searchParams, patients]);
 
   // Check for persisted state on mount (ONLY ONCE)
+  // Ne pas utiliser hasDraft qui change quand on sauvegarde pendant la création
   useEffect(() => {
-    if (isReady && hasDraft) {
-      setShowRestoreDialog(true);
+    if (!isReady) return;
+    
+    // Vérifier directement sessionStorage pour éviter les faux positifs
+    const sessionHandled = sessionStorage.getItem("medannot_draft_handled");
+    if (sessionHandled) return; // Déjà géré dans cette session
+    
+    // Vérifier s'il y a un vrai brouillon dans localStorage
+    const stored = localStorage.getItem("medannot_draft_annotation");
+    if (!stored) return;
+    
+    try {
+      const state = JSON.parse(stored);
+      // Vérifier qu'il y a du contenu significatif (transcription ou annotation)
+      const hasMeaningfulContent = state.transcription?.trim() || state.annotation?.trim();
+      if (hasMeaningfulContent) {
+        setShowRestoreDialog(true);
+      }
+    } catch (e) {
+      // Ignorer les erreurs de parsing
     }
-  }, [isReady, hasDraft]);
+  }, [isReady]);
 
   // Save state whenever important fields change
   useEffect(() => {
