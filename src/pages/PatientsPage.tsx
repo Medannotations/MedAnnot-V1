@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2, Trash2, AlertTriangle, FolderOpen } from "lucide-react";
 import { usePatients, useCreatePatient, useArchivePatient, useDeletePatient, type Patient } from "@/hooks/usePatients";
 import { GPSNavigationButton } from "@/components/patients/GPSNavigation";
 
@@ -135,10 +135,10 @@ export default function PatientsPage() {
   const handleDeletePatient = async () => {
     if (!patientToDelete) return;
     
-    if (deleteConfirmation !== "supprimer ce patient") {
+    if (deleteConfirmation.toLowerCase().trim() !== "supprimer ce patient") {
       toast({
         title: "Erreur",
-        description: "Vous devez écrire exactement 'supprimer ce patient' pour confirmer.",
+        description: "Vous devez écrire 'supprimer ce patient' pour confirmer.",
         variant: "destructive",
       });
       return;
@@ -201,9 +201,9 @@ export default function PatientsPage() {
           {/* Actions principales - boutons larges */}
           <div className="flex items-center gap-3">
             <Button asChild variant="default" size="default" className="flex-1 h-12 text-base">
-              <Link to={`/app/annotations/new?patientId=${patient.id}`}>
-                <FileText className="w-5 h-5 mr-2" />
-                Nouvelle annotation
+              <Link to={`/app/patients/${patient.id}`}>
+                <FolderOpen className="w-5 h-5 mr-2" />
+                Accéder aux annotations
               </Link>
             </Button>
             <GPSNavigationButton patient={patient} />
