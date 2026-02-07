@@ -34,19 +34,18 @@ import { cn } from "@/lib/utils";
 import { VoiceRecorderDual } from "@/components/annotations/VoiceRecorderDual";
 import { TranscriptionReview } from "@/components/annotations/TranscriptionReview";
 import { AnnotationResult } from "@/components/annotations/AnnotationResult";
-import { VitalSignsInput, type VitalSigns, formatVitalSigns, validateVitalSigns } from "@/components/annotations/VitalSignsInput";
+
 import { EmptyState } from "@/components/ui/empty-state";
 import { usePersistedAnnotationState } from "@/hooks/usePersistedAnnotationState";
 
-type Step = "patient" | "visit" | "record" | "transcription" | "vitals" | "result";
+type Step = "patient" | "visit" | "record" | "transcription" | "result";
 
 const STEPS: { key: Step; label: string; number: number }[] = [
   { key: "patient", label: "Patient", number: 1 },
   { key: "visit", label: "Visite", number: 2 },
   { key: "record", label: "Audio", number: 3 },
   { key: "transcription", label: "Transcription", number: 4 },
-  { key: "vitals", label: "Constantes", number: 5 },
-  { key: "result", label: "Annotation", number: 6 },
+  { key: "result", label: "Annotation", number: 5 },
 ];
 
 export default function CreateAnnotationPage() {
@@ -60,7 +59,7 @@ export default function CreateAnnotationPage() {
   const [audioDuration, setAudioDuration] = useState(0);
   const [transcription, setTranscription] = useState("");
   const [annotation, setAnnotation] = useState("");
-  const [vitalSigns, setVitalSigns] = useState<VitalSigns>({});
+
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -225,15 +224,7 @@ export default function CreateAnnotationPage() {
     setIsGenerating(true);
 
     try {
-      // Formater les signes vitaux pour l'IA
-      const vitalSignsText = Object.keys(vitalSigns).length > 0 
-        ? formatVitalSigns(vitalSigns) 
-        : "";
-      
-      // Combiner transcription + signes vitaux
-      const enrichedTranscription = vitalSignsText 
-        ? `${editedTranscription}\n\n[CONSTANTES]: ${vitalSignsText}` 
-        : editedTranscription;
+      // La transcription telle quelle (pas de signes vitaux dans le flux)
       
       const result = await generateAnnotation({
         transcription: enrichedTranscription,
@@ -246,7 +237,7 @@ export default function CreateAnnotationPage() {
         visitDuration,
         userStructure: config.annotation_structure,
         userExamples: examples?.map((e) => e.content) || [],
-        vitalSigns,
+
 
         // Pass patient-specific examples (only active ones)
         patientExamples: selectedPatient.exampleAnnotations
@@ -301,16 +292,7 @@ export default function CreateAnnotationPage() {
       return;
     }
     
-    // Vérifier les signes vitaux anormaux avant sauvegarde
-    const { alerts } = validateVitalSigns(vitalSigns);
-    if (alerts.length > 0) {
-      const confirmSave = window.confirm(
-        `⚠️ Valeurs vitales anormales détectées :\n\n${alerts.join('\n')}\n\n` +
-        `Voulez-vous quand même sauvegarder cette annotation ?`
-      );
-      if (!confirmSave) return;
-    }
-    
+
     console.log("[handleSave] Saving annotation:", {
       patient_id: selectedPatient.id,
       annotation_length: annotation.length,
@@ -332,7 +314,7 @@ export default function CreateAnnotationPage() {
         audio_duration: audioDuration || 0,
         was_transcription_edited: false,
         was_content_edited: false,
-        vital_signs: Object.keys(vitalSigns).length > 0 ? vitalSigns : null,
+        vital_signs: null,
       } as any);
       clearState(); // Clear persisted state on successful save
       toast({
@@ -579,61 +561,14 @@ export default function CreateAnnotationPage() {
           transcription={transcription}
           onConfirm={(edited) => {
             setTranscription(edited);
-            setStep("vitals");
+            handleGenerateAnnotation(edited);
           }}
           onCancel={() => setStep("record")}
-          isGenerating={false}
+          isGenerating={isGenerating}
         />
       )}
 
-      {/* Step 5: Vital Signs */}
-      {step === "vitals" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Signes vitaux
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Renseignez les constantes pour enrichir l'annotation. 
-              L'IA en tiendra compte et vous serez alerté en cas de valeurs anormales.
-            </p>
-            
-            <VitalSignsInput 
-              value={vitalSigns} 
-              onChange={setVitalSigns} 
-            />
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="outline" onClick={() => setStep("transcription")} className="flex-1">
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Retour
-              </Button>
-              <Button 
-                onClick={() => handleGenerateAnnotation(transcription)} 
-                className="flex-1"
-                disabled={isGenerating}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Générer l'annotation
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 6: Result */}
+      {/* Step 5: Result */}
       {step === "result" && (
         <AnnotationResult
           transcription={transcription}

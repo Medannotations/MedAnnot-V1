@@ -14,10 +14,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Thermometer, Heart, Activity, Wind } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { VoiceRecorder } from "@/components/annotations/VoiceRecorder";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
 import { PatientExamplesTab } from "@/components/patient/PatientExamplesTab";
+import { PatientVitalSignsPanel } from "@/components/patients/PatientVitalSignsPanel";
 import { usePatient, useUpdatePatient, useArchivePatient } from "@/hooks/usePatients";
 import { useAnnotationsByPatient, useCreateAnnotation, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
 import { useUserConfiguration, useExampleAnnotations } from "@/hooks/useConfiguration";
@@ -323,6 +325,13 @@ export default function PatientDetailPage() {
         </TabsList>
 
         <TabsContent value="annotations" className="mt-6 space-y-6">
+          {/* Signes vitaux du jour */}
+          {patientId && (
+            <PatientVitalSignsPanel 
+              patientId={patientId} 
+            />
+          )}
+
           {/* New Annotation Section */}
           {!isNewAnnotation ? (
             <Button onClick={() => setIsNewAnnotation(true)} className="w-full" size="lg">
@@ -436,45 +445,93 @@ export default function PatientDetailPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {annotations?.map((annotation) => (
-                  <Card key={annotation.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                            <Calendar className="w-4 h-4" />
-                            {format(new Date(annotation.visit_date), "d MMMM yyyy", { locale: fr })}
-                            {annotation.visit_time && (
-                              <>
-                                <Clock className="w-4 h-4 ml-2" />
-                                {annotation.visit_time.slice(0, 5)}
-                              </>
-                            )}
+                {annotations?.map((annotation) => {
+                  const vitalSigns = annotation.vital_signs as Record<string, number> | null;
+                  const hasVitals = vitalSigns && Object.keys(vitalSigns).length > 0;
+                  
+                  return (
+                    <Card key={annotation.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col gap-3">
+                          {/* Header avec date et actions */}
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              {format(new Date(annotation.visit_date), "d MMMM yyyy", { locale: fr })}
+                              {annotation.visit_time && (
+                                <>
+                                  <Clock className="w-4 h-4 ml-2" />
+                                  {annotation.visit_time.slice(0, 5)}
+                                </>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewAnnotation(annotation as AnnotationWithPatient)}
+                              >
+                                Voir
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeleteAnnotationId(annotation.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <p className="text-card-foreground line-clamp-3 whitespace-pre-line">
-                            {annotation.content.substring(0, 200)}...
+                          
+                          {/* Signes vitaux */}
+                          {hasVitals && (
+                            <div className="flex flex-wrap gap-2">
+                              {vitalSigns.temperature && (
+                                <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 text-xs">
+                                  <Thermometer className="w-3 h-3 mr-1" />
+                                  {vitalSigns.temperature}°C
+                                </Badge>
+                              )}
+                              {vitalSigns.heartRate && (
+                                <Badge variant="outline" className="bg-red-50 border-red-200 text-red-700 text-xs">
+                                  <Heart className="w-3 h-3 mr-1" />
+                                  {vitalSigns.heartRate} bpm
+                                </Badge>
+                              )}
+                              {(vitalSigns.systolicBP || vitalSigns.diastolicBP) && (
+                                <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 text-xs">
+                                  <Activity className="w-3 h-3 mr-1" />
+                                  {vitalSigns.systolicBP}/{vitalSigns.diastolicBP}
+                                </Badge>
+                              )}
+                              {vitalSigns.oxygenSaturation && (
+                                <Badge variant="outline" className="bg-cyan-50 border-cyan-200 text-cyan-700 text-xs">
+                                  <Wind className="w-3 h-3 mr-1" />
+                                  {vitalSigns.oxygenSaturation}%
+                                </Badge>
+                              )}
+                              {vitalSigns.respiratoryRate && (
+                                <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 text-xs">
+                                  FR {vitalSigns.respiratoryRate}
+                                </Badge>
+                              )}
+                              {vitalSigns.bloodSugar && (
+                                <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700 text-xs">
+                                  Gly {vitalSigns.bloodSugar}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Contenu */}
+                          <p className="text-card-foreground line-clamp-3 whitespace-pre-line text-sm">
+                            {annotation.content.substring(0, 200)}{annotation.content.length > 200 ? "..." : ""}
                           </p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setViewAnnotation(annotation as AnnotationWithPatient)}
-                          >
-                            Voir
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteAnnotationId(annotation.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
