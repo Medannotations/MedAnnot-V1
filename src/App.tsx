@@ -13,6 +13,7 @@ import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import ConfigurationPage from "./pages/ConfigurationPage";
+import SettingsPage from "./pages/SettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import PatientsPage from "./pages/PatientsPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
@@ -29,7 +30,13 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 2,
+      gcTime: 1000 * 60 * 30, // 30 minutes (anciennement cacheTime)
+      retry: 1,
+      refetchOnWindowFocus: false, // Évite les rechargements inutiles
+      refetchOnMount: false, // Utilise les données en cache si disponibles
+    },
+    mutations: {
+      retry: 1,
     },
   },
 });
@@ -64,6 +71,7 @@ const App = () => (
             >
               <Route index element={<DashboardHome />} />
               <Route path="configuration" element={<ConfigurationPage />} />
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="patients" element={<PatientsPage />} />
               <Route path="patients/:patientId" element={<PatientDetailPage />} />
