@@ -29,11 +29,10 @@ interface GenerateRequest {
   patientPostalCode?: string;
 }
 
-// CEO-GRADE configuration - Swiss medical precision
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 3000; // 3 seconds for medical-grade reliability
-const ANTHROPIC_TIMEOUT = 90000; // 90 seconds for complex medical annotations
-const MAX_TRANSCRIPTION_LENGTH = 8000; // 8KB max for medical annotations
+// Optimized configuration for faster response
+const MAX_RETRIES = 2; // Reduced from 5 to 2 for faster fallback
+const RETRY_DELAY = 2000; // 2 seconds
+const MAX_TRANSCRIPTION_LENGTH = 6000; // 6KB max for faster processing
 
 // Swiss medical-grade retry logic with exponential backoff
 async function retryWithMedicalPrecision<T>(
@@ -103,47 +102,18 @@ serve(async (req) => {
 
     console.log(`CEO MEDICAL GENERATION: Processing annotation for ${requestData.patientName}, transcription length: ${transcription.length}`);
 
-    // Swiss medical-grade prompt engineering
-    const medicalPrompt = `Vous êtes une infirmière suisse romande avec 15 ans d'expérience en documentation médicale. 
+    // Optimized prompt for faster processing
+    const medicalPrompt = `Tu es une infirmière suisse. Rédige une annotation médicale structurée.
 
-**CONTEXTE MÉDICAL SUISSE:**
-- Patient: ${requestData.patientName}
-- Date de visite: ${requestData.visitDate}
-- Heure: ${requestData.visitTime || 'Non spécifiée'}
-- Durée: ${requestData.visitDuration ? `${requestData.visitDuration} minutes` : 'Non spécifiée'}
-- Pathologies: ${requestData.patientPathologies || 'Aucune pathologie spécifiée'}
-- Ville: ${requestData.patientCity || 'Suisse Romande'}
+Patient: ${requestData.patientName}
+Date: ${requestData.visitDate}
+Pathologies: ${requestData.patientPathologies || 'Aucune'}
 
-**TRANSMISSION INFIRMIÈRE - DICTÉE VOCALE:**
-"${transcription}"
+DICTÉE: "${transcription}"
 
-**STANDARDS MÉDICAUX SUISSES REQUIS:**
-1. Langage professionnel et médical
-2. Structure SOAP ou selon ${requestData.userStructure || 'standards suisses'}
-3. Terminologie médicale en français suisse
-4. Mention des médicaments avec dosages
-5. Observations objectives et mesurables
-6. Plan de soins clair et actionnable
-7. Conforme aux standards LPD suisses
+Structure: ${requestData.userStructure || 'Date/Motif/Observations/Soins/Plan'}
 
-${requestData.userExamples?.length ? `**EXEMPLES DE STYLE SOUHAITÉ:**
-${requestData.userExamples.map(ex => `- ${ex}`).join('\n')}` : ''}
-
-${requestData.patientExamples?.length ? `**HISTORIQUE DU PATIENT:**
-${requestData.patientExamples.map(ex => `- ${ex.visitDate}: ${ex.content}`).join('\n')}` : ''}
-
-${requestData.recentAnnotations?.length ? `**ANNOTATIONS RÉCENTES:**
-${requestData.recentAnnotations.map(ann => `- ${ann.date}: ${ann.content}`).join('\n')}` : ''}
-
-**INSTRUCTIONS PRÉCISES:**
-- Rédigez une annotation médicale professionnelle et complète
-- Utilisez la structure: OBSERVATION/ANALYSE/PLAN
-- Soyonctif et précis
-- Mentionnez tous les aspects importants de la dictée
-- Ajoutez des observations professionnelles si nécessaire
-- Format optimisé pour la relecture médicale
-
-**NIVEAU DE DÉTAIL:** Professionnel, complet, mais concis. Maximum 500 mots.`;
+Rédige en français professionnel, 200-300 mots maximum.`;
 
     // CEO-GRADE API call with medical precision
     const anthropicResponse = await retryWithMedicalPrecision(async () => {
@@ -155,9 +125,9 @@ ${requestData.recentAnnotations.map(ann => `- ${ann.date}: ${ann.content}`).join
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-3-sonnet-20240229",
-          max_tokens: 1500,
-          temperature: 0.3, // Low temperature for medical consistency
+          model: "claude-3-haiku-20240307", // Faster model
+          max_tokens: 1000, // Reduced for faster response
+          temperature: 0.3
           messages: [
             {
               role: "user",

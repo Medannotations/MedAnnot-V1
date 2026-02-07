@@ -96,37 +96,68 @@ function escapeRegExp(string: string): string {
  * 
  * Result: Patient name NEVER leaves the client, NEVER sent to Anthropic API
  */
+// Fonction fetch avec timeout
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout = 30000 // 30 secondes max
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Timeout: La requête a pris trop de temps');
+    }
+    throw error;
+  }
+}
+
 export async function generateAnnotation(
   params: GenerateAnnotationParams,
   onProgress?: (progress: number) => void
 ): Promise<string> {
   try {
-    if (onProgress) onProgress(20);
+    if (onProgress) onProgress(10);
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user?.id) {
       throw new Error("Session utilisateur invalide");
     }
 
-    if (onProgress) onProgress(40);
+    if (onProgress) onProgress(20);
 
-    // Essayer la fonction principale d'abord
-    let response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-annotation`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
+    // Essayer la fonction principale d'abord (avec timeout de 25s)
+    let response: Response;
+    let usedFallback = false;
+    
+    try {
+      console.log("[generateAnnotation] Appel fonction principale...");
+      response = await fetchWithTimeout(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-annotation`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(params),
         },
-        body: JSON.stringify(params),
-      }
-    );
-
-    // Si échec, essayer la fonction de secours (mode démo)
-    if (!response.ok) {
-      console.log("Fonction principale échouée, tentative avec fonction de secours...");
-      response = await fetch(
+        25000 // 25 secondes max pour Anthropic
+      );
+      console.log("[generateAnnotation] Réponse principale:", response.status);
+    } catch (primaryError) {
+      console.log("[generateAnnotation] Fonction principale échouée:", primaryError);
+      usedFallback = true;
+      response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-annotation-simple`,
         {
           method: "POST",
@@ -135,32 +166,42 @@ export async function generateAnnotation(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(params),
-        }
+        },
+        10000 // 10 secondes max pour la fonction simple
       );
+      console.log("[generateAnnotation] Réponse fallback:", response.status);
     }
 
-    if (onProgress) onProgress(80);
+    if (onProgress) onProgress(70);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Erreur inconnue" }));
-      throw new Error(error.error || "Erreur lors de la génération");
+      const errorText = await response.text();
+      console.error("[generateAnnotation] Erreur HTTP:", response.status, errorText);
+      throw new Error(`Erreur serveur: ${response.status}`);
     }
 
     const result = await response.json();
+    console.log("[generateAnnotation] Résultat:", { 
+      hasAnnotation: !!result.annotation,
+      demo: result.demo,
+      usedFallback 
+    });
 
     if (onProgress) onProgress(90);
     
     // Log si mode démo
-    if (result.demo) {
-      console.log("Mode démonstration actif:", result.message);
+    if (result.demo || usedFallback) {
+      console.log("Mode démonstration/fallback actif");
+    }
+
+    if (!result.annotation) {
+      throw new Error("Aucune annotation reçue du serveur");
     }
 
     // MEDICAL-GRADE SECURITY: Substitute pseudonym with real patient name locally
-    // The AI only saw the pseudonym, never the real name - this is critical for LPD compliance
     let finalAnnotation = result.annotation;
     
     if (result.pseudonymUsed && params.patientName) {
-      // Case-insensitive replacement of pseudonym with real name
       const pseudonymRegex = new RegExp(escapeRegExp(result.pseudonymUsed), 'gi');
       finalAnnotation = finalAnnotation.replace(pseudonymRegex, params.patientName);
     }
@@ -169,6 +210,7 @@ export async function generateAnnotation(
 
     return finalAnnotation;
   } catch (error) {
+    console.error("[generateAnnotation] Erreur finale:", error);
     throw error instanceof Error ? error : new Error("Erreur lors de la génération de l'annotation");
   }
 }
