@@ -84,7 +84,11 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
             </div>
             
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="ghost" onClick={onLogin} className="text-gray-700 hover:text-gray-900">
+              <Button 
+                variant="outline" 
+                onClick={onLogin} 
+                className="text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 border-gray-300 font-medium transition-all"
+              >
                 Se connecter
               </Button>
               <Button 
@@ -154,7 +158,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Button 
                 variant="outline" 
                 onClick={() => { onLogin(); closeMenu(); }}
-                className="w-full min-h-[48px] text-base touch-manipulation"
+                className="w-full min-h-[48px] text-base touch-manipulation border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50"
               >
                 Se connecter
               </Button>

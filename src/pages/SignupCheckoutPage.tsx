@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Check, ArrowLeft, Eye, EyeOff, Stethoscope, Shield, Clock, XCircle } from "lucide-react";
+import { Loader2, Check, ArrowLeft, Eye, EyeOff, Stethoscope, Shield, Clock, Sparkles, Lock, Mail, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,12 +27,14 @@ export function SignupCheckoutPage() {
       name: "Mensuel",
       price: "149",
       period: "/mois",
-      description: "Flexibilité maximale",
+      description: "Sans engagement",
+      engagement: "Résiliable à tout moment",
+      icon: Clock,
       features: [
         "Annotations illimitées",
         "Patients illimités",
         "7 jours d'essai gratuit",
-        "Annulation à tout moment",
+        "Sans engagement",
       ],
     },
     {
@@ -40,13 +42,15 @@ export function SignupCheckoutPage() {
       name: "Annuel",
       price: "125",
       period: "/mois",
-      annualTotal: "1'499 CHF/an",
-      badge: "Économisez 16%",
+      description: "Engagement 12 mois",
+      engagement: "Paiement mensuel échelonné",
+      icon: Shield,
+      badge: "Économisez 288 CHF/an",
       recommended: true,
       features: [
         "Tout du plan mensuel",
         "7 jours d'essai gratuit",
-        "Meilleur rapport qualité-prix",
+        "Économisez 16%",
         "Support prioritaire",
       ],
     },
@@ -144,22 +148,25 @@ export function SignupCheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <button 
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <Stethoscope className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
               MedAnnot
             </span>
-          </div>
+          </button>
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="gap-2 text-gray-600 hover:text-gray-900 touch-manipulation"
+            className="gap-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Retour</span>
@@ -167,120 +174,118 @@ export function SignupCheckoutPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Title Section */}
-        <div className="text-center mb-8 sm:mb-12 animate-fade-in-up">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Commencez votre essai gratuit de{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
-              7 jours
-            </span>
-          </h1>
-          <p className="text-base sm:text-lg text-gray-600 mb-4">
-            Créez votre compte et récupérez 2h par jour
-          </p>
-          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium">
-            <Check className="w-4 h-4" />
-            0 CHF prélevé pendant 7 jours
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
+            <Sparkles className="w-4 h-4" />
+            7 jours d'essai gratuit — 0 CHF aujourd'hui
           </div>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            Créez votre compte MedAnnot
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto">
+            Rejoignez des centaines d'infirmiers qui gagnent 2h par jour
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left: Plan Selection */}
-          <div className="animate-fade-in-up animation-delay-100">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
-              Choisissez votre plan
+        <div className="grid lg:grid-cols-5 gap-8 lg:gap-10">
+          {/* Left: Plan Selection (2 cols) */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Choisissez votre formule
             </h2>
 
-            <div className="space-y-4">
-              {plans.map((plan) => (
+            {plans.map((plan) => {
+              const Icon = plan.icon;
+              const isSelected = selectedPlan === plan.id;
+              
+              return (
                 <div
                   key={plan.id}
-                  className={`relative cursor-pointer transition-all duration-300 rounded-2xl p-1 ${
-                    selectedPlan === plan.id
-                      ? "bg-gradient-to-r from-blue-600 to-emerald-500"
-                      : "bg-transparent"
-                  }`}
                   onClick={() => setSelectedPlan(plan.id)}
+                  className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-200 ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-50/50 shadow-lg"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                  }`}
                 >
                   {plan.recommended && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                      <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
+                    <div className="absolute -top-3 left-4">
+                      <span className="inline-flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                        <Sparkles className="w-3 h-3" />
                         RECOMMANDÉ
                       </span>
                     </div>
                   )}
-                  {plan.badge && (
-                    <div className="absolute -top-3 right-4 z-10">
-                      <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        {plan.badge}
-                      </span>
-                    </div>
-                  )}
                   
-                  <Card className={`relative transition-all duration-300 ${
-                    selectedPlan === plan.id
-                      ? "bg-white shadow-xl"
-                      : "bg-white hover:shadow-lg border-gray-200"
-                  }`}>
-                    <CardContent className="p-4 sm:p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-                          <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
-                          
-                          <div className="mt-4 flex items-baseline gap-1">
-                            <span className="text-3xl sm:text-4xl font-bold text-gray-900">
-                              {plan.price}
-                            </span>
-                            <span className="text-gray-600 font-medium">CHF</span>
-                            <span className="text-gray-500">{plan.period}</span>
-                          </div>
-                          
-                          {plan.annualTotal && (
-                            <p className="text-sm text-gray-500 mt-1">
-                              Facturé {plan.annualTotal}
-                            </p>
-                          )}
-
-                          <ul className="mt-4 space-y-2">
-                            {plan.features.map((feature, i) => (
-                              <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
+                  <div className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className={`w-5 h-5 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />
+                          <h3 className={`font-bold ${isSelected ? "text-blue-900" : "text-gray-900"}`}>
+                            {plan.name}
+                          </h3>
                         </div>
-
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                          selectedPlan === plan.id
-                            ? "border-emerald-500 bg-emerald-500"
-                            : "border-gray-300"
-                        }`}>
-                          {selectedPlan === plan.id && (
-                            <Check className="w-4 h-4 text-white" />
-                          )}
+                        
+                        <div className="mt-2 flex items-baseline gap-1">
+                          <span className={`text-3xl font-bold ${isSelected ? "text-blue-700" : "text-gray-900"}`}>
+                            {plan.price}
+                          </span>
+                          <span className="text-gray-500 font-medium">CHF</span>
+                          <span className="text-gray-400">{plan.period}</span>
                         </div>
+                        
+                        <p className={`text-sm mt-1 ${isSelected ? "text-blue-600" : "text-gray-500"}`}>
+                          {plan.description}
+                        </p>
+                        
+                        <p className="text-xs text-gray-400 mt-1">
+                          {plan.engagement}
+                        </p>
+
+                        {plan.badge && (
+                          <span className="inline-block mt-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                            {plan.badge}
+                          </span>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-all ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-500"
+                          : "border-gray-300"
+                      }`}>
+                        {isSelected && <Check className="w-4 h-4 text-white" />}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ))}
+              );
+            })}
+
+            {/* Info box */}
+            <div className="bg-blue-50 rounded-xl p-4 mt-4">
+              <p className="text-sm text-blue-800">
+                <strong>💡 Information :</strong> Les deux formules sont payées mensuellement. 
+                Le plan Annuel vous engage sur 12 mois avec paiement échelonné.
+              </p>
             </div>
           </div>
 
-          {/* Right: Signup Form */}
-          <div className="animate-fade-in-up animation-delay-200">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
-              Créez votre compte
-            </h2>
+          {/* Right: Signup Form (3 cols) */}
+          <div className="lg:col-span-3">
+            <Card className="shadow-xl border-0 bg-white">
+              <CardContent className="p-6 sm:p-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">
+                  Vos informations
+                </h2>
 
-            <Card className="shadow-xl border-0">
-              <CardContent className="p-4 sm:p-6 md:p-8">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-gray-700 font-medium">
+                    <Label htmlFor="name" className="text-gray-700 font-medium flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-400" />
                       Nom complet
                     </Label>
                     <Input
@@ -291,12 +296,13 @@ export function SignupCheckoutPage() {
                       onChange={(e) => setName(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium">
+                    <Label htmlFor="email" className="text-gray-700 font-medium flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-400" />
                       Email professionnel
                     </Label>
                     <Input
@@ -307,12 +313,13 @@ export function SignupCheckoutPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 font-medium">
+                    <Label htmlFor="password" className="text-gray-700 font-medium flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-gray-400" />
                       Mot de passe
                     </Label>
                     <div className="relative">
@@ -325,19 +332,15 @@ export function SignupCheckoutPage() {
                         required
                         disabled={isLoading}
                         minLength={6}
-                        className="h-12 pr-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                        className="h-12 pr-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         disabled={isLoading}
                       >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
@@ -348,15 +351,15 @@ export function SignupCheckoutPage() {
                       checked={acceptTerms}
                       onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                       disabled={isLoading}
-                      className="mt-1 border-gray-300 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                      className="mt-1 border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                     />
                     <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed cursor-pointer">
                       J'accepte les{" "}
-                      <a href="/cgv" className="text-blue-600 hover:underline">
+                      <a href="/terms-of-service" className="text-blue-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
                         conditions générales
                       </a>{" "}
                       et la{" "}
-                      <a href="/confidentialite" className="text-blue-600 hover:underline">
+                      <a href="/privacy-policy" className="text-blue-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
                         politique de confidentialité
                       </a>
                     </Label>
@@ -365,7 +368,7 @@ export function SignupCheckoutPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-lg font-bold rounded-xl shadow-lg animate-pulse-glow touch-manipulation"
+                    className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-lg font-semibold rounded-xl shadow-lg transition-all"
                   >
                     {isLoading ? (
                       <>
@@ -374,17 +377,28 @@ export function SignupCheckoutPage() {
                       </>
                     ) : (
                       <>
-                        <span className="mr-2">🚀</span>
+                        <Sparkles className="w-5 h-5 mr-2" />
                         Démarrer mon essai gratuit
                       </>
                     )}
                   </Button>
 
-                  <p className="text-center text-sm text-gray-500">
+                  <div className="flex items-center justify-center gap-4 pt-2">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Lock className="w-3 h-3" />
+                      Paiement sécurisé SSL
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Clock className="w-3 h-3" />
+                      7 jours gratuits
+                    </div>
+                  </div>
+
+                  <p className="text-center text-sm text-gray-500 pt-2">
                     Déjà un compte ?{" "}
                     <button
                       type="button"
-                      className="text-blue-600 hover:underline font-medium touch-manipulation"
+                      className="text-blue-600 hover:underline font-medium"
                       onClick={() => navigate("/?login=true")}
                       disabled={isLoading}
                     >
@@ -394,30 +408,6 @@ export function SignupCheckoutPage() {
                 </form>
               </CardContent>
             </Card>
-          </div>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="mt-12 sm:mt-16 animate-fade-in-up animation-delay-300">
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
-            <div className="flex items-center gap-2 text-gray-600">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-emerald-600" />
-              </div>
-              <span className="text-sm font-medium">7 jours gratuits</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-600" />
-              </div>
-              <span className="text-sm font-medium">Conforme LPD</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-gray-600" />
-              </div>
-              <span className="text-sm font-medium">Annulation en 1 clic</span>
-            </div>
           </div>
         </div>
       </main>
