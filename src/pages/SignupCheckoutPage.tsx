@@ -141,7 +141,13 @@ export function SignupCheckoutPage() {
           window.location.href = data.url;
         }, 500);
       } else {
-        throw new Error("Impossible de créer la session de paiement");
+        // If no Stripe URL, redirect to app anyway (user is logged in)
+        console.log("No Stripe checkout URL, redirecting to app");
+        toast({
+          title: "Compte créé !",
+          description: "Bienvenue sur MedAnnot. Vous pouvez commencer votre essai gratuit.",
+        });
+        navigate("/app");
       }
     } catch (error: any) {
       toast({

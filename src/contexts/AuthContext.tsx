@@ -35,19 +35,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from profiles table
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid error if no profile
 
       if (error) {
-        // Ne pas bloquer - continuer avec profile null
+        console.error("Error fetching profile:", error);
+        // Don't block - continue with null profile
         return;
       }
 
+      if (data) {
+        console.log("Profile found:", data);
+        setProfile(data as Profile);
+      } else {
+        console.log("No profile found for user");
+        // Try to create a basic profile if it doesn't exist
+        await createBasicProfile(userId);
+      }
+    } catch (err) {
+      console.error("Exception fetching profile:", err);
+    }
+  };
+
+  // Create a basic profile if it doesn't exist
+  const createBasicProfile = async (userId: string) => {
+    try {
+      console.log("Attempting to create basic profile for:", userId);
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (!userData.user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: userId,
+          email: userData.user.email,
+          full_name: userData.user.user_metadata?.full_name || null,
+          subscription_status: "none",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating profile:", error);
+        return;
+      }
+
+      console.log("Profile created:", data);
       setProfile(data as Profile);
     } catch (err) {
+      console.error("Exception creating profile:", err);
     }
   };
 
