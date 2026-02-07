@@ -127,7 +127,7 @@ Rédige en français professionnel, 200-300 mots maximum.`;
         body: JSON.stringify({
           model: "claude-3-haiku-20240307", // Faster model
           max_tokens: 1000, // Reduced for faster response
-          temperature: 0.3
+          temperature: 0.3,
           messages: [
             {
               role: "user",
