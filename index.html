@@ -28,6 +28,25 @@
 
   <body>
     <div id="root"></div>
+    <!-- Clear old service workers -->
+    <script>
+      (async function() {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            await reg.unregister();
+            console.log('Old SW cleared');
+          }
+        }
+        if ('caches' in window) {
+          const names = await caches.keys();
+          for (const name of names) {
+            await caches.delete(name);
+            console.log('Old cache cleared:', name);
+          }
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

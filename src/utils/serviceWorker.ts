@@ -4,18 +4,45 @@ export function registerServiceWorker() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
+          console.log('SW registered:', registration);
+          
+          // Check for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New content available, force reload
+                  console.log('New version available, reloading...');
+                  window.location.reload();
+                }
+              });
+            }
+          });
         })
         .catch((registrationError) => {
+          console.log('SW registration failed:', registrationError);
         });
     });
   }
 }
 
-export function unregisterServiceWorker() {
+export async function unregisterServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.unregister();
-    });
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      await registration.unregister();
+      console.log('SW unregistered');
+    }
+    
+    // Clear all caches
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName);
+        console.log('Cache deleted:', cacheName);
+      }
+    }
   }
 }
 
