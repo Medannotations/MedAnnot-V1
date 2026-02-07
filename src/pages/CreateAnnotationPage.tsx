@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { VoiceRecorderDual } from "@/components/annotations/VoiceRecorderDual";
 import { TranscriptionReview } from "@/components/annotations/TranscriptionReview";
 import { AnnotationResult } from "@/components/annotations/AnnotationResult";
+import { VitalSignsInput, type VitalSigns } from "@/components/annotations/VitalSignsInput";
 import { EmptyState } from "@/components/ui/empty-state";
 import { usePersistedAnnotationState } from "@/hooks/usePersistedAnnotationState";
 
@@ -56,6 +57,7 @@ export default function CreateAnnotationPage() {
   const [audioDuration, setAudioDuration] = useState(0);
   const [transcription, setTranscription] = useState("");
   const [annotation, setAnnotation] = useState("");
+  const [vitalSigns, setVitalSigns] = useState<VitalSigns>({});
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -299,14 +301,15 @@ export default function CreateAnnotationPage() {
         patient_id: selectedPatient.id,
         visit_date: visitDate,
         visit_time: visitTime,
-        visit_duration: visitDuration || 30, // Valeur par défaut si non définie
-        transcription: "", // ⚠️ SÉCURITÉ: Transcription NON sauvegardée (secret médical)
+        visit_duration: visitDuration || 30,
+        transcription: "",
         content: annotation,
         structure_used: config?.annotation_structure,
         audio_duration: audioDuration || 0,
         was_transcription_edited: false,
         was_content_edited: false,
-      });
+        vital_signs: Object.keys(vitalSigns).length > 0 ? vitalSigns : null,
+      } as any);
       clearState(); // Clear persisted state on successful save
       toast({
         title: "✓ Annotation enregistrée",
@@ -498,6 +501,13 @@ export default function CreateAnnotationPage() {
                 onChange={(e) => setVisitDuration(parseInt(e.target.value) || undefined)} 
               />
             </div>
+            
+            {/* Signes vitaux */}
+            <VitalSignsInput 
+              value={vitalSigns} 
+              onChange={setVitalSigns} 
+            />
+            
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("patient")}>
                 <ChevronLeft className="w-4 h-4 mr-2" />

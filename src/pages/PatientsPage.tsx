@@ -17,6 +17,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2 } from "lucide-react";
 import { usePatients, useCreatePatient, useArchivePatient, type Patient } from "@/hooks/usePatients";
+import { GPSNavigationButton } from "@/components/patients/GPSNavigation";
 
 export default function PatientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,6 +135,7 @@ export default function PatientsPage() {
             )}
           </div>
           <div className="flex items-center gap-2 ml-4">
+            <GPSNavigationButton patient={patient} />
             <Button asChild variant="outline" size="sm">
               <Link to={`/app/annotations/new?patientId=${patient.id}`}>
                 <FileText className="w-4 h-4 mr-1" />

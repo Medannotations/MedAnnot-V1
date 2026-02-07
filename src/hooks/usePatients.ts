@@ -14,6 +14,8 @@ const decryptPatient = (patient: Patient, userId: string): Patient => ({
   first_name: decryptData(patient.first_name, userId),
   last_name: decryptData(patient.last_name, userId),
   address: patient.address ? decryptData(patient.address, userId) : null,
+  street: patient.street ? decryptData(patient.street, userId) : null,
+  city: patient.city ? decryptData(patient.city, userId) : null,
 });
 
 export function usePatients(includeArchived = false) {
