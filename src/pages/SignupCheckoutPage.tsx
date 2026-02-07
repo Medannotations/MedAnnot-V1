@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Check, ArrowLeft, Eye, EyeOff, Stethoscope, Shield, Clock, Sparkles, Lock, Mail, User } from "lucide-react";
+import { Loader2, Check, ArrowLeft, Eye, EyeOff, Stethoscope, Shield, Clock, Sparkles, Lock, Mail, User, Calendar, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +21,14 @@ export function SignupCheckoutPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
 
+  const today = new Date();
+  const trialEndDate = new Date(today);
+  trialEndDate.setDate(today.getDate() + 7);
+  const formattedTrialEnd = trialEndDate.toLocaleDateString('fr-CH', { 
+    day: 'numeric', 
+    month: 'long' 
+  });
+
   const plans = [
     {
       id: "monthly" as const,
@@ -33,8 +41,7 @@ export function SignupCheckoutPage() {
       features: [
         "Annotations illimitées",
         "Patients illimités",
-        "7 jours d'essai gratuit",
-        "Sans engagement",
+        "Support par email",
       ],
     },
     {
@@ -43,15 +50,14 @@ export function SignupCheckoutPage() {
       price: "125",
       period: "/mois",
       description: "Engagement 12 mois",
-      engagement: "Paiement mensuel échelonné",
+      engagement: "Économisez 288 CHF/an",
       icon: Shield,
-      badge: "Économisez 288 CHF/an",
+      badge: "Le plus populaire",
       recommended: true,
       features: [
         "Tout du plan mensuel",
-        "7 jours d'essai gratuit",
-        "Économisez 16%",
         "Support prioritaire",
+        "Meilleur rapport qualité-prix",
       ],
     },
   ];
@@ -148,7 +154,7 @@ export function SignupCheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -174,27 +180,39 @@ export function SignupCheckoutPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Title Section */}
-        <div className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Sparkles className="w-4 h-4" />
-            7 jours d'essai gratuit — 0 CHF aujourd'hui
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* HERO: 0 CHF aujourd'hui - GROS et VISIBLE */}
+        <div className="text-center mb-8">
+          <div className="inline-flex flex-col items-center">
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-2xl shadow-xl mb-4">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-8 h-8" />
+                <div className="text-left">
+                  <p className="text-3xl sm:text-4xl font-bold">0 CHF</p>
+                  <p className="text-emerald-100 text-sm font-medium">aujourd'hui</p>
+                </div>
+              </div>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Commencez votre essai gratuit
+            </h1>
+            <p className="text-gray-600 max-w-md mx-auto">
+              Testez MedAnnot pendant 7 jours sans payer. <br className="hidden sm:block"/>
+              Annulez avant le <strong>{formattedTrialEnd}</strong> et vous ne serez pas débité.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            Créez votre compte MedAnnot
-          </h1>
-          <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto">
-            Rejoignez des centaines d'infirmiers qui gagnent 2h par jour
-          </p>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8 lg:gap-10">
-          {/* Left: Plan Selection (2 cols) */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Choisissez votre formule
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Left: Plan Selection */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              Choisissez votre formule pour après l'essai
             </h2>
+            <p className="text-sm text-gray-500 -mt-2 mb-4">
+              Vous ne serez débité que si vous continuez après le {formattedTrialEnd}
+            </p>
 
             {plans.map((plan) => {
               const Icon = plan.icon;
@@ -206,15 +224,15 @@ export function SignupCheckoutPage() {
                   onClick={() => setSelectedPlan(plan.id)}
                   className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-200 ${
                     isSelected
-                      ? "border-blue-500 bg-blue-50/50 shadow-lg"
+                      ? "border-emerald-500 bg-emerald-50/30 shadow-lg"
                       : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
                   }`}
                 >
                   {plan.recommended && (
                     <div className="absolute -top-3 left-4">
-                      <span className="inline-flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                      <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
                         <Sparkles className="w-3 h-3" />
-                        RECOMMANDÉ
+                        {plan.badge}
                       </span>
                     </div>
                   )}
@@ -222,39 +240,38 @@ export function SignupCheckoutPage() {
                   <div className="p-5">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Icon className={`w-5 h-5 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />
-                          <h3 className={`font-bold ${isSelected ? "text-blue-900" : "text-gray-900"}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon className={`w-5 h-5 ${isSelected ? "text-emerald-600" : "text-gray-400"}`} />
+                          <h3 className={`font-bold text-lg ${isSelected ? "text-emerald-900" : "text-gray-900"}`}>
                             {plan.name}
                           </h3>
                         </div>
                         
-                        <div className="mt-2 flex items-baseline gap-1">
-                          <span className={`text-3xl font-bold ${isSelected ? "text-blue-700" : "text-gray-900"}`}>
+                        <div className="flex items-baseline gap-1 mb-1">
+                          <span className={`text-3xl font-bold ${isSelected ? "text-emerald-700" : "text-gray-900"}`}>
                             {plan.price}
                           </span>
                           <span className="text-gray-500 font-medium">CHF</span>
                           <span className="text-gray-400">{plan.period}</span>
                         </div>
                         
-                        <p className={`text-sm mt-1 ${isSelected ? "text-blue-600" : "text-gray-500"}`}>
-                          {plan.description}
-                        </p>
-                        
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className={`text-sm ${isSelected ? "text-emerald-600 font-medium" : "text-gray-500"}`}>
                           {plan.engagement}
                         </p>
 
-                        {plan.badge && (
-                          <span className="inline-block mt-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
-                            {plan.badge}
-                          </span>
-                        )}
+                        <ul className="mt-3 space-y-1">
+                          {plan.features.map((feature, i) => (
+                            <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                              <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
 
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-all ${
                         isSelected
-                          ? "border-blue-500 bg-blue-500"
+                          ? "border-emerald-500 bg-emerald-500"
                           : "border-gray-300"
                       }`}>
                         {isSelected && <Check className="w-4 h-4 text-white" />}
@@ -265,27 +282,36 @@ export function SignupCheckoutPage() {
               );
             })}
 
-            {/* Info box */}
-            <div className="bg-blue-50 rounded-xl p-4 mt-4">
-              <p className="text-sm text-blue-800">
-                <strong>💡 Information :</strong> Les deux formules sont payées mensuellement. 
-                Le plan Annuel vous engage sur 12 mois avec paiement échelonné.
-              </p>
+            {/* Info box - PRÉLÈVEMENT EXPLICITE */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <CreditCard className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-blue-900 font-medium">
+                    Quand serez-vous débité ?
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    <strong>Aujourd'hui : 0 CHF</strong> (essai gratuit)<br/>
+                    <strong>Le {formattedTrialEnd}</strong> : {selectedPlan === "monthly" ? "149 CHF" : "125 CHF"} si vous continuez<br/>
+                    Ensuite : tous les mois à la même date
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right: Signup Form (3 cols) */}
-          <div className="lg:col-span-3">
+          {/* Right: Signup Form */}
+          <div>
             <Card className="shadow-xl border-0 bg-white">
-              <CardContent className="p-6 sm:p-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  Vos informations
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Créez votre compte
                 </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-gray-700 font-medium flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
+                    <Label htmlFor="name" className="text-gray-700 font-medium text-sm">
                       Nom complet
                     </Label>
                     <Input
@@ -296,13 +322,12 @@ export function SignupCheckoutPage() {
                       onChange={(e) => setName(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
+                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-gray-400" />
+                    <Label htmlFor="email" className="text-gray-700 font-medium text-sm">
                       Email professionnel
                     </Label>
                     <Input
@@ -313,13 +338,12 @@ export function SignupCheckoutPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
+                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 font-medium flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-gray-400" />
+                    <Label htmlFor="password" className="text-gray-700 font-medium text-sm">
                       Mot de passe
                     </Label>
                     <div className="relative">
@@ -332,7 +356,7 @@ export function SignupCheckoutPage() {
                         required
                         disabled={isLoading}
                         minLength={6}
-                        className="h-12 pr-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-gray-50/50"
+                        className="h-12 pr-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white"
                       />
                       <button
                         type="button"
@@ -356,41 +380,52 @@ export function SignupCheckoutPage() {
                     <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed cursor-pointer">
                       J'accepte les{" "}
                       <a href="/terms-of-service" className="text-blue-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
-                        conditions générales
+                        CGV
                       </a>{" "}
                       et la{" "}
                       <a href="/privacy-policy" className="text-blue-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
-                        politique de confidentialité
+                        confidentialité
                       </a>
                     </Label>
                   </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-lg font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Création en cours...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Démarrer mon essai gratuit
-                      </>
-                    )}
-                  </Button>
+                  {/* CTA 0 CHF */}
+                  <div className="pt-2">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-lg font-bold rounded-xl shadow-lg transition-all"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Création en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-5 h-5 mr-2" />
+                          Commencer gratuitement
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-center text-xs text-gray-500 mt-2">
+                      Carte bancaire requise mais <strong>aucun prélèvement aujourd'hui</strong>
+                    </p>
+                  </div>
 
-                  <div className="flex items-center justify-center gap-4 pt-2">
+                  {/* Trust badges */}
+                  <div className="flex items-center justify-center gap-4 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Lock className="w-3 h-3" />
-                      Paiement sécurisé SSL
+                      SSL sécurisé
                     </div>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Clock className="w-3 h-3" />
+                      <Calendar className="w-3 h-3" />
                       7 jours gratuits
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Check className="w-3 h-3" />
+                      Annulation facile
                     </div>
                   </div>
 
@@ -408,6 +443,31 @@ export function SignupCheckoutPage() {
                 </form>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* Garanties en bas */}
+        <div className="mt-12 grid sm:grid-cols-3 gap-4 text-center">
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-2">
+              <Calendar className="w-5 h-5 text-emerald-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">7 jours gratuits</h3>
+            <p className="text-xs text-gray-500 mt-1">Testez sans risque</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-2">
+              <Lock className="w-5 h-5 text-blue-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">Sans engagement</h3>
+            <p className="text-xs text-gray-500 mt-1">Annulez quand vous voulez</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-2">
+              <CreditCard className="w-5 h-5 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">0 CHF aujourd'hui</h3>
+            <p className="text-xs text-gray-500 mt-1">Prélèvement différé</p>
           </div>
         </div>
       </main>

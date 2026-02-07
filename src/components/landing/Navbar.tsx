@@ -87,7 +87,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Button 
                 variant="outline" 
                 onClick={onLogin} 
-                className="text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 border-gray-300 font-medium transition-all"
+                className="bg-white border-2 border-gray-300 text-gray-800 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 font-semibold shadow-sm transition-all px-6"
               >
                 Se connecter
               </Button>
@@ -158,7 +158,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Button 
                 variant="outline" 
                 onClick={() => { onLogin(); closeMenu(); }}
-                className="w-full min-h-[48px] text-base touch-manipulation border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50"
+                className="w-full min-h-[48px] text-base touch-manipulation bg-white border-2 border-gray-300 text-gray-800 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 font-semibold"
               >
                 Se connecter
               </Button>
