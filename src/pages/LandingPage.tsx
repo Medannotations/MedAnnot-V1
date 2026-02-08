@@ -119,6 +119,13 @@ export default function LandingPage() {
     trackPageView("landing");
   }, [trackPageView]);
 
+  // Rediriger automatiquement vers /app quand l'utilisateur se connecte
+  useEffect(() => {
+    if (user) {
+      navigate("/app");
+    }
+  }, [user, navigate]);
+
   const handleOpenAuth = (mode: "login" | "signup") => {
     if (user) {
       navigate("/app");
