@@ -5,15 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { 
-  User, 
-  CreditCard, 
-  Bell, 
-  Shield, 
+import { Badge } from "@/components/ui/badge";
+import {
+  User,
+  CreditCard,
+  Bell,
+  Shield,
   Loader2,
   Save,
   Mail,
@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, resetPassword } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name || "");
 
   const handleUpdateProfile = async () => {
@@ -188,47 +189,48 @@ export default function SettingsPage() {
         <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Changer le mot de passe</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                Mot de passe
+              </CardTitle>
               <CardDescription>
-                Mettez à jour votre mot de passe pour sécuriser votre compte
+                Réinitialisez votre mot de passe via un lien envoyé par email
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-                <div className="flex items-center gap-2">
-                  <Key className="w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="currentPassword"
-                    type="password"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <Button className="gap-2">
-                <Save className="w-4 h-4" />
-                Mettre à jour le mot de passe
+              <p className="text-sm text-muted-foreground">
+                Pour des raisons de sécurité, la réinitialisation du mot de passe se fait par email.
+                Un lien vous sera envoyé à <strong>{user?.email}</strong> pour choisir un nouveau mot de passe.
+              </p>
+              <Button
+                className="gap-2"
+                disabled={isResettingPassword}
+                onClick={async () => {
+                  if (!user?.email) return;
+                  setIsResettingPassword(true);
+                  try {
+                    await resetPassword(user.email);
+                    toast({
+                      title: "Email envoyé",
+                      description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
+                    });
+                  } catch (error: any) {
+                    toast({
+                      title: "Erreur",
+                      description: error.message || "Impossible d'envoyer l'email.",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsResettingPassword(false);
+                  }
+                }}
+              >
+                {isResettingPassword ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
+                Envoyer le lien de réinitialisation
               </Button>
             </CardContent>
           </Card>
@@ -257,5 +259,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-import { Badge } from "@/components/ui/badge";

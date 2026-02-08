@@ -25,6 +25,7 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import TermsOfSalePage from "./pages/TermsOfSalePage";
 import LegalNoticePage from "./pages/LegalNoticePage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/signup" element={<SignupCheckoutPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* Legal Pages */}
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
