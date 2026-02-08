@@ -164,7 +164,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
-                  minLength={6}
+                  minLength={7}
                   className="pl-10 pr-12 h-12 bg-slate-700/50 border-white/15 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 />
                 <button
@@ -176,7 +176,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <p className="text-xs text-white/40">Minimum 6 caractères</p>
+              <p className="text-xs text-white/40">Minimum 7 caractères</p>
             </div>
 
             {mode === "signup" && (

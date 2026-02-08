@@ -59,10 +59,10 @@ export function SignupCheckoutPage() {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 7) {
       toast({
         title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères.",
+        description: "Le mot de passe doit contenir au moins 7 caractères.",
         variant: "destructive",
       });
       return;
@@ -316,12 +316,12 @@ export function SignupCheckoutPage() {
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Minimum 6 caractères"
+                        placeholder="Minimum 7 caractères"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={isLoading}
-                        minLength={6}
+                        minLength={7}
                         className="h-12 pl-10 pr-12 border-white/10 bg-slate-700/50 text-white placeholder:text-white/40 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                       />
                       <button
