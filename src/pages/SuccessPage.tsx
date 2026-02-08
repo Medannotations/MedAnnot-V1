@@ -7,12 +7,8 @@ import { useNavigate } from "react-router-dom";
 export function SuccessPage() {
   const navigate = useNavigate();
 
-  // Effet confettis au chargement
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Animation d'entrée pour les éléments
-    }, 100);
-    return () => clearTimeout(timer);
+    document.title = "Bienvenue sur MedAnnot — Votre Essai Gratuit est Actif";
   }, []);
 
   const nextSteps = [

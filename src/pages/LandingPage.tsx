@@ -18,77 +18,82 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
+// Helper to set or create a meta tag
+function setMeta(attr: string, key: string, content: string) {
+  let tag = document.querySelector(`meta[${attr}="${key}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute(attr, key);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
 // SEO Component
 function SEO() {
   useEffect(() => {
-    // Update page title and meta description
-    document.title = "Medannot - Assistant IA pour Annotations Infirmières | Dictez, l'IA rédige";
-    
-    // Update or create meta description
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', 'Medannot rédige vos annotations infirmières automatiquement à partir de vos dictées vocales. Économisez 2h/jour. Essai gratuit de 7 jours. Conforme LPD suisse.');
+    document.title = "MedAnnot — Annotations Infirmières par IA | Dictée Vocale & Rédaction Automatique";
 
-    // Update or create meta keywords
-    let metaKeywords = document.querySelector('meta[name="keywords"]');
-    if (!metaKeywords) {
-      metaKeywords = document.createElement('meta');
-      metaKeywords.setAttribute('name', 'keywords');
-      document.head.appendChild(metaKeywords);
-    }
-    metaKeywords.setAttribute('content', 'annotation infirmière, dictée médicale, IA infirmière, logiciel infirmier Suisse, transcription vocale, rédaction médicale, signes vitaux, observations infirmières');
+    // Meta description optimisée conversion + SEO
+    setMeta('name', 'description', "Gagnez 2h par jour sur vos annotations infirmières. Dictez vos observations vocalement, MedAnnot génère des annotations professionnelles en secondes. Essai gratuit 7 jours, sans engagement. Conforme LPD suisse.");
 
-    // Open Graph tags
-    const ogTags = [
-      { property: 'og:title', content: 'Medannot - Assistant IA pour Annotations Infirmières' },
-      { property: 'og:description', content: 'Dictez vos observations. L\'IA rédige vos annotations professionnelles. Économisez 2h/jour.' },
-      { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: 'https://medannot-v1.vercel.app' },
-      { property: 'og:image', content: 'https://medannot-v1.vercel.app/og-image.jpg' },
-    ];
+    // Keywords longue traîne ciblées marché suisse
+    setMeta('name', 'keywords', "annotations infirmières IA, dictée vocale médicale, logiciel infirmier Suisse, transcription médicale automatique, soins à domicile, observations infirmières, infirmier indépendant Suisse, documentation soins infirmiers, rédaction automatique soins, conforme LPD, dossier patient, aide-soignant");
 
-    ogTags.forEach(({ property, content }) => {
-      let tag = document.querySelector(`meta[property="${property}"]`);
-      if (!tag) {
-        tag = document.createElement('meta');
-        tag.setAttribute('property', property);
-        document.head.appendChild(tag);
-      }
-      tag.setAttribute('content', content);
-    });
+    // Open Graph
+    setMeta('property', 'og:title', "MedAnnot — Dictez vos observations, l'IA rédige vos annotations infirmières");
+    setMeta('property', 'og:description', "Fini les heures de rédaction. Dictez, MedAnnot génère des annotations professionnelles en secondes. 7 jours gratuits, sans engagement.");
+    setMeta('property', 'og:type', 'website');
+    setMeta('property', 'og:url', 'https://medannot-v1.vercel.app/');
+    setMeta('property', 'og:image', 'https://medannot-v1.vercel.app/og-image.png');
+    setMeta('property', 'og:locale', 'fr_CH');
+    setMeta('property', 'og:site_name', 'MedAnnot');
 
-    // Structured Data - SoftwareApplication
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Medannot",
-      "applicationCategory": "HealthApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "149",
-        "priceCurrency": "CHF",
-        "priceValidUntil": "2025-12-31"
-      },
-      "description": "Assistant IA pour la rédaction d'annotations infirmières pour infirmiers en Suisse.",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "ratingCount": "127"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "Medannot",
-        "address": {
-          "@type": "PostalAddress",
-          "addressCountry": "CH"
+    // Twitter Card
+    setMeta('name', 'twitter:title', "MedAnnot — Annotations Infirmières par IA en 30 Secondes");
+    setMeta('name', 'twitter:description', "Dictez vos observations. L'IA rédige vos annotations infirmières professionnelles. Essai gratuit 7 jours, sans engagement.");
+
+    // Structured Data - SoftwareApplication + WebSite
+    const structuredData = [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MedAnnot",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "Web",
+        "url": "https://medannot-v1.vercel.app",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "CHF",
+          "description": "Essai gratuit 7 jours, puis 149 CHF/mois",
+          "priceValidUntil": "2026-12-31"
+        },
+        "description": "MedAnnot est l'assistant IA qui rédige vos annotations infirmières à partir de vos dictées vocales. Conçu pour les infirmiers indépendants en Suisse. Conforme LPD.",
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "127"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "MedAnnot",
+          "url": "https://medannot-v1.vercel.app",
+          "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "CH"
+          }
         }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "MedAnnot",
+        "url": "https://medannot-v1.vercel.app",
+        "description": "Assistant IA pour annotations infirmières par dictée vocale",
+        "inLanguage": "fr-CH"
       }
-    };
+    ];
 
     let scriptTag = document.getElementById('structured-data');
     if (!scriptTag) {
@@ -98,10 +103,6 @@ function SEO() {
       document.head.appendChild(scriptTag);
     }
     scriptTag.textContent = JSON.stringify(structuredData);
-
-    return () => {
-      // Cleanup not needed as we want to keep the SEO tags
-    };
   }, []);
 
   return null;

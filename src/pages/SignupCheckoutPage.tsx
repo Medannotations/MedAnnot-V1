@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function SignupCheckoutPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Inscription Gratuite | MedAnnot — Essai 7 Jours Sans Engagement";
+  }, []);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
 
