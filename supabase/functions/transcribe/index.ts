@@ -5,10 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// SURGICAL CEO ENHANCEMENT: Maximum reliability configuration
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 2000; // 2 seconds initial delay
-const REQUEST_TIMEOUT = 60000; // 60 seconds
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000;
+const REQUEST_TIMEOUT = 55000; // 55 seconds (Supabase edge function limit ~60s)
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 // Enhanced error types for precise error handling
@@ -54,7 +53,8 @@ function validateAudioFile(file: File): void {
     'audio/opus', 'audio/flac'
   ];
 
-  if (!allowedTypes.includes(file.type)) {
+  // Allow empty type (browsers may not always set it for Blobs)
+  if (file.type && !allowedTypes.includes(file.type) && !file.type.startsWith('audio/')) {
     throw new TranscriptionError(
       "Format audio non supporté. Utilisez MP3, WAV, M4A, WebM ou OGG.",
       "INVALID_FORMAT"
@@ -117,9 +117,15 @@ async function handleTranscription(req: Request): Promise<Response> {
   // Preprocess audio
   const processedFile = await preprocessAudio(audioFile);
 
+  // Ensure file has a proper name with extension for OpenAI format detection
+  const fileName = processedFile.name && processedFile.name !== "blob"
+    ? processedFile.name
+    : "recording.webm";
+  const fileWithName = new File([processedFile], fileName, { type: processedFile.type || "audio/webm" });
+
   // Prepare FormData for OpenAI Whisper API
   const whisperFormData = new FormData();
-  whisperFormData.append("file", processedFile);
+  whisperFormData.append("file", fileWithName);
   whisperFormData.append("model", "whisper-1");
   whisperFormData.append("language", "fr");
   whisperFormData.append("temperature", "0.2"); // Slightly higher for better medical term recognition

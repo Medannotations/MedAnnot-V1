@@ -362,7 +362,7 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
                   ref={audioRef}
                   src={audioUrl}
                   onEnded={() => setIsPlaying(false)}
-                  className="hidden"
+                  preload="auto"
                 />
                 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">

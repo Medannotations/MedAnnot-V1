@@ -16,26 +16,40 @@ export async function transcribeAudio(
 
     if (onProgress) onProgress(30);
 
-    // Create FormData
+    // Create FormData with proper filename for Whisper API format detection
     const formData = new FormData();
-    formData.append("audio", audioFile);
+    const fileName = audioFile instanceof File ? audioFile.name : "recording.webm";
+    formData.append("audio", audioFile, fileName);
 
     if (onProgress) onProgress(50);
 
-    // Call edge function
+    // Call edge function with timeout (90s max for transcription)
     const { data: { session } } = await supabase.auth.getSession();
-    
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: formData,
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: formData,
+          signal: controller.signal,
+        }
+      );
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error("La transcription a pris trop de temps. Réessayez avec un enregistrement plus court.");
       }
-    );
+      throw err;
+    }
+    clearTimeout(timeoutId);
 
     if (onProgress) onProgress(80);
 
