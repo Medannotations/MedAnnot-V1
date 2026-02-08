@@ -141,7 +141,7 @@ export default function TermsOfSalePage() {
               <h3 className="text-xl font-semibold mb-3 mt-6">4.2 Modalités d'Exercice</h3>
               <p className="mb-4">Pour exercer ce droit, adressez-nous une demande claire par :</p>
               <ul className="list-disc pl-6 space-y-2 mb-4">
-                <li>Email à : <strong>refund@medannot.ch</strong></li>
+                <li>Email à : <strong>contact@medannot.ch</strong></li>
                 <li>Formulaire de contact sur la plateforme</li>
               </ul>
 
@@ -181,7 +181,7 @@ export default function TermsOfSalePage() {
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>Depuis votre espace client (section "Abonnement")</li>
                 <li>Via le portail client Stripe</li>
-                <li>Par email à support@medannot.ch</li>
+                <li>Par email à contact@medannot.ch</li>
               </ul>
 
               <h3 className="text-xl font-semibold mb-3 mt-6">5.3 Effets de la Résiliation</h3>
@@ -228,7 +228,7 @@ export default function TermsOfSalePage() {
               <div className="bg-muted p-6 rounded-lg mb-4">
                 <h3 className="font-semibold mb-3">Canaux de Support</h3>
                 <ul className="space-y-2 text-sm">
-                  <li><strong>Email :</strong> support@medannot.ch</li>
+                  <li><strong>Email :</strong> contact@medannot.ch</li>
                   <li><strong>Horaires :</strong> Lundi-Vendredi, 9h00-17h00 (CET)</li>
                   <li><strong>Délai de réponse :</strong> 24-48h ouvrables</li>
                   <li><strong>Documentation :</strong> Base de connaissances en ligne</li>
@@ -294,7 +294,7 @@ export default function TermsOfSalePage() {
               <h3 className="text-xl font-semibold mb-3 mt-6">11.2 Médiation</h3>
               <p className="mb-4">
                 En cas de litige, nous privilégions une résolution amiable. Vous pouvez contacter
-                notre service client à : <strong>legal@medannot.ch</strong>
+                notre service client à : <strong>contact@medannot.ch</strong>
               </p>
 
               <h3 className="text-xl font-semibold mb-3 mt-6">11.3 Juridiction</h3>

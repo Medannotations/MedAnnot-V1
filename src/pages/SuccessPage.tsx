@@ -139,8 +139,8 @@ export function SuccessPage() {
               <h4 className="text-sm font-semibold text-white">Un problème ? Une question ?</h4>
               <p className="text-sm text-white/60 mt-1">
                 Notre équipe de support est disponible par email à{" "}
-                <a href="mailto:support@medannot.com" className="text-cyan-400 hover:text-cyan-300">
-                  support@medannot.com
+                <a href="mailto:contact@medannot.ch" className="text-cyan-400 hover:text-cyan-300">
+                  contact@medannot.ch
                 </a>
                 {" "}pour vous accompagner.
               </p>

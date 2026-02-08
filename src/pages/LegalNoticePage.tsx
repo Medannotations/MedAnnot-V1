@@ -39,7 +39,7 @@ export default function LegalNoticePage() {
                 <p className="mt-4"><strong>Numéro IDE (Identification des entreprises) :</strong> CHE-[Votre numéro IDE]</p>
                 <p><strong>Numéro TVA :</strong> CHE-[Votre numéro TVA].MWST</p>
                 <p className="mt-4"><strong>Email de contact :</strong> contact@medannot.ch</p>
-                <p><strong>Support technique :</strong> support@medannot.ch</p>
+                <p><strong>Support technique :</strong> contact@medannot.ch</p>
               </div>
             </section>
 
@@ -196,7 +196,7 @@ export default function LegalNoticePage() {
 
               <h3 className="text-xl font-semibold mb-3 mt-6">6.1 Délégué à la Protection des Données (DPO)</h3>
               <div className="bg-muted p-6 rounded-lg">
-                <p><strong>Email :</strong> dpo@medannot.ch</p>
+                <p><strong>Email :</strong> contact@medannot.ch</p>
                 <p><strong>Fonction :</strong> Contact pour toutes questions relatives à vos données personnelles</p>
                 <p className="mt-3 text-sm text-muted-foreground">
                   Pour plus d'informations, consultez notre <a href="/privacy-policy" className="text-primary hover:underline">
@@ -252,7 +252,7 @@ export default function LegalNoticePage() {
                 service client :
               </p>
               <div className="bg-muted p-4 rounded-lg mb-4">
-                <p><strong>Email :</strong> legal@medannot.ch</p>
+                <p><strong>Email :</strong> contact@medannot.ch</p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Nous nous engageons à répondre dans un délai de 5 jours ouvrables et à rechercher
                   une solution amiable.
@@ -308,7 +308,7 @@ export default function LegalNoticePage() {
               </p>
               <p className="mb-4">
                 Si vous rencontrez des difficultés d'accessibilité, contactez-nous à :
-                <strong className="ml-1">accessibility@medannot.ch</strong>
+                <strong className="ml-1">contact@medannot.ch</strong>
               </p>
             </section>
 
@@ -332,17 +332,17 @@ export default function LegalNoticePage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="bg-muted p-6 rounded-lg">
                   <h3 className="font-semibold mb-3">Support Technique</h3>
-                  <p className="text-sm">Email : support@medannot.ch</p>
+                  <p className="text-sm">Email : contact@medannot.ch</p>
                   <p className="text-sm">Horaires : Lun-Ven, 9h-17h (CET)</p>
                 </div>
                 <div className="bg-muted p-6 rounded-lg">
                   <h3 className="font-semibold mb-3">Questions Juridiques</h3>
-                  <p className="text-sm">Email : legal@medannot.ch</p>
+                  <p className="text-sm">Email : contact@medannot.ch</p>
                   <p className="text-sm">Délai de réponse : 5 jours ouvrables</p>
                 </div>
                 <div className="bg-muted p-6 rounded-lg">
                   <h3 className="font-semibold mb-3">Protection des Données</h3>
-                  <p className="text-sm">Email : dpo@medannot.ch</p>
+                  <p className="text-sm">Email : contact@medannot.ch</p>
                   <p className="text-sm">Pour exercer vos droits RGPD/LPD</p>
                 </div>
                 <div className="bg-muted p-6 rounded-lg">

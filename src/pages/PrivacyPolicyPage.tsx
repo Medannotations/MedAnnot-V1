@@ -268,7 +268,7 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <p className="mt-6 mb-4">
-                Pour exercer vos droits, contactez-nous à : <strong>privacy@medannot.ch</strong>
+                Pour exercer vos droits, contactez-nous à : <strong>contact@medannot.ch</strong>
               </p>
               <p className="text-sm text-muted-foreground">
                 Nous nous engageons à répondre à toute demande dans un délai de 30 jours maximum.
@@ -319,7 +319,7 @@ export default function PrivacyPolicyPage() {
 
               <div className="bg-muted p-6 rounded-lg">
                 <h3 className="font-semibold mb-4">Délégué à la Protection des Données (DPO)</h3>
-                <p>Email : <strong>dpo@medannot.ch</strong></p>
+                <p>Email : <strong>contact@medannot.ch</strong></p>
                 <p>Adresse : [Votre adresse]</p>
 
                 <h3 className="font-semibold mb-4 mt-6">Autorité de Contrôle</h3>

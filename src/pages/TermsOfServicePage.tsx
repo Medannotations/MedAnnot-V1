@@ -332,7 +332,7 @@ export default function TermsOfServicePage() {
               <div className="bg-muted p-6 rounded-lg">
                 <p>Pour toute question concernant ces CGU :</p>
                 <p className="mt-2">
-                  <strong>Email :</strong> legal@medannot.ch<br />
+                  <strong>Email :</strong> contact@medannot.ch<br />
                   <strong>Adresse :</strong> [Votre adresse]<br />
                   Suisse
                 </p>

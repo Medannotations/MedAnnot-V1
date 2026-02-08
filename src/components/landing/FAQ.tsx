@@ -117,7 +117,7 @@ export function FAQ() {
             Vous avez encore des questions?
           </p>
           <a
-            href="mailto:support@medannot.ch"
+            href="mailto:contact@medannot.ch"
             className="inline-flex items-center gap-2 text-cyan-400 font-medium hover:text-cyan-300 transition-colors py-2 px-4 min-h-[44px] touch-manipulation"
           >
             <Mail className="w-5 h-5" />
