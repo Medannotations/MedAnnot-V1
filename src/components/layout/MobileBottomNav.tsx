@@ -16,7 +16,7 @@ import { useState } from "react";
 const mainNavItems = [
   { to: "/app", icon: Home, label: "Accueil" },
   { to: "/app/patients", icon: User, label: "Patients" },
-  { to: "/app/annotations/new", icon: Plus, label: "Nouvelle", isAction: true },
+  { to: "/app/annotations/new", icon: Plus, label: "", isAction: true },
   { to: "/app/configuration", icon: Settings, label: "Config" },
 ];
 
@@ -64,7 +64,6 @@ export function MobileBottomNav() {
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 shadow-lg shadow-blue-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-[10px] font-medium text-muted-foreground mt-1">{item.label}</span>
               </Link>
             );
           }

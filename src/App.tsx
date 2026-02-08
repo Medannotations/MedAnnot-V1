@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import LandingPage from "./pages/LandingPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { SignupCheckoutPage } from "./pages/SignupCheckoutPage";
@@ -48,6 +49,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />

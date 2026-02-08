@@ -152,6 +152,32 @@ All colors MUST be HSL.
     touch-action: manipulation;
   }
 
+  /* Fix browser autofill overriding dark backgrounds */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    caret-color: hsl(var(--foreground)) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Autofill fix for dark inputs (slate-700 backgrounds on landing/auth pages) */
+  .bg-slate-700\/50 input:-webkit-autofill,
+  .bg-slate-700\/50 input:-webkit-autofill:hover,
+  .bg-slate-700\/50 input:-webkit-autofill:focus,
+  .bg-slate-700\/50 input:-webkit-autofill:active,
+  input.bg-slate-700\/50:-webkit-autofill,
+  input.bg-slate-700\/50:-webkit-autofill:hover,
+  input.bg-slate-700\/50:-webkit-autofill:focus,
+  input.bg-slate-700\/50:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgb(51 65 85 / 0.5) inset !important;
+    -webkit-text-fill-color: white !important;
+    caret-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
   /* Prevent horizontal scroll on mobile */
   html, body {
     overflow-x: hidden;
