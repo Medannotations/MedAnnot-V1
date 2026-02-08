@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { 
-  CreditCard, 
-  Calendar, 
-  Check, 
-  X, 
+import {
+  CreditCard,
+  Calendar,
+  Check,
+  X,
   AlertTriangle,
   Sparkles,
   ArrowRight,
@@ -19,11 +19,14 @@ import {
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { CancellationDialog } from "./CancellationDialog";
 
 export function SubscriptionSettings() {
   const { profile, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [localStatus, setLocalStatus] = useState<string | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [isCancelledPending, setIsCancelledPending] = useState(false);
 
   // Récupérer le statut frais depuis la base
   useEffect(() => {
@@ -48,11 +51,11 @@ export function SubscriptionSettings() {
   const isCanceled = subscriptionStatus === "canceled";
   const isPastDue = subscriptionStatus === "past_due";
 
-  const periodEnd = profile?.subscription_current_period_end 
+  const periodEnd = profile?.subscription_current_period_end
     ? parseISO(profile.subscription_current_period_end)
     : null;
 
-  const handleManageSubscription = async () => {
+  const handleManagePayment = async () => {
     setIsLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -75,7 +78,7 @@ export function SubscriptionSettings() {
         console.error("Portal response error:", response.status, errorText);
         throw new Error(
           response.status === 404
-            ? "La fonction stripe-portal n'est pas déployée. Déployez-la avec: supabase functions deploy stripe-portal"
+            ? "La fonction stripe-portal n'est pas déployée."
             : `Erreur serveur (${response.status})`
         );
       }
@@ -91,7 +94,7 @@ export function SubscriptionSettings() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message || "Impossible d'accéder à la gestion d'abonnement",
+        description: error.message || "Impossible d'accéder à la gestion de paiement",
         variant: "destructive",
       });
     } finally {
@@ -100,7 +103,7 @@ export function SubscriptionSettings() {
   };
 
   const handleUpgrade = () => {
-    window.location.href = "/checkout?upgrade=true";
+    window.location.href = "/signup";
   };
 
   const getStatusBadge = () => {
@@ -154,7 +157,7 @@ export function SubscriptionSettings() {
                 Mon abonnement
               </CardTitle>
               <CardDescription>
-                Gérez votre abonnement MedAnnot
+                149 CHF/mois — Sans engagement
               </CardDescription>
             </div>
             {getStatusBadge()}
@@ -176,13 +179,12 @@ export function SubscriptionSettings() {
             </div>
           )}
 
-          {isCanceled && periodEnd && (
+          {(isCanceled || isCancelledPending) && periodEnd && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <p className="text-sm text-amber-800">
-                <span className="font-medium">Votre abonnement est résilié.</span>
+                <span className="font-medium">Résiliation programmée.</span>
                 <br />
-                Vous avez accès jusqu'au {format(periodEnd, "d MMMM yyyy", { locale: fr })}.
-                Réactivez pour ne pas perdre l'accès.
+                Votre abonnement reste actif jusqu'au {format(periodEnd, "d MMMM yyyy", { locale: fr })}.
               </p>
             </div>
           )}
@@ -199,23 +201,34 @@ export function SubscriptionSettings() {
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
           {(isActive || isTrialing || isPastDue) && (
-            <Button 
-              onClick={handleManageSubscription} 
-              disabled={isLoading}
-              className="w-full"
-              variant="outline"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <CreditCard className="w-4 h-4 mr-2" />
+            <>
+              <Button
+                onClick={handleManagePayment}
+                disabled={isLoading}
+                className="w-full"
+                variant="outline"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <CreditCard className="w-4 h-4 mr-2" />
+                )}
+                Gérer mon moyen de paiement
+              </Button>
+              {!isCancelledPending && (
+                <Button
+                  variant="ghost"
+                  onClick={() => setCancelDialogOpen(true)}
+                  className="w-full text-muted-foreground hover:text-red-600"
+                >
+                  Résilier mon abonnement
+                </Button>
               )}
-              Gérer mon abonnement
-            </Button>
+            </>
           )}
-          
-          {((!isActive && !isTrialing) || isCanceled) && (
-            <Button 
+
+          {((!isActive && !isTrialing) || isCanceled) && !isCancelledPending && (
+            <Button
               onClick={handleUpgrade}
               className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600"
             >
@@ -227,58 +240,6 @@ export function SubscriptionSettings() {
         </CardFooter>
       </Card>
 
-      {(isActive || isTrialing) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Changer de formule</CardTitle>
-            <CardDescription>
-              Passez à l'abonnement annuel et économisez
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="border-2 border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Mensuel</CardTitle>
-                  <CardDescription>Flexibilité maximale</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">149 CHF<span className="text-sm font-normal text-muted-foreground">/mois</span></div>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2 border-emerald-500 bg-emerald-50/50 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-emerald-500 text-white">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    RECOMMANDÉ
-                  </Badge>
-                </div>
-                <CardHeader className="pb-3 pt-6">
-                  <CardTitle className="text-base">Annuel</CardTitle>
-                  <CardDescription>Économisez 288 CHF/an</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">125 CHF<span className="text-sm font-normal text-muted-foreground">/mois</span></div>
-                  <p className="text-xs text-muted-foreground mt-1">Engagement 12 mois, paiement mensuel</p>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    onClick={handleManageSubscription}
-                    disabled={isLoading}
-                    variant="outline"
-                    className="w-full border-emerald-500 text-emerald-700 hover:bg-emerald-100"
-                  >
-                    Passer à l'annuel
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Inclus dans votre abonnement</CardTitle>
@@ -286,15 +247,15 @@ export function SubscriptionSettings() {
         <CardContent>
           <ul className="space-y-3">
             {[
-              "Annotations illimitées",
-              "Patients illimités",
-              "Dictée vocale IA",
+              "Dictée vocale IA — 2h de gagnées chaque jour",
+              "Annotations médicales complètes — plus de saisie manuelle",
+              "Patients illimités — tout votre cabinet, un seul outil",
               "Templates personnalisables",
               "Support prioritaire",
               "Mises à jour automatiques",
             ].map((feature, index) => (
               <li key={index} className="flex items-center gap-2 text-sm">
-                <Check className="w-4 h-4 text-emerald-500" />
+                <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                 {feature}
               </li>
             ))}
@@ -314,10 +275,21 @@ export function SubscriptionSettings() {
             Vos données de paiement sont sécurisées par Stripe. MedAnnot ne stocke jamais vos informations bancaires.
           </p>
           <p>
-            Vous pouvez résilier votre abonnement à tout moment depuis le portail de gestion. Aucun frais de résiliation.
+            Vous pouvez résilier votre abonnement à tout moment directement depuis cette page. Aucun frais de résiliation.
           </p>
         </CardContent>
       </Card>
+
+      <CancellationDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        periodEnd={periodEnd}
+        userId={user?.id || ""}
+        onCancelled={() => {
+          setIsCancelledPending(true);
+          setCancelDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

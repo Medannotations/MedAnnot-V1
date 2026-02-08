@@ -26,7 +26,12 @@ export function FAQ() {
     {
       question: "Que se passe-t-il après les 7 jours d'essai?",
       answer:
-        "Vous choisissez librement de continuer ou non. Aucune carte bancaire n'est demandée pour l'essai. Si vous ne faites rien, votre compte est simplement désactivé. Pas de mauvaise surprise.",
+        "Votre carte est demandée à l'inscription mais aucun prélèvement n'est effectué pendant les 7 jours d'essai. Si vous annulez avant la fin de l'essai, vous ne payez rien. Si vous continuez, un seul tarif : 149 CHF/mois, sans engagement.",
+    },
+    {
+      question: "Comment résilier mon abonnement?",
+      answer:
+        "Directement depuis vos paramètres dans l'application, en 2 clics. Pas besoin de contacter le support, pas de formulaire compliqué. Votre abonnement reste actif jusqu'à la fin de la période en cours.",
     },
     {
       question: "Et si l'IA fait une erreur?",

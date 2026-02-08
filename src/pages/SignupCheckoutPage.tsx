@@ -5,22 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  Check, 
-  ArrowLeft, 
-  Eye, 
-  EyeOff, 
-  Stethoscope, 
-  Shield, 
-  Clock, 
-  Sparkles, 
-  Lock, 
-  Mail, 
-  User, 
-  Calendar, 
+import {
+  Loader2,
+  Check,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Stethoscope,
+  Shield,
+  Sparkles,
+  Lock,
+  Mail,
+  User,
+  Calendar,
   CreditCard,
-  ArrowRight,
   FileText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +31,6 @@ export function SignupCheckoutPage() {
     document.title = "Inscription Gratuite | MedAnnot — Essai 7 Jours Sans Engagement";
   }, []);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
 
   // Form fields
   const [name, setName] = useState("");
@@ -45,43 +42,10 @@ export function SignupCheckoutPage() {
   const today = new Date();
   const trialEndDate = new Date(today);
   trialEndDate.setDate(today.getDate() + 7);
-  const formattedTrialEnd = trialEndDate.toLocaleDateString('fr-CH', { 
-    day: 'numeric', 
-    month: 'long' 
+  const formattedTrialEnd = trialEndDate.toLocaleDateString('fr-CH', {
+    day: 'numeric',
+    month: 'long'
   });
-
-  const plans = [
-    {
-      id: "monthly" as const,
-      name: "Mensuel",
-      price: "149",
-      period: "/mois",
-      description: "Sans engagement",
-      engagement: "Résiliable à tout moment",
-      icon: Clock,
-      features: [
-        "Annotations illimitées",
-        "Patients illimités",
-        "Support par email",
-      ],
-    },
-    {
-      id: "yearly" as const,
-      name: "Annuel",
-      price: "125",
-      period: "/mois",
-      description: "Engagement 12 mois",
-      engagement: "Économisez 288 CHF/an",
-      icon: Shield,
-      badge: "Le plus populaire",
-      recommended: true,
-      features: [
-        "Tout du plan mensuel",
-        "Support prioritaire",
-        "Meilleur rapport qualité-prix",
-      ],
-    },
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +104,7 @@ export function SignupCheckoutPage() {
             "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            plan: selectedPlan,
+            priceId: import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY,
             userId: authData.user.id,
             email: email,
             name: name,
@@ -195,7 +159,7 @@ export function SignupCheckoutPage() {
       {/* Header */}
       <header className="relative border-b border-white/15 bg-slate-800/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <button 
+          <button
             onClick={() => navigate("/")}
             className="flex items-center gap-2 group"
           >
@@ -217,7 +181,7 @@ export function SignupCheckoutPage() {
         </div>
       </header>
 
-      <main className="relative max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="relative max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Hero Badge */}
         <div className="text-center mb-8 sm:mb-12">
           <div className="inline-flex flex-col items-center">
@@ -238,89 +202,48 @@ export function SignupCheckoutPage() {
               Annulez avant le <strong className="text-cyan-400">{formattedTrialEnd}</strong> et vous ne serez pas débité.
             </p>
             <p className="text-sm text-cyan-400 font-semibold">
-              Sans aucun engagement — Annulation en 1 clic
+              149 CHF/mois — Sans aucun engagement — Annulation en 1 clic
             </p>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
-          {/* Left: Plan Selection */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-cyan-400" />
-              Choisissez votre formule pour après l'essai
-            </h2>
-            <p className="text-sm text-white/50 -mt-2 mb-4">
-              Vous ne serez débité que si vous continuez après le {formattedTrialEnd}
-            </p>
-
-            {plans.map((plan) => {
-              const Icon = plan.icon;
-              const isSelected = selectedPlan === plan.id;
-              
-              return (
-                <div
-                  key={plan.id}
-                  onClick={() => setSelectedPlan(plan.id)}
-                  className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-200 ${
-                    isSelected
-                      ? "border-cyan-500 bg-cyan-500/10 backdrop-blur-sm shadow-lg shadow-cyan-500/10"
-                      : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
-                  }`}
-                >
-                  {plan.recommended && (
-                    <div className="absolute -top-3 left-4">
-                      <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        <Sparkles className="w-3 h-3" />
-                        {plan.badge}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Icon className={`w-5 h-5 ${isSelected ? "text-cyan-400" : "text-white/50"}`} />
-                          <h3 className={`font-bold text-lg ${isSelected ? "text-white" : "text-white/80"}`}>
-                            {plan.name}
-                          </h3>
-                        </div>
-                        
-                        <div className="flex items-baseline gap-1 mb-1">
-                          <span className={`text-3xl font-bold ${isSelected ? "text-cyan-400" : "text-white"}`}>
-                            {plan.price}
-                          </span>
-                          <span className="text-white/60 font-medium">CHF</span>
-                          <span className="text-white/40">{plan.period}</span>
-                        </div>
-                        
-                        <p className={`text-sm ${isSelected ? "text-cyan-300" : "text-white/60"}`}>
-                          {plan.engagement}
-                        </p>
-
-                        <ul className="mt-3 space-y-1">
-                          {plan.features.map((feature, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm text-white/70">
-                              <Check className="w-4 h-4 text-teal-400 flex-shrink-0" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-all ${
-                        isSelected
-                          ? "border-cyan-500 bg-cyan-500"
-                          : "border-white/30"
-                      }`}>
-                        {isSelected && <Check className="w-4 h-4 text-white" />}
-                      </div>
-                    </div>
-                  </div>
+          {/* Left: Plan summary + benefits */}
+          <div className="space-y-6">
+            {/* Plan summary */}
+            <div className="bg-gradient-to-br from-cyan-600 to-teal-600 rounded-2xl p-6 text-white shadow-xl shadow-cyan-500/20 overflow-hidden relative">
+              <div
+                className="absolute inset-0 opacity-10"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                  backgroundSize: '24px 24px'
+                }}
+              />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="w-5 h-5" />
+                  <span className="text-sm font-medium text-white/80 uppercase tracking-wide">Votre formule</span>
                 </div>
-              );
-            })}
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-4xl font-bold">149</span>
+                  <span className="text-lg text-white/70">CHF/mois</span>
+                </div>
+                <ul className="space-y-2">
+                  {[
+                    "Dictée vocale illimitée",
+                    "Annotations IA complètes",
+                    "Patients illimités",
+                    "Suivi des signes vitaux",
+                    "Support prioritaire",
+                  ].map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-white/80 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
             {/* Info box */}
             <div className="bg-blue-500/10 border border-blue-400/20 rounded-xl p-4 backdrop-blur-sm">
@@ -332,8 +255,8 @@ export function SignupCheckoutPage() {
                   </p>
                   <p className="text-sm text-white/70 mt-1">
                     <strong className="text-white">Aujourd'hui : 0 CHF</strong> (essai gratuit)<br/>
-                    <strong className="text-white">Le {formattedTrialEnd}</strong> : {selectedPlan === "monthly" ? "149 CHF" : "125 CHF"} si vous continuez<br/>
-                    <span className="text-white/50">Ensuite : tous les mois à la même date</span>
+                    <strong className="text-white">Le {formattedTrialEnd}</strong> : 149 CHF si vous continuez<br/>
+                    <span className="text-white/50">Ensuite : 149 CHF tous les mois à la même date</span>
                   </p>
                 </div>
               </div>
