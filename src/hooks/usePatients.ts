@@ -222,9 +222,17 @@ export function useUpdatePatient() {
 
       return patientWithExamples as Patient;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["patients"] });
-      queryClient.invalidateQueries({ queryKey: ["patient", data.id] });
+    onSuccess: (updatedPatient) => {
+      // Mise à jour immédiate du cache pour UX instantanée
+      queryClient.setQueryData(["patient", updatedPatient.id], updatedPatient);
+      queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
+        if (!old) return old;
+        return old.map(p => p.id === updatedPatient.id ? updatedPatient : p);
+      });
+      queryClient.setQueryData(["patients", user?.id, true], (old: Patient[] | undefined) => {
+        if (!old) return old;
+        return old.map(p => p.id === updatedPatient.id ? updatedPatient : p);
+      });
     },
   });
 }
