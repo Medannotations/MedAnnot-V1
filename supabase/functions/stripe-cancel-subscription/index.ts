@@ -40,24 +40,30 @@ serve(async (req) => {
     // Récupérer le stripe_customer_id
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, subscription_status")
       .eq("user_id", userId)
       .single();
 
+    console.log("Profile lookup:", {
+      userId,
+      found: !!profile,
+      stripe_customer_id: profile?.stripe_customer_id,
+      subscription_status: profile?.subscription_status,
+      error: profileError?.message,
+    });
+
     if (profileError || !profile?.stripe_customer_id) {
-      console.error("Profile lookup error:", profileError);
       return new Response(
-        JSON.stringify({ error: "Aucun abonnement Stripe trouvé" }),
+        JSON.stringify({ error: "Aucun abonnement Stripe trouvé pour ce compte" }),
         { status: 404, headers: corsHeaders }
       );
     }
 
     const customerId = profile.stripe_customer_id;
-    console.log("Cancelling subscription for customer:", customerId);
 
-    // Lister les abonnements actifs
+    // Lister TOUS les abonnements du client (sans filtre de statut)
     const listResponse = await fetch(
-      `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=active&limit=1`,
+      `https://api.stripe.com/v1/subscriptions?customer=${customerId}&limit=10`,
       {
         headers: { "Authorization": `Bearer ${stripeSecretKey}` },
       }
@@ -67,40 +73,52 @@ serve(async (req) => {
       const errorText = await listResponse.text();
       console.error("Failed to list subscriptions:", errorText);
       return new Response(
-        JSON.stringify({ error: "Impossible de récupérer l'abonnement" }),
+        JSON.stringify({ error: "Impossible de récupérer les abonnements" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    const subscriptions = await listResponse.json();
+    const allSubscriptions = await listResponse.json();
+    console.log("All subscriptions found:", allSubscriptions.data?.length,
+      "statuses:", allSubscriptions.data?.map((s: any) => `${s.id}:${s.status}`));
 
-    // Essayer aussi les abonnements trialing
-    let subscription = subscriptions.data?.[0];
-    if (!subscription) {
-      const trialingResponse = await fetch(
-        `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=trialing&limit=1`,
-        {
-          headers: { "Authorization": `Bearer ${stripeSecretKey}` },
-        }
-      );
-      if (trialingResponse.ok) {
-        const trialingSubs = await trialingResponse.json();
-        subscription = trialingSubs.data?.[0];
-      }
-    }
+    // Trouver le premier abonnement annulable (active, trialing, past_due, incomplete)
+    const cancellableStatuses = ["active", "trialing", "past_due", "incomplete"];
+    const subscription = allSubscriptions.data?.find(
+      (s: any) => cancellableStatuses.includes(s.status) && !s.cancel_at_period_end
+    );
 
-    if (!subscription) {
+    // Si aucun non-annulé, chercher même ceux déjà programmés pour annulation
+    const anySubscription = subscription || allSubscriptions.data?.find(
+      (s: any) => cancellableStatuses.includes(s.status)
+    );
+
+    if (!anySubscription) {
+      console.error("No cancellable subscription found for customer:", customerId);
       return new Response(
-        JSON.stringify({ error: "Aucun abonnement actif trouvé" }),
+        JSON.stringify({
+          error: "Aucun abonnement actif trouvé",
+          debug: `Customer ${customerId}, ${allSubscriptions.data?.length || 0} subscriptions found`
+        }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-    console.log("Found subscription:", subscription.id, "status:", subscription.status);
+    if (anySubscription.cancel_at_period_end) {
+      // Déjà programmé pour annulation
+      const periodEnd = new Date(anySubscription.current_period_end * 1000).toISOString();
+      console.log("Subscription already set to cancel at period end:", periodEnd);
+      return new Response(
+        JSON.stringify({ success: true, periodEnd, alreadyCancelled: true }),
+        { headers: corsHeaders }
+      );
+    }
 
-    // Annuler à la fin de la période (pas immédiatement)
+    console.log("Cancelling subscription:", anySubscription.id, "status:", anySubscription.status);
+
+    // Annuler à la fin de la période
     const cancelResponse = await fetch(
-      `https://api.stripe.com/v1/subscriptions/${subscription.id}`,
+      `https://api.stripe.com/v1/subscriptions/${anySubscription.id}`,
       {
         method: "POST",
         headers: {
