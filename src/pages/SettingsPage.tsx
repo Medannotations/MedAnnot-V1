@@ -107,7 +107,7 @@ export default function SettingsPage() {
                   id="fullName"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Dr. Marie Dupont"
+                  placeholder="Marie Dupont"
                 />
               </div>
 
