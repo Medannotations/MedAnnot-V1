@@ -118,6 +118,7 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: formData,
         }
@@ -201,7 +202,7 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
 
       {/* Playback and Send */}
       {audioUrl && !isRecording && (
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <audio
             ref={audioRef}
             src={audioUrl}
@@ -230,7 +231,7 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
                 {isTranscribing ? "Transcription..." : "Génération..."}
               </>
             ) : (
-              "Générer l'annotation"
+              "Transcrire"
             )}
           </Button>
           <Button

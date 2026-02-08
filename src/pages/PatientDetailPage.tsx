@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Thermometer, Heart, Activity, Wind } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Thermometer, Heart, Activity, Wind, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { VoiceRecorder } from "@/components/annotations/VoiceRecorder";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
@@ -127,7 +127,6 @@ export default function PatientDetailPage() {
 
   const handleTranscriptionComplete = async (text: string) => {
     setTranscription(text);
-    await handleGenerateAnnotation(text);
   };
 
   const handleGenerateAnnotation = async (text: string) => {
@@ -249,7 +248,7 @@ export default function PatientDetailPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-6xl w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -345,7 +344,7 @@ export default function PatientDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date" className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
@@ -372,7 +371,7 @@ export default function PatientDetailPage() {
                   </div>
                 </div>
 
-                <VoiceRecorder 
+                <VoiceRecorder
                   onTranscriptionComplete={handleTranscriptionComplete}
                   isGenerating={isTranscribing || isGenerating}
                 />
@@ -380,7 +379,22 @@ export default function PatientDetailPage() {
                 {transcription && (
                   <div className="space-y-2">
                     <Label>Transcription</Label>
-                    <p className="p-3 bg-muted rounded-lg text-sm">{transcription}</p>
+                    <p className="p-3 bg-muted rounded-lg text-sm break-words">{transcription}</p>
+                    {!generatedContent && !isGenerating && (
+                      <Button
+                        onClick={() => handleGenerateAnnotation(transcription)}
+                        className="w-full"
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Générer l'annotation
+                      </Button>
+                    )}
+                    {isGenerating && (
+                      <div className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Génération de l'annotation...</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -392,7 +406,7 @@ export default function PatientDetailPage() {
                       onChange={(e) => setGeneratedContent(e.target.value)}
                       className="min-h-[300px]"
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button onClick={handleSaveAnnotation} disabled={createAnnotation.isPending}>
                         {createAnnotation.isPending ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -555,7 +569,7 @@ export default function PatientDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-last_name">Nom *</Label>
                 <Input
@@ -587,7 +601,7 @@ export default function PatientDetailPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-postal_code">Code postal</Label>
                 <Input
