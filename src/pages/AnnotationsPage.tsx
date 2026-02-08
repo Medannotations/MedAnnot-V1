@@ -50,7 +50,7 @@ import { format, isToday, parseISO, subDays, subWeeks, subMonths } from "date-fn
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
-import { cn } from "@/lib/utils";
+import { cn, cleanAnnotationForCopy } from "@/lib/utils";
 
 // Type pour les signes vitaux
 interface VitalSigns {
@@ -331,7 +331,7 @@ export default function AnnotationsPage() {
   }, [filteredAnnotations]);
 
   const handleCopy = async (content: string) => {
-    await navigator.clipboard.writeText(content);
+    await navigator.clipboard.writeText(cleanAnnotationForCopy(content));
     toast({
       title: "✓ Copié !",
       description: "L'annotation a été copiée dans le presse-papier.",

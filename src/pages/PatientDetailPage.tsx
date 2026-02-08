@@ -25,6 +25,7 @@ import { usePatient, useUpdatePatient, useArchivePatient } from "@/hooks/usePati
 import { useAnnotationsByPatient, useCreateAnnotation, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
 import { useUserConfiguration, useExampleAnnotations } from "@/hooks/useConfiguration";
 import { transcribeAudio, generateAnnotation } from "@/services/aiService";
+import { cleanAnnotationForCopy } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -643,7 +644,7 @@ export default function PatientDetailPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(annotation.content);
+                                  navigator.clipboard.writeText(cleanAnnotationForCopy(annotation.content));
                                   toast({ title: "Annotation copiée" });
                                 }}
                               >
@@ -845,7 +846,7 @@ export default function PatientDetailPage() {
           isOpen={!!viewAnnotation}
           onClose={() => setViewAnnotation(null)}
           onCopy={() => {
-            navigator.clipboard.writeText(viewAnnotation.content);
+            navigator.clipboard.writeText(cleanAnnotationForCopy(viewAnnotation.content));
             toast({ title: "Annotation copiée" });
           }}
         />

@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Loader2, Copy, Calendar, Clock, User, FileText, Timer 
 import { useAnnotation, useUpdateAnnotation } from "@/hooks/useAnnotations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhraseTemplatePicker } from "@/components/annotations/PhraseTemplatePicker";
+import { cleanAnnotationForCopy } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -72,7 +73,7 @@ export default function EditAnnotationPage() {
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
+    await navigator.clipboard.writeText(cleanAnnotationForCopy(content));
     toast({
       title: "Copié !",
       description: "L'annotation a été copiée dans le presse-papier.",
