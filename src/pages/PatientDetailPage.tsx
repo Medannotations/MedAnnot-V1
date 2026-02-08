@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Thermometer, Heart, Activity, Wind, Sparkles, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Thermometer, Heart, Activity, Wind, Sparkles, RotateCcw, X, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { VoiceRecorderDual } from "@/components/annotations/VoiceRecorderDual";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
@@ -624,7 +624,25 @@ export default function PatientDetailPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setViewAnnotation(annotation as AnnotationWithPatient)}
+                                onClick={() => {
+                                  navigator.clipboard.writeText(annotation.content);
+                                  toast({ title: "Annotation copiée" });
+                                }}
+                              >
+                                <Copy className="w-3.5 h-3.5 mr-1" />
+                                Copier
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewAnnotation({
+                                  ...annotation,
+                                  patients: {
+                                    first_name: patient.first_name,
+                                    last_name: patient.last_name,
+                                    pathologies: patient.pathologies,
+                                  },
+                                } as AnnotationWithPatient)}
                               >
                                 Voir
                               </Button>
