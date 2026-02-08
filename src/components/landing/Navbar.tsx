@@ -64,7 +64,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo élégant */}
             <a href="/" className="flex items-center group">
-              <Logo size="sm" className="group-hover:opacity-90 transition-opacity" />
+              <Logo size="md" className="group-hover:opacity-90 transition-opacity" />
             </a>
             
             {/* Desktop menu */}

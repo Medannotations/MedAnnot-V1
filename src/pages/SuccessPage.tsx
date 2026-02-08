@@ -47,7 +47,7 @@ export function SuccessPage() {
       {/* Header */}
       <header className="relative border-b border-white/15 bg-slate-800/50 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-center">
-          <Logo size="md" />
+          <Logo size="lg" />
         </div>
       </header>
 

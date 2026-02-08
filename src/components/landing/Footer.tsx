@@ -24,7 +24,7 @@ export function Footer() {
             {/* Colonne 1 - À propos */}
             <div className="space-y-4 text-center sm:text-left">
               <div className="flex items-center justify-center sm:justify-start">
-                <Logo size="md" />
+                <Logo size="lg" />
               </div>
               <p className="text-white/70 leading-relaxed">
                 L'assistant IA qui économise 2h par jour aux infirmiers. 
