@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, ArrowRight, Sparkles, Shield, Zap, Play, Pause, X, FileText, Activity, Mic } from "lucide-react";
+import { ArrowRight, Sparkles, Shield, Zap, Play, Pause, X, FileText, Activity, Mic } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import { Link } from "react-router-dom";
 
 interface HeroPremiumProps {
@@ -195,7 +196,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
                   </div>
                   <div className="flex-1 flex justify-center">
                     <div className="px-4 py-1.5 bg-slate-900/50 rounded-lg text-xs text-white/50 flex items-center gap-2">
-                      <Stethoscope className="w-3 h-3" />
+                      <Logo size="xs" className="h-4" />
                       app.medannot.com
                     </div>
                   </div>

@@ -1,5 +1,6 @@
-import { Shield, Lock, Stethoscope, MapPin } from "lucide-react";
+import { Shield, Lock, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Logo } from "@/components/ui/Logo";
 
 export function Footer() {
   return (
@@ -22,11 +23,8 @@ export function Footer() {
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12">
             {/* Colonne 1 - À propos */}
             <div className="space-y-4 text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-white">MedAnnot</h3>
+              <div className="flex items-center justify-center sm:justify-start">
+                <Logo size="md" />
               </div>
               <p className="text-white/70 leading-relaxed">
                 L'assistant IA qui économise 2h par jour aux infirmiers. 

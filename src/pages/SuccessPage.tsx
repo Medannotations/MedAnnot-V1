@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Stethoscope, ArrowRight, FileText, Users, Sparkles, Shield } from "lucide-react";
+import { Check, ArrowRight, FileText, Users, Sparkles, Shield, Mic } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import { useNavigate } from "react-router-dom";
 
 export function SuccessPage() {
@@ -13,7 +14,7 @@ export function SuccessPage() {
 
   const nextSteps = [
     {
-      icon: Stethoscope,
+      icon: Mic,
       title: "Enregistrez votre première annotation",
       description: "Ajoutez un patient, enregistrez une observation vocale et laissez l'IA créer une annotation complète.",
       cta: "Créer une annotation",
@@ -46,14 +47,7 @@ export function SuccessPage() {
       {/* Header */}
       <header className="relative border-b border-white/15 bg-slate-800/50 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-center">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <Stethoscope className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">
-              MedAnnot
-            </span>
-          </div>
+          <Logo size="md" />
         </div>
       </header>
 
@@ -130,7 +124,6 @@ export function SuccessPage() {
             onClick={() => navigate("/app")}
             className="h-14 px-8 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white text-lg font-bold rounded-xl shadow-lg shadow-cyan-500/20 transition-all hover:shadow-cyan-500/30"
           >
-            <Stethoscope className="w-5 h-5 mr-2" />
             Accéder à mon espace
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>

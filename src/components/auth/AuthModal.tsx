@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Mail, Lock, User, Eye, EyeOff, Stethoscope, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -245,7 +246,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
           {/* Trust badges */}
           <div className="flex items-center justify-center gap-4 pt-2 text-xs text-white/50">
             <div className="flex items-center gap-1">
-              <Stethoscope className="w-3 h-3 text-cyan-400" />
+              <Logo size="xs" className="h-3.5" />
               <span><strong className="text-white/70">7 jours gratuits</strong></span>
             </div>
             <div className="flex items-center gap-1">

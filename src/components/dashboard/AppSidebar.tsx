@@ -1,5 +1,6 @@
 import { Settings, FileText, Users, Home, LogOut, BarChart3, User, Moon, Monitor, Sun } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { Logo } from "@/components/ui/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/components/theme-provider";
 import {
@@ -70,11 +71,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <FileText className="w-4 h-4 text-sidebar-primary-foreground" />
-          </div>
-          <span className="text-lg font-bold text-sidebar-foreground">Medannot</span>
+        <div className="flex items-center">
+          <Logo size="sm" />
         </div>
         
         {/* Sélecteur de thème dans le header */}

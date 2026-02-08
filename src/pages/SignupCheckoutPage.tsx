@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-  Stethoscope,
   Shield,
   Sparkles,
   Lock,
@@ -23,6 +22,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Logo } from "@/components/ui/Logo";
 
 export function SignupCheckoutPage() {
   const navigate = useNavigate();
@@ -162,14 +162,9 @@ export function SignupCheckoutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 group"
+            className="flex items-center group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/30 transition-all">
-              <Stethoscope className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">
-              MedAnnot
-            </span>
+            <Logo size="md" className="group-hover:opacity-90 transition-opacity" />
           </button>
           <Button
             variant="ghost"
