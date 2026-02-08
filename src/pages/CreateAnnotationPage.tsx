@@ -224,10 +224,8 @@ export default function CreateAnnotationPage() {
     setIsGenerating(true);
 
     try {
-      // La transcription telle quelle (pas de signes vitaux dans le flux)
-      
       const result = await generateAnnotation({
-        transcription: enrichedTranscription,
+        transcription: editedTranscription,
         patientName: `${selectedPatient.last_name} ${selectedPatient.first_name}`,
         patientId: selectedPatient.id,
         patientAddress: selectedPatient.address || "",

@@ -50,6 +50,7 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
   const animationRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const recordingTimeRef = useRef(0);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -107,7 +108,7 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-        setAudioDuration(recordingTime);
+        setAudioDuration(recordingTimeRef.current);
         stream.getTracks().forEach((track) => track.stop());
         if (audioContextRef.current) {
           audioContextRef.current.close();
@@ -118,11 +119,13 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
       setIsRecording(true);
       setIsPaused(false);
       setRecordingTime(0);
+      recordingTimeRef.current = 0;
       setAudioBlob(null);
       setAudioUrl(null);
 
       timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
+        recordingTimeRef.current += 1;
+        setRecordingTime(recordingTimeRef.current);
       }, 1000);
       
       // Start audio level animation
@@ -141,7 +144,8 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
       if (isPaused) {
         mediaRecorderRef.current.resume();
         timerRef.current = setInterval(() => {
-          setRecordingTime((prev) => prev + 1);
+          recordingTimeRef.current += 1;
+          setRecordingTime(recordingTimeRef.current);
         }, 1000);
         updateAudioLevel();
       } else {
