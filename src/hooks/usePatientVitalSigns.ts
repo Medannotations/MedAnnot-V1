@@ -92,6 +92,7 @@ export function useSaveVitalSigns() {
           visit_date: date,
           visit_time: new Date().toTimeString().slice(0, 5),
           content: "Signes vitaux enregistrés - Annotation à compléter",
+          transcription: "",
           vital_signs: vitalSigns,
           user_id: user.id,
         });
