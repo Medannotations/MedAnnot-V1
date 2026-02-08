@@ -25,10 +25,10 @@ export function Problem() {
   ];
 
   return (
-    <section className="relative py-20 md:py-28 bg-slate-950 overflow-hidden">
+    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-red-950/10 to-slate-900" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-red-950/15 to-slate-800" />
       </div>
 
       <div className="relative container mx-auto px-4">

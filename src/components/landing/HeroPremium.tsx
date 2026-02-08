@@ -40,7 +40,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background médical premium */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-teal-950">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900 to-teal-900">
         {/* Grid pattern */}
         <div 
           className="absolute inset-0 opacity-20"
@@ -63,8 +63,8 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left: Text Content */}
-          <div 
-            className={`space-y-6 transition-all duration-1000 ${
+          <div
+            className={`space-y-6 text-center lg:text-left transition-all duration-1000 ${
               isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
             }`}
           >
@@ -84,17 +84,17 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
             </h1>
 
             {/* Description */}
-            <p className="text-lg sm:text-xl text-white/70 max-w-2xl leading-relaxed">
-              Enregistrez vos observations à chaud, laissez l'IA générer des annotations médicales complètes. 
+            <p className="text-lg sm:text-xl text-white/70 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              Enregistrez vos observations à chaud, laissez l'IA générer des annotations médicales complètes.
               Dédié aux infirmiers en Suisse.
             </p>
 
             {/* Feature pills */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-3">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <div 
+                  <div
                     key={index}
                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/80 text-sm"
                   >
@@ -106,7 +106,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 pt-4">
               <Button
                 size="lg"
                 onClick={handleGetStarted}
@@ -116,7 +116,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
                 Essai gratuit 7 jours
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="lg"
@@ -130,11 +130,27 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
               </Button>
             </div>
 
+            {/* Marketing emphasis */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-sm text-white/60">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <strong className="text-white/80">0 CHF</strong> aujourd'hui
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                Sans engagement
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+                Annulation en 1 clic
+              </span>
+            </div>
+
             {/* Social proof */}
-            <div className="flex items-center gap-4 pt-6">
+            <div className="flex items-center justify-center lg:justify-start gap-4 pt-6">
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <div 
+                  <div
                     key={i}
                     className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold"
                   >
@@ -143,7 +159,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
                 ))}
               </div>
               <div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center lg:justify-start gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <svg key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20">
                       <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />

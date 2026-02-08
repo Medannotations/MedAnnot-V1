@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
-    <footer className="relative bg-slate-950 border-t border-white/10 py-12 sm:py-16 overflow-hidden">
+    <footer className="relative bg-slate-900 border-t border-white/15 py-12 sm:py-16 overflow-hidden">
       {/* Background subtle pattern */}
       <div 
         className="absolute inset-0 opacity-5"
@@ -21,8 +21,8 @@ export function Footer() {
         <div className="max-w-6xl mx-auto mb-8 sm:mb-12">
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12">
             {/* Colonne 1 - À propos */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
                 <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center">
                   <Stethoscope className="w-6 h-6 text-white" />
                 </div>
@@ -49,7 +49,7 @@ export function Footer() {
             </div>
 
             {/* Colonne 2 - Navigation rapide */}
-            <div>
+            <div className="text-center sm:text-left">
               <h4 className="font-semibold mb-4 text-lg text-white">Navigation</h4>
               <ul className="space-y-1 text-white/70">
                 <li>
@@ -76,7 +76,7 @@ export function Footer() {
             </div>
 
             {/* Colonne 3 - Support */}
-            <div>
+            <div className="text-center sm:text-left">
               <h4 className="font-semibold mb-4 text-lg text-white">Support</h4>
               <ul className="space-y-3 text-white/70">
                 <li>

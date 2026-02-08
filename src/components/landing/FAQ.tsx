@@ -42,10 +42,10 @@ export function FAQ() {
   };
 
   return (
-    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden" id="faq">
+    <section className="relative py-20 md:py-28 bg-slate-800 overflow-hidden" id="faq">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-teal-950/10 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-800 via-teal-900/15 to-slate-900" />
       </div>
 
       <div className="relative container mx-auto px-4">

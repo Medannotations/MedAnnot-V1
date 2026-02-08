@@ -56,10 +56,10 @@ export function Features() {
   };
 
   return (
-    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden" id="features">
+    <section className="relative py-20 md:py-28 bg-slate-800 overflow-hidden" id="features">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-950/20 to-slate-900" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-800 via-blue-900/20 to-slate-800" />
         <div 
           className="absolute inset-0 opacity-10"
           style={{

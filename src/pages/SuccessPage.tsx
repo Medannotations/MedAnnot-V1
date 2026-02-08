@@ -40,15 +40,15 @@ export function SuccessPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-900 relative overflow-hidden">
       {/* Background médical */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950/80 to-teal-950/70" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900/70 to-teal-900/60" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-teal-500/20 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
-      <header className="relative border-b border-white/10 bg-slate-900/50 backdrop-blur-xl">
+      <header className="relative border-b border-white/15 bg-slate-800/50 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-center">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">

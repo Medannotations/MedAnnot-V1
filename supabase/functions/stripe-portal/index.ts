@@ -88,7 +88,8 @@ serve(async (req) => {
           },
           body: new URLSearchParams({
             email: profile.email,
-            metadata: JSON.stringify({ userId, source: "medannot_portal" }),
+            "metadata[userId]": userId,
+            "metadata[source]": "medannot_portal",
           }),
         });
 
@@ -155,8 +156,20 @@ serve(async (req) => {
     if (!portalResponse.ok) {
       const errorText = await portalResponse.text();
       console.error("Stripe portal creation failed:", errorText);
+
+      // Parse Stripe error for better messaging
+      let errorMessage = "Failed to create portal session";
+      try {
+        const stripeError = JSON.parse(errorText);
+        if (stripeError?.error?.message?.includes("No portal configuration")) {
+          errorMessage = "Le portail client Stripe n'est pas configuré. Activez-le dans Stripe Dashboard > Settings > Billing > Customer portal.";
+        } else if (stripeError?.error?.message) {
+          errorMessage = stripeError.error.message;
+        }
+      } catch (_) {}
+
       return new Response(
-        JSON.stringify({ error: "Failed to create portal session" }),
+        JSON.stringify({ error: errorMessage }),
         { status: 500, headers: corsHeaders }
       );
     }

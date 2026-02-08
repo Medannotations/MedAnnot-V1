@@ -73,9 +73,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-slate-900 border border-white/10 shadow-2xl">
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-slate-800 border border-white/15 shadow-2xl">
         {/* Header avec gradient */}
-        <div className="relative bg-gradient-to-br from-slate-800 via-blue-950/50 to-teal-950/50 p-8 pb-10">
+        <div className="relative bg-gradient-to-br from-slate-700 via-blue-900/50 to-teal-900/50 p-8 pb-10">
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-20">
             <div 
@@ -99,9 +99,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
               {mode === "login" ? "Connexion" : "Créer un compte"}
             </DialogTitle>
             <DialogDescription className="text-white/60 text-center mt-2">
-              {mode === "login" 
-                ? "Accédez à votre espace MedAnnot" 
-                : "Commencez votre essai gratuit de 7 jours"}
+              {mode === "login"
+                ? "Accédez à votre espace MedAnnot"
+                : "7 jours gratuits — Sans aucun engagement"}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -124,7 +124,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                     onChange={(e) => setName(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-10 h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
+                    className="pl-10 h-12 bg-slate-700/50 border-white/15 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                   />
                 </div>
               </div>
@@ -144,7 +144,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="pl-10 h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
+                  className="pl-10 h-12 bg-slate-700/50 border-white/15 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 />
               </div>
             </div>
@@ -164,7 +164,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                   required
                   disabled={isLoading}
                   minLength={6}
-                  className="pl-10 pr-12 h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
+                  className="pl-10 pr-12 h-12 bg-slate-700/50 border-white/15 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 />
                 <button
                   type="button"
@@ -225,7 +225,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-slate-900 text-white/40">
+              <span className="px-2 bg-slate-800 text-white/40">
                 {mode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?"}
               </span>
             </div>
@@ -243,14 +243,14 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
           </Button>
 
           {/* Trust badges */}
-          <div className="flex items-center justify-center gap-4 pt-2 text-xs text-white/40">
+          <div className="flex items-center justify-center gap-4 pt-2 text-xs text-white/50">
             <div className="flex items-center gap-1">
-              <Stethoscope className="w-3 h-3" />
-              <span>Essai gratuit 7 jours</span>
+              <Stethoscope className="w-3 h-3 text-cyan-400" />
+              <span><strong className="text-white/70">7 jours gratuits</strong></span>
             </div>
             <div className="flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              <span>Données sécurisées</span>
+              <Lock className="w-3 h-3 text-teal-400" />
+              <span>Sans engagement</span>
             </div>
           </div>
         </div>

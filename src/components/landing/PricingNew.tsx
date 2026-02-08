@@ -24,10 +24,10 @@ export function Pricing({ onGetStarted }: PricingProps) {
   ];
 
   return (
-    <section className="relative py-20 md:py-28 bg-slate-950 overflow-hidden" id="pricing">
+    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden" id="pricing">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-cyan-950/10 to-slate-900" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-cyan-900/15 to-slate-800" />
       </div>
 
       <div className="relative container mx-auto px-4">
@@ -44,7 +44,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
             </span>
           </h2>
           <p className="text-xl text-white/60 max-w-2xl mx-auto">
-            7 jours d'essai sans engagement. Annulez avant le {formattedTrialEnd} et vous ne payez rien.
+            <strong className="text-white">7 jours d'essai gratuit, sans aucun engagement.</strong> Annulez avant le {formattedTrialEnd} et vous ne payez rien.
           </p>
         </div>
 

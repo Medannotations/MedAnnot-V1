@@ -16,7 +16,7 @@ import {
   Shield,
   Clock
 } from "lucide-react";
-import { format, parseISO, isAfter, addDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -52,8 +52,6 @@ export function SubscriptionSettings() {
     ? parseISO(profile.subscription_current_period_end)
     : null;
 
-  const isPeriodEndingSoon = periodEnd && isAfter(new Date(), addDays(periodEnd, -7));
-
   const handleManageSubscription = async () => {
     setIsLoading(true);
     try {
@@ -72,12 +70,23 @@ export function SubscriptionSettings() {
         }
       );
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Portal response error:", response.status, errorText);
+        throw new Error(
+          response.status === 404
+            ? "La fonction stripe-portal n'est pas déployée. Déployez-la avec: supabase functions deploy stripe-portal"
+            : `Erreur serveur (${response.status})`
+        );
+      }
+
       const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error("Impossible d'accéder au portail de gestion");
+        console.error("Portal response without URL:", data);
+        throw new Error(data.error || "Impossible d'accéder au portail de gestion");
       }
     } catch (error: any) {
       toast({
@@ -153,28 +162,18 @@ export function SubscriptionSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           {(isActive || isTrialing) && (
-            <>
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>Prochaine échéance</span>
-                </div>
-                <span className={isPeriodEndingSoon ? "text-amber-600 font-medium" : ""}>
-                  {periodEnd 
-                    ? format(periodEnd, "d MMMM yyyy", { locale: fr })
-                    : "Non définie"
-                  }
-                </span>
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>Prochaine échéance</span>
               </div>
-              {isPeriodEndingSoon && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span className="font-medium">Votre abonnement se termine bientôt</span>
-                  </div>
-                </div>
-              )}
-            </>
+              <span>
+                {periodEnd
+                  ? format(periodEnd, "d MMMM yyyy", { locale: fr })
+                  : "Non définie"
+                }
+              </span>
+            </div>
           )}
 
           {isCanceled && periodEnd && (

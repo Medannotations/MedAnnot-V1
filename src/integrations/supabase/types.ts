@@ -160,6 +160,9 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          stripe_customer_id: string | null
+          subscription_current_period_end: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -168,6 +171,9 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -176,6 +182,9 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }

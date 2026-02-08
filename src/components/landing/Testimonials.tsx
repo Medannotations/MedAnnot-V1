@@ -62,7 +62,7 @@ export function Testimonials() {
     <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden" id="testimonials">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-950/10 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-900/15 to-slate-800" />
       </div>
 
       <div className="relative container mx-auto px-4">

@@ -7,10 +7,10 @@ interface FinalCTAProps {
 
 export function FinalCTA({ onGetStarted }: FinalCTAProps) {
   return (
-    <section className="relative py-20 md:py-28 bg-slate-950 overflow-hidden">
+    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-cyan-950/30 to-teal-950/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-cyan-900/30 to-teal-900/20" />
         {/* Decorative orbs */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
@@ -46,8 +46,11 @@ export function FinalCTA({ onGetStarted }: FinalCTAProps) {
           </h2>
 
           {/* Subtext */}
-          <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto">
-            7 jours pour tester. Aucun engagement. Si MedAnnot ne change pas votre quotidien, vous n'avez rien perdu.
+          <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto">
+            7 jours pour tester. <strong className="text-white">Aucun engagement.</strong> Si MedAnnot ne change pas votre quotidien, vous n'avez rien perdu.
+          </p>
+          <p className="text-2xl font-bold text-cyan-400 mb-10">
+            0 CHF aujourd'hui — sans aucun engagement
           </p>
 
           {/* CTA Button */}

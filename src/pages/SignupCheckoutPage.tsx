@@ -180,16 +180,16 @@ export function SignupCheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-900">
       {/* Background médical */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950/80 to-teal-950/70" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900/70 to-teal-900/60" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
-      <header className="relative border-b border-white/10 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-50">
+      <header className="relative border-b border-white/15 bg-slate-800/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <button 
             onClick={() => navigate("/")}
@@ -229,9 +229,12 @@ export function SignupCheckoutPage() {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
               Commencez votre essai gratuit
             </h1>
-            <p className="text-white/60 max-w-md mx-auto text-sm sm:text-base">
-              Testez MedAnnot pendant 7 jours sans payer. <br className="hidden sm:block"/>
+            <p className="text-white/60 max-w-md mx-auto text-sm sm:text-base mb-3">
+              Testez MedAnnot pendant <strong className="text-white">7 jours sans payer</strong>. <br className="hidden sm:block"/>
               Annulez avant le <strong className="text-cyan-400">{formattedTrialEnd}</strong> et vous ne serez pas débité.
+            </p>
+            <p className="text-sm text-cyan-400 font-semibold">
+              Sans aucun engagement — Annulation en 1 clic
             </p>
           </div>
         </div>

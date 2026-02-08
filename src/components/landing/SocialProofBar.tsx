@@ -25,9 +25,9 @@ export function SocialProofBar() {
   ];
 
   return (
-    <section className="relative py-4 sm:py-6 bg-slate-800/80 backdrop-blur-sm border-y border-white/10 overflow-hidden">
+    <section className="relative py-4 sm:py-6 bg-slate-700/60 backdrop-blur-sm border-y border-white/15 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-cyan-950/50 via-teal-950/30 to-cyan-950/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/40 via-teal-900/25 to-cyan-900/40" />
 
       <div className="relative container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
