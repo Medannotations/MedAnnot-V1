@@ -65,6 +65,7 @@ export default function PatientDetailPage() {
   // Formulaire nouvelle annotation
   const [newAnnotationDate, setNewAnnotationDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [newAnnotationTime, setNewAnnotationTime] = useState(format(new Date(), "HH:mm"));
+  const [newAnnotationDuration, setNewAnnotationDuration] = useState("");
   const [transcription, setTranscription] = useState("");
   const [editedTranscription, setEditedTranscription] = useState("");
   const [generatedContent, setGeneratedContent] = useState("");
@@ -77,6 +78,7 @@ export default function PatientDetailPage() {
     setTranscription("");
     setEditedTranscription("");
     setGeneratedContent("");
+    setNewAnnotationDuration("");
     setIsTranscribing(false);
     setIsGenerating(false);
     setIsSaving(false);
@@ -231,6 +233,7 @@ export default function PatientDetailPage() {
         patient_id: patient.id,
         visit_date: newAnnotationDate,
         visit_time: newAnnotationTime,
+        visit_duration: newAnnotationDuration ? parseInt(newAnnotationDuration) : undefined,
         content: generatedContent,
         transcription: "",
         structure_used: config?.annotation_structure,
@@ -412,8 +415,8 @@ export default function PatientDetailPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Date & heure */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Date, heure & durée */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date" className="flex items-center gap-2 text-sm">
                       <Calendar className="w-4 h-4" />
@@ -436,6 +439,21 @@ export default function PatientDetailPage() {
                       type="time"
                       value={newAnnotationTime}
                       onChange={(e) => setNewAnnotationTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="duration" className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4" />
+                      Durée (min)
+                    </Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      max="480"
+                      placeholder="Optionnel"
+                      value={newAnnotationDuration}
+                      onChange={(e) => setNewAnnotationDuration(e.target.value)}
                     />
                   </div>
                 </div>

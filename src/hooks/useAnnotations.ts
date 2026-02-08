@@ -190,13 +190,12 @@ export function useCreateAnnotation() {
       const encryptedContent = encryptData(annotation.content, user.id);
       const encryptedTranscription = encryptData(annotation.transcription || "", user.id);
 
-      const insertData = { 
-        ...annotation, 
+      const insertData = {
+        ...annotation,
         user_id: user.id,
         content: encryptedContent,
         transcription: encryptedTranscription,
-        // S'assurer que visit_duration a une valeur par défaut si undefined
-        visit_duration: annotation.visit_duration || 30,
+        visit_duration: annotation.visit_duration || null,
       };
 
       console.log("[useCreateAnnotation] Inserting data:", insertData);
