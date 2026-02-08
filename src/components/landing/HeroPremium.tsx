@@ -1,17 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Shield, Zap, Play, Pause, X, FileText, Activity, Mic } from "lucide-react";
-import { Logo } from "@/components/ui/Logo";
-import { Link } from "react-router-dom";
+import { ArrowRight, Sparkles, Shield, Zap, Play, Pause, RotateCcw, FileText, Activity, Mic } from "lucide-react";
 
 interface HeroPremiumProps {
   onGetStarted?: () => void;
-  onWatchDemo?: () => void;
 }
 
-export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
+const nurseAvatars = [
+  "/avatars/nurse1.jpg",
+  "/avatars/nurse2.jpg",
+  "/avatars/nurse3.jpg",
+  "/avatars/nurse4.jpg",
+];
+
+export function HeroPremium({ onGetStarted }: HeroPremiumProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasEnded, setHasEnded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -23,12 +29,28 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
     }
   };
 
-  const handleWatchDemo = () => {
-    if (onWatchDemo) {
-      onWatchDemo();
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (hasEnded) {
+      // Video ended — reset and play again
+      video.currentTime = 0;
+      setHasEnded(false);
+      video.play();
+      setIsPlaying(true);
+    } else if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
     } else {
-      setIsVideoModalOpen(true);
+      video.play();
+      setIsPlaying(true);
     }
+  };
+
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
+    setHasEnded(true);
   };
 
   // Features list with icons
@@ -43,7 +65,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
       {/* Background médical premium */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900 to-teal-900">
         {/* Grid pattern */}
-        <div 
+        <div
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `
@@ -121,7 +143,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={handleWatchDemo}
+                onClick={handleVideoClick}
                 className="h-14 px-8 bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30 text-white text-lg rounded-xl backdrop-blur-sm group"
               >
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mr-2 group-hover:bg-white/20 transition-colors">
@@ -150,13 +172,13 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
             {/* Social proof */}
             <div className="flex items-center justify-center lg:justify-start gap-4 pt-6">
               <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
+                {nurseAvatars.map((src, i) => (
+                  <img
                     key={i}
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold"
-                  >
-                    {String.fromCharCode(64 + i)}
-                  </div>
+                    src={src}
+                    alt=""
+                    className="w-10 h-10 rounded-full border-2 border-slate-900 object-cover"
+                  />
                 ))}
               </div>
               <div>
@@ -174,76 +196,50 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
             </div>
           </div>
 
-          {/* Right: App Preview */}
-          <div 
+          {/* Right: Demo Video Player */}
+          <div
             className={`relative transition-all duration-1000 delay-300 ${
               isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"
             }`}
           >
-            {/* Dashboard mockup */}
             <div className="relative">
               {/* Glow effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 via-teal-500/30 to-emerald-500/30 rounded-3xl blur-2xl" />
-              
-              {/* Browser window */}
-              <div className="relative bg-slate-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
-                {/* Browser header */}
-                <div className="flex items-center gap-2 px-4 py-3 bg-slate-800/50 border-b border-white/10">
-                  <div className="flex gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                  </div>
-                  <div className="flex-1 flex justify-center">
-                    <div className="px-4 py-1.5 bg-slate-900/50 rounded-lg text-xs text-white/50 flex items-center gap-2">
-                      <Logo size="xs" className="h-4" />
-                      app.medannot.com
-                    </div>
-                  </div>
-                </div>
 
-                {/* Dashboard content */}
-                <div className="p-6 space-y-4">
-                  {/* Stats row */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: "Annotations", value: "247", color: "cyan" },
-                      { label: "Patients", value: "18", color: "teal" },
-                      { label: "Aujourd'hui", value: "12", color: "emerald" },
-                    ].map((stat, i) => (
-                      <div key={i} className="bg-white/5 rounded-xl p-3 border border-white/10">
-                        <p className="text-2xl font-bold text-white">{stat.value}</p>
-                        <p className={`text-xs text-${stat.color}-400`}>{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
+              {/* Video container */}
+              <div
+                className="relative bg-slate-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden cursor-pointer group"
+                onClick={handleVideoClick}
+              >
+                {/* Video element */}
+                <video
+                  ref={videoRef}
+                  src="/demo.mp4"
+                  onEnded={handleVideoEnded}
+                  playsInline
+                  preload="metadata"
+                  className="w-full aspect-video object-cover"
+                />
 
-                  {/* Annotation card mock */}
-                  <div className="bg-gradient-to-br from-cyan-500/10 to-teal-500/10 rounded-xl p-4 border border-cyan-500/20">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                        <Mic className="w-5 h-5 text-cyan-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-medium text-sm">Observation enregistrée</h4>
-                        <p className="text-white/50 text-xs mt-1">Patient: M. Dubois • 14:30</p>
-                        <div className="mt-2 p-2 bg-slate-800/50 rounded-lg">
-                          <p className="text-white/70 text-xs italic">
-                            "Patient stable, tension contrôlée, médication administrée à l'heure..."
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {/* Overlay: Play / Pause / Replay */}
+                <div
+                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                    isPlaying ? "opacity-0 hover:opacity-100" : "opacity-100"
+                  }`}
+                >
+                  {/* Semi-transparent backdrop when not playing */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 bg-slate-900/40" />
+                  )}
 
-                  {/* Action buttons */}
-                  <div className="flex gap-2">
-                    <div className="flex-1 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                      <span className="text-cyan-400 text-sm font-medium">+ Annotation</span>
-                    </div>
-                    <div className="flex-1 h-10 bg-white/5 rounded-lg flex items-center justify-center">
-                      <span className="text-white/60 text-sm">Patients</span>
-                    </div>
+                  <div className="relative z-10 w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-cyan-500/30 group-hover:scale-110 transition-transform">
+                    {hasEnded ? (
+                      <RotateCcw className="w-8 h-8 text-white" />
+                    ) : isPlaying ? (
+                      <Pause className="w-8 h-8 text-white fill-white" />
+                    ) : (
+                      <Play className="w-8 h-8 text-white fill-white ml-1" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -263,97 +259,7 @@ export function HeroPremium({ onGetStarted, onWatchDemo }: HeroPremiumProps) {
             </div>
           </div>
         </div>
-
-        {/* Video Section */}
-        <div 
-          className={`mt-20 lg:mt-32 transition-all duration-1000 delay-500 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-          }`}
-        >
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-              Découvrez MedAnnot en action
-            </h2>
-            <p className="text-white/60 max-w-xl mx-auto">
-              Voyez comment enregistrer une observation et générer une annotation complète en quelques secondes
-            </p>
-          </div>
-
-          {/* Video thumbnail with play button */}
-          <div 
-            className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden cursor-pointer group"
-            onClick={() => setIsVideoModalOpen(true)}
-          >
-            {/* Glow */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-teal-500/30 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-            
-            <div className="relative bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden aspect-video">
-              {/* Video placeholder with pattern */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900">
-                {/* Abstract UI mockup as video preview */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="grid grid-cols-3 gap-4 p-8 w-full max-w-2xl opacity-30">
-                    <div className="h-32 bg-gradient-to-br from-cyan-500/20 to-transparent rounded-xl" />
-                    <div className="h-32 bg-gradient-to-br from-teal-500/20 to-transparent rounded-xl" />
-                    <div className="h-32 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-xl" />
-                    <div className="col-span-2 h-24 bg-white/5 rounded-xl" />
-                    <div className="h-24 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-xl" />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Play button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-cyan-500/30 group-hover:scale-110 transition-transform">
-                  <Play className="w-8 h-8 text-white fill-white ml-1" />
-                </div>
-              </div>
-
-              {/* Duration badge */}
-              <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full">
-                <span className="text-white text-sm font-medium">2:30</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-
-      {/* Video Modal */}
-      {isVideoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl">
-            {/* Close button */}
-            <button
-              onClick={() => setIsVideoModalOpen(false)}
-              className="absolute -top-12 right-0 p-2 text-white/60 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Video container */}
-            <div className="bg-slate-900 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              <div className="aspect-video bg-slate-800 flex items-center justify-center">
-                {/* Placeholder - Replace with actual video */}
-                <div className="text-center p-8">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-4">
-                    <Play className="w-8 h-8 text-cyan-400 fill-cyan-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Démo vidéo à venir
-                  </h3>
-                  <p className="text-white/60 max-w-md">
-                    Cette vidéo présentera le flux complet : enregistrement d'une observation, 
-                    génération de l'annotation, et consultation de l'historique.
-                  </p>
-                  <p className="text-cyan-400 text-sm mt-4">
-                    Contactez-nous pour une démo live personnalisée
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

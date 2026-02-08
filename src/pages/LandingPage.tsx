@@ -148,10 +148,6 @@ export default function LandingPage() {
       <main>
         <HeroPremium
           onGetStarted={() => handleOpenAuth("signup")}
-          onWatchDemo={() => {
-            const demoSection = document.getElementById('how-it-works');
-            demoSection?.scrollIntoView({ behavior: 'smooth' });
-          }}
         />
         
         <SocialProofBar />
