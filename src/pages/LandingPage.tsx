@@ -40,7 +40,7 @@ function SEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'annotation infirmière, dictée médicale, IA infirmière, logiciel infirmier indépendant, Suisse, transcription vocale, rédaction médicale');
+    metaKeywords.setAttribute('content', 'annotation infirmière, dictée médicale, IA infirmière, logiciel infirmier Suisse, transcription vocale, rédaction médicale, signes vitaux, observations infirmières');
 
     // Open Graph tags
     const ogTags = [
@@ -74,7 +74,7 @@ function SEO() {
         "priceCurrency": "CHF",
         "priceValidUntil": "2025-12-31"
       },
-      "description": "Assistant IA pour la rédaction d'annotations infirmières pour infirmiers indépendants en Suisse.",
+      "description": "Assistant IA pour la rédaction d'annotations infirmières pour infirmiers en Suisse.",
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.8",
@@ -130,7 +130,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-950">
       <SEO />
       <Navbar 
         onLogin={() => handleOpenAuth("login")} 
@@ -169,7 +169,7 @@ export default function LandingPage() {
       <AuthModal 
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        mode={authMode}
+        defaultMode={authMode}
       />
     </div>
   );

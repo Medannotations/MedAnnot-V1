@@ -1,128 +1,92 @@
+import { Mic, FileText, Zap, Smartphone, Edit3, History, Activity, Shield } from "lucide-react";
+
 export function Features() {
   const features = [
     {
-      icon: (
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-          />
-        </svg>
-      ),
+      icon: Mic,
       title: "Reconnaissance vocale médicale",
       description:
         "Comprend le vocabulaire infirmier suisse romand — abréviations, termes techniques, noms de médicaments.",
+      color: "cyan",
+    },
+    {
+      icon: Activity,
+      title: "Suivi des signes vitaux",
+      description:
+        "Enregistrez température, tension, pouls, glycémie et plus. Historique complet par patient et par date.",
+      color: "teal",
+    },
+    {
+      icon: FileText,
+      title: "Annotations complètes",
+      description:
+        "Générez des annotations médicales structurées avec contexte, observations, signes vitaux et plan de soins.",
       color: "blue",
     },
     {
-      icon: (
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-      title: "Templates personnalisables",
-      description:
-        "Adaptez le format de sortie à vos besoins: soins à domicile, suivi chronique, post-hospitalisation...",
-      color: "purple",
-    },
-    {
-      icon: (
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 10V3L4 14h7v7l9-11h-7z"
-          />
-        </svg>
-      ),
+      icon: Zap,
       title: "Génération instantanée",
       description:
         "Votre annotation est prête en moins de 10 secondes. Pas d'attente, pas de latence.",
-      color: "yellow",
-    },
-    {
-      icon: (
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-      title: "Fonctionne sur mobile",
-      description:
-        "Dictez depuis votre smartphone, entre deux visites. L'application s'adapte à votre rythme.",
       color: "emerald",
     },
     {
-      icon: (
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-          />
-        </svg>
-      ),
-      title: "Édition simplifiée",
+      icon: Smartphone,
+      title: "Fonctionne sur mobile",
       description:
-        "Modifiez le texte généré en un clic. Ajoutez, supprimez, reformulez — vous gardez le contrôle.",
-      color: "pink",
+        "Dictez depuis votre smartphone, entre deux visites. L'application s'adapte à votre rythme.",
+      color: "violet",
     },
     {
-      icon: (
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-      ),
+      icon: History,
       title: "Historique consultable",
       description:
-        "Retrouvez vos annotations passées. Utile pour le suivi ou en cas de contrôle.",
-      color: "indigo",
+        "Retrouvez toutes vos annotations et signes vitaux passés. Filtres avancés par patient et période.",
+      color: "amber",
     },
   ];
 
   const colorClasses = {
-    blue: { bg: "bg-blue-100", text: "text-blue-600", border: "hover:border-blue-200" },
-    purple: { bg: "bg-purple-100", text: "text-purple-600", border: "hover:border-purple-200" },
-    yellow: { bg: "bg-yellow-100", text: "text-yellow-600", border: "hover:border-yellow-200" },
-    emerald: { bg: "bg-emerald-100", text: "text-emerald-600", border: "hover:border-emerald-200" },
-    pink: { bg: "bg-pink-100", text: "text-pink-600", border: "hover:border-pink-200" },
-    indigo: { bg: "bg-indigo-100", text: "text-indigo-600", border: "hover:border-indigo-200" },
+    cyan: { bg: "bg-cyan-500/20", text: "text-cyan-400", border: "border-cyan-500/30", shadow: "hover:shadow-cyan-500/10" },
+    teal: { bg: "bg-teal-500/20", text: "text-teal-400", border: "border-teal-500/30", shadow: "hover:shadow-teal-500/10" },
+    blue: { bg: "bg-blue-500/20", text: "text-blue-400", border: "border-blue-500/30", shadow: "hover:shadow-blue-500/10" },
+    emerald: { bg: "bg-emerald-500/20", text: "text-emerald-400", border: "border-emerald-500/30", shadow: "hover:shadow-emerald-500/10" },
+    violet: { bg: "bg-violet-500/20", text: "text-violet-400", border: "border-violet-500/30", shadow: "hover:shadow-violet-500/10" },
+    amber: { bg: "bg-amber-500/20", text: "text-amber-400", border: "border-amber-500/30", shadow: "hover:shadow-amber-500/10" },
   };
 
   return (
-    <section className="py-12 md:py-20 bg-gray-50" id="features">
-      <div className="container mx-auto px-4">
+    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden" id="features">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-950/20 to-slate-900" />
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px'
+          }}
+        />
+      </div>
+
+      <div className="relative container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-medium mb-4">
+            <Shield className="w-4 h-4" />
             Fonctionnalités
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
             Tout ce qu'il vous faut,{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400">
               rien de superflu
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            MedAnnot a été conçu avec des infirmiers suisses pour répondre exactement à leurs besoins.
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
+            MedAnnot a été conçu avec des infirmiers pour répondre exactement à leurs besoins quotidiens.
           </p>
         </div>
 
@@ -131,23 +95,24 @@ export function Features() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => {
               const colors = colorClasses[feature.color as keyof typeof colorClasses];
+              const Icon = feature.icon;
               return (
                 <div
                   key={index}
-                  className={`bg-white rounded-2xl border-2 border-gray-100 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 ${colors.border}`}
+                  className={`group bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 hover:border-cyan-500/30 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg ${colors.shadow}`}
                 >
                   {/* Icon */}
                   <div
-                    className={`w-14 h-14 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center mb-5`}
+                    className={`w-14 h-14 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}
                   >
-                    {feature.icon}
+                    <Icon className="w-7 h-7" />
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl font-bold text-white mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-white/60 leading-relaxed">
                     {feature.description}
                   </p>
                 </div>

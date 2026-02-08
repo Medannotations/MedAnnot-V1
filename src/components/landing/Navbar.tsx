@@ -9,6 +9,16 @@ interface NavbarProps {
 
 export function Navbar({ onLogin, onSignup }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Handle scroll for navbar background
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close menu on escape key
   useEffect(() => {
@@ -44,17 +54,21 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-slate-900/95 backdrop-blur-xl border-b border-white/10 shadow-lg' 
+          : 'bg-transparent'
+      }`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo élégant */}
             <a href="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/30 transition-all">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold">
-                <span className="text-gray-900">Med</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">Annot</span>
+                <span className="text-white">Med</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">Annot</span>
               </span>
             </a>
             
@@ -63,21 +77,21 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <a 
                 href="#features" 
                 onClick={(e) => handleNavClick(e, 'features')}
-                className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                className="text-white/70 hover:text-white transition-colors font-medium"
               >
                 Fonctionnalités
               </a>
               <a 
                 href="#pricing" 
                 onClick={(e) => handleNavClick(e, 'pricing')}
-                className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                className="text-white/70 hover:text-white transition-colors font-medium"
               >
                 Tarification
               </a>
               <a 
                 href="#testimonials" 
                 onClick={(e) => handleNavClick(e, 'testimonials')}
-                className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                className="text-white/70 hover:text-white transition-colors font-medium"
               >
                 Témoignages
               </a>
@@ -85,15 +99,15 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
             
             <div className="hidden md:flex items-center gap-3">
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 onClick={onLogin} 
-                className="bg-white border-2 border-gray-300 text-gray-800 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 font-semibold shadow-sm transition-all px-6"
+                className="text-white/80 hover:text-white hover:bg-white/10 font-medium transition-all"
               >
                 Se connecter
               </Button>
               <Button 
                 onClick={onSignup}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all"
               >
                 Essai gratuit
               </Button>
@@ -101,12 +115,12 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
             
             {/* Mobile menu button */}
             <button 
-              className="md:hidden p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors touch-manipulation"
+              className="md:hidden p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={isMenuOpen}
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMenuOpen ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
             </button>
           </div>
         </div>
@@ -115,7 +129,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
       {/* Mobile menu backdrop */}
       {isMenuOpen && (
         <div 
-          className="fixed inset-0 bg-gray-500/20 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={closeMenu}
           aria-hidden="true"
         />
@@ -123,48 +137,48 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
 
       {/* Mobile menu panel */}
       {isMenuOpen && (
-        <div className="fixed top-16 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50 md:hidden animate-fade-in">
+        <div className="fixed top-16 left-0 right-0 bg-slate-900 border-b border-white/10 shadow-2xl z-50 md:hidden animate-fade-in">
           <div className="container mx-auto px-4 py-4 space-y-1">
             <a 
               href="#features" 
               onClick={(e) => handleNavClick(e, 'features')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
+              className="flex items-center text-white/80 hover:text-cyan-400 hover:bg-white/5 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               Fonctionnalités
             </a>
             <a 
               href="#pricing" 
               onClick={(e) => handleNavClick(e, 'pricing')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
+              className="flex items-center text-white/80 hover:text-cyan-400 hover:bg-white/5 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               Tarification
             </a>
             <a 
               href="#testimonials" 
               onClick={(e) => handleNavClick(e, 'testimonials')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
+              className="flex items-center text-white/80 hover:text-cyan-400 hover:bg-white/5 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               Témoignages
             </a>
             <a 
               href="#faq" 
               onClick={(e) => handleNavClick(e, 'faq')}
-              className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
+              className="flex items-center text-white/80 hover:text-cyan-400 hover:bg-white/5 transition-colors font-medium py-3 px-4 min-h-[44px] rounded-lg touch-manipulation"
             >
               FAQ
             </a>
             
-            <div className="flex flex-col gap-3 pt-4 mt-2 border-t border-gray-100">
+            <div className="flex flex-col gap-3 pt-4 mt-2 border-t border-white/10">
               <Button 
                 variant="outline" 
                 onClick={() => { onLogin(); closeMenu(); }}
-                className="w-full min-h-[48px] text-base touch-manipulation bg-white border-2 border-gray-300 text-gray-800 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 font-semibold"
+                className="w-full min-h-[48px] text-base touch-manipulation bg-transparent border-white/20 text-white hover:text-white hover:bg-white/10 hover:border-white/30"
               >
                 Se connecter
               </Button>
               <Button 
                 onClick={() => { onSignup(); closeMenu(); }}
-                className="w-full min-h-[48px] text-base bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold touch-manipulation"
+                className="w-full min-h-[48px] text-base bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold touch-manipulation shadow-lg shadow-cyan-500/20"
               >
                 Essai gratuit 7 jours
               </Button>

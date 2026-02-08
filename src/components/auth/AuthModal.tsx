@@ -1,338 +1,258 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, User, Eye, EyeOff, Stethoscope, ArrowRight } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: "login" | "signup";
-  onModeChange?: (mode: "login" | "signup") => void;
+  defaultMode?: "login" | "signup";
 }
 
-export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProps) {
-  const { login, signup } = useAuth();
-  const navigate = useNavigate();
+export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalProps) {
+  const [mode, setMode] = useState<"login" | "signup">(defaultMode);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-
-  const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
+  
+  const { login, signup } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Form fields
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
     try {
-      await login(loginEmail, loginPassword);
-      toast({
-        title: "Bienvenue !",
-        description: "Vous êtes maintenant connecté.",
-      });
-      onClose();
-      navigate("/app");
-    } catch (error: any) {
-      toast({
-        title: "Erreur de connexion",
-        description: error.message || "Email ou mot de passe incorrect",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (signupPassword !== signupConfirmPassword) {
-      toast({
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!acceptTerms) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez accepter les conditions d'utilisation.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await signup(signupEmail, signupPassword, signupName);
-      toast({
-        title: "Compte créé !",
-        description: "Redirection vers le paiement...",
-      });
-      onClose();
-      navigate("/checkout");
-    } catch (error: any) {
-      toast({
-        title: "Erreur d'inscription",
-        description: error.message || "Une erreur est survenue",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const switchMode = (newMode: "login" | "signup") => {
-    if (onModeChange) {
-      onModeChange(newMode);
-    } else {
-      if (newMode === "signup") {
-        navigate("/signup");
-        onClose();
+      if (mode === "signup") {
+        if (!acceptTerms) {
+          toast({
+            title: "Erreur",
+            description: "Veuillez accepter les conditions d'utilisation.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        await signup(email, password, name);
+        toast({
+          title: "Compte créé !",
+          description: "Bienvenue sur MedAnnot. Votre essai gratuit commence maintenant.",
+        });
+      } else {
+        await login(email, password);
+        toast({
+          title: "Connexion réussie",
+          description: "Ravi de vous revoir !",
+        });
       }
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: mode === "login" ? "Erreur de connexion" : "Erreur d'inscription",
+        description: error.message || "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const toggleMode = () => {
+    setMode(mode === "login" ? "signup" : "login");
+    setAcceptTerms(false);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-0 overflow-hidden">
-        {/* Header with gradient */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-blue-950 to-teal-950 p-6 pb-8">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.02%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-slate-900 border border-white/10 shadow-2xl">
+        {/* Header avec gradient */}
+        <div className="relative bg-gradient-to-br from-slate-800 via-blue-950/50 to-teal-950/50 p-8 pb-10">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-20">
+            <div 
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
+                backgroundSize: '24px 24px'
+              }}
+            />
+          </div>
           
-          <div className="relative text-center">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
+          <DialogHeader className="relative z-10">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-4">
               {mode === "login" ? (
                 <Lock className="w-8 h-8 text-white" />
               ) : (
                 <User className="w-8 h-8 text-white" />
               )}
             </div>
-            <DialogTitle className="text-xl font-bold text-white">
-              {mode === "login" ? "Se connecter" : "Créer un compte"}
+            <DialogTitle className="text-2xl font-bold text-white text-center">
+              {mode === "login" ? "Connexion" : "Créer un compte"}
             </DialogTitle>
-            <DialogDescription className="text-slate-300 mt-1">
-              {mode === "login"
-                ? "Accédez à votre espace MedAnnot"
-                : "Rejoignez MedAnnot et simplifiez vos annotations"}
+            <DialogDescription className="text-white/60 text-center mt-2">
+              {mode === "login" 
+                ? "Accédez à votre espace MedAnnot" 
+                : "Commencez votre essai gratuit de 7 jours"}
             </DialogDescription>
-          </div>
+          </DialogHeader>
         </div>
 
-        {/* Form content */}
-        <div className="p-6 pt-4">
+        {/* Form */}
+        <div className="p-6 pt-4 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-white/80 text-sm font-medium">
+                  Nom complet
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Dr. Marie Dupont"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="pl-10 h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
+                  />
+                </div>
+              </div>
+            )}
 
-        {mode === "login" ? (
-          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">Email</Label>
+              <Label htmlFor="email" className="text-white/80 text-sm font-medium">
+                Email professionnel
+              </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="votre@email.ch"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="marie@cabinet-medical.ch"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-800 dark:text-white placeholder:text-slate-400"
+                  disabled={isLoading}
+                  className="pl-10 h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">Mot de passe</Label>
+              <Label htmlFor="password" className="text-white/80 text-sm font-medium">
+                Mot de passe
+              </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 pr-10 h-12 border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-800 dark:text-white placeholder:text-slate-400"
+                  disabled={isLoading}
+                  minLength={6}
+                  className="pl-10 pr-12 h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              <p className="text-xs text-white/40">Minimum 6 caractères</p>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/40"
-              disabled={isLoading}
+            {mode === "signup" && (
+              <div className="flex items-start space-x-3 pt-2">
+                <Checkbox
+                  id="terms"
+                  checked={acceptTerms}
+                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                  disabled={isLoading}
+                  className="mt-1 border-white/30 data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
+                />
+                <Label htmlFor="terms" className="text-sm text-white/60 leading-relaxed cursor-pointer">
+                  J'accepte les{" "}
+                  <a href="/terms-of-service" className="text-cyan-400 hover:text-cyan-300 hover:underline" target="_blank" rel="noopener noreferrer">
+                    conditions d'utilisation
+                  </a>{" "}
+                  et la{" "}
+                  <a href="/privacy-policy" className="text-cyan-400 hover:text-cyan-300 hover:underline" target="_blank" rel="noopener noreferrer">
+                    politique de confidentialité
+                  </a>
+                </Label>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isLoading || (mode === "signup" && !acceptTerms)}
+              className="w-full h-12 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/20 transition-all"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  {mode === "login" ? "Connexion..." : "Création..."}
+                </>
               ) : (
                 <>
-                  Se connecter
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  {mode === "login" ? "Se connecter" : "Créer mon compte"}
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </>
               )}
             </Button>
-
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-              Pas encore de compte ?{" "}
-              <button
-                type="button"
-                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors"
-                onClick={() => switchMode("signup")}
-              >
-                S'inscrire
-              </button>
-            </p>
           </form>
-        ) : (
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="signup-name" className="text-slate-700 dark:text-slate-300 font-medium">Nom complet</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="signup-name"
-                  type="text"
-                  placeholder="Marie Dupont"
-                  value={signupName}
-                  onChange={(e) => setSignupName(e.target.value)}
-                  className="pl-10 h-12 border-slate-300 dark:border-slate-600 focus:border-emerald-500 focus:ring-emerald-500 dark:bg-slate-800 dark:text-white placeholder:text-slate-400"
-                />
-              </div>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="signup-email" className="text-slate-700 dark:text-slate-300 font-medium">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="votre@email.ch"
-                  value={signupEmail}
-                  onChange={(e) => setSignupEmail(e.target.value)}
-                  required
-                  className="pl-10 h-12 border-slate-300 dark:border-slate-600 focus:border-emerald-500 focus:ring-emerald-500 dark:bg-slate-800 dark:text-white placeholder:text-slate-400"
-                />
-              </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-2 bg-slate-900 text-white/40">
+                {mode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?"}
+              </span>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="signup-password" className="text-slate-700 dark:text-slate-300 font-medium">Mot de passe</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="signup-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  required
-                  className="pl-10 pr-10 h-12 border-slate-300 dark:border-slate-600 focus:border-emerald-500 focus:ring-emerald-500 dark:bg-slate-800 dark:text-white placeholder:text-slate-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+          {/* Toggle mode */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={toggleMode}
+            disabled={isLoading}
+            className="w-full h-11 bg-transparent border-white/10 text-white hover:bg-white/5 hover:border-white/20"
+          >
+            {mode === "login" ? "Créer un compte" : "Se connecter"}
+          </Button>
+
+          {/* Trust badges */}
+          <div className="flex items-center justify-center gap-4 pt-2 text-xs text-white/40">
+            <div className="flex items-center gap-1">
+              <Stethoscope className="w-3 h-3" />
+              <span>Essai gratuit 7 jours</span>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password" className="text-slate-700 dark:text-slate-300 font-medium">Confirmer le mot de passe</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={signupConfirmPassword}
-                  onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                  required
-                  className="pl-10 pr-10 h-12 border-slate-300 dark:border-slate-600 focus:border-emerald-500 focus:ring-emerald-500 dark:bg-slate-800 dark:text-white placeholder:text-slate-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+            <div className="flex items-center gap-1">
+              <Lock className="w-3 h-3" />
+              <span>Données sécurisées</span>
             </div>
-
-            <div className="flex items-start space-x-3 pt-2">
-              <Checkbox
-                id="terms"
-                checked={acceptTerms}
-                onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                className="mt-0.5 border-gray-300 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-              />
-              <Label htmlFor="terms" className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer">
-                J'accepte les{" "}
-                <a href="/terms-of-service" className="text-blue-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
-                  conditions générales
-                </a>{" "}
-                et la{" "}
-                <a href="/privacy-policy" className="text-blue-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
-                  politique de confidentialité
-                </a>
-              </Label>
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/40"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  Créer mon compte
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-              Déjà un compte ?{" "}
-              <button
-                type="button"
-                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors"
-                onClick={() => switchMode("login")}
-              >
-                Se connecter
-              </button>
-            </p>
-          </form>
-        )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

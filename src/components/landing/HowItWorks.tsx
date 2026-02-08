@@ -1,3 +1,5 @@
+import { Mic, FileText, Copy, Zap, Activity } from "lucide-react";
+
 export function HowItWorks() {
   const steps = [
     {
@@ -5,127 +7,115 @@ export function HowItWorks() {
       title: "Dictez",
       description:
         "Parlez naturellement après votre visite — dans votre voiture, entre deux patients, où vous voulez. Décrivez ce que vous avez observé, comme vous le feriez à un collègue.",
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-          />
-        </svg>
-      ),
-      color: "blue",
+      icon: Mic,
+      color: "cyan",
     },
     {
       number: "2",
       title: "L'IA rédige",
       description:
-        "MedAnnot transforme votre dictée en annotation structurée et professionnelle. Vocabulaire médical précis, format clair, ton adapté.",
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-      color: "purple",
+        "MedAnnot transforme votre dictée en annotation médicale complète. Vocabulaire médical précis, signes vitaux intégrés, format structuré.",
+      icon: FileText,
+      color: "teal",
     },
     {
       number: "3",
+      title: "Ajoutez les signes vitaux",
+      description:
+        "Renseignez température, tension, pouls et autres constantes directement dans l'application. Ils seront intégrés à l'annotation.",
+      icon: Activity,
+      color: "emerald",
+    },
+    {
+      number: "4",
       title: "Copiez et collez",
       description:
         "Relisez, ajustez si besoin, puis copiez l'annotation dans votre logiciel de soins habituel. Terminé.",
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-          />
-        </svg>
-      ),
-      color: "emerald",
+      icon: Copy,
+      color: "blue",
     },
   ];
 
   const colorClasses = {
-    blue: {
-      bg: "bg-blue-100",
-      text: "text-blue-600",
-      border: "border-blue-200",
-      gradient: "from-blue-500 to-blue-600",
+    cyan: {
+      bg: "bg-cyan-500/20",
+      text: "text-cyan-400",
+      border: "border-cyan-500/30",
+      gradient: "from-cyan-500 to-cyan-600",
     },
-    purple: {
-      bg: "bg-purple-100",
-      text: "text-purple-600",
-      border: "border-purple-200",
-      gradient: "from-purple-500 to-purple-600",
+    teal: {
+      bg: "bg-teal-500/20",
+      text: "text-teal-400",
+      border: "border-teal-500/30",
+      gradient: "from-teal-500 to-teal-600",
     },
     emerald: {
-      bg: "bg-emerald-100",
-      text: "text-emerald-600",
-      border: "border-emerald-200",
+      bg: "bg-emerald-500/20",
+      text: "text-emerald-400",
+      border: "border-emerald-500/30",
       gradient: "from-emerald-500 to-emerald-600",
+    },
+    blue: {
+      bg: "bg-blue-500/20",
+      text: "text-blue-400",
+      border: "border-blue-500/30",
+      gradient: "from-blue-500 to-blue-600",
     },
   };
 
   return (
-    <section className="py-12 md:py-20 bg-white" id="how-it-works">
-      <div className="container mx-auto px-4">
+    <section className="relative py-20 md:py-28 bg-slate-950 overflow-hidden" id="how-it-works">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/10 to-slate-900" />
+      </div>
+
+      <div className="relative container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-10 md:mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-medium mb-4">
             Comment ça marche
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            3 étapes.{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+            4 étapes.{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">
               30 secondes.
             </span>{" "}
             C'est tout.
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
             Pas de formation, pas de logiciel compliqué. Si vous savez laisser un message vocal, vous savez utiliser MedAnnot.
           </p>
         </div>
 
         {/* Steps */}
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((step, index) => {
               const colors = colorClasses[step.color as keyof typeof colorClasses];
+              const Icon = step.icon;
               return (
                 <div key={index} className="relative">
-                  {/* Connector line (hidden on mobile and after last item) */}
-                  {index < steps.length - 1 && (
-                    <div className="hidden md:block absolute top-16 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-gray-200 to-gray-100" />
-                  )}
-
-                  <div className="relative bg-white rounded-2xl border-2 border-gray-100 p-5 md:p-8 hover:border-blue-200 hover:shadow-lg transition-all duration-300 ml-2 md:ml-0">
+                  <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 hover:border-cyan-500/30 hover:bg-slate-800/80 transition-all duration-300 group">
                     {/* Step number badge */}
                     <div
-                      className={`absolute -top-3 -left-3 md:-top-4 md:-left-4 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r ${colors.gradient} text-white font-bold text-sm md:text-base flex items-center justify-center shadow-lg`}
+                      className={`absolute -top-3 -left-3 w-8 h-8 rounded-full bg-gradient-to-r ${colors.gradient} text-white font-bold text-sm flex items-center justify-center shadow-lg`}
                     >
                       {step.number}
                     </div>
 
                     {/* Icon */}
                     <div
-                      className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${colors.bg} ${colors.text} flex items-center justify-center mb-4 md:mb-6`}
+                      className={`w-14 h-14 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
                     >
-                      {step.icon}
+                      <Icon className="w-7 h-7" />
                     </div>
 
                     {/* Content */}
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                    <h3 className="text-xl font-bold text-white mb-2">
                       {step.title}
                     </h3>
-                    <p className="text-sm md:text-base text-gray-600 leading-relaxed">
+                    <p className="text-sm text-white/60 leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -137,10 +127,8 @@ export function HowItWorks() {
 
         {/* Bottom highlight */}
         <div className="mt-12 text-center">
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-50 text-emerald-700 font-medium">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-medium">
+            <Zap className="w-5 h-5" />
             Temps moyen pour générer une annotation : moins de 10 secondes
           </div>
         </div>

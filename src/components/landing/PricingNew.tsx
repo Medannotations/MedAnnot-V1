@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Check, Clock, Shield, Sparkles, Calendar, ArrowRight } from "lucide-react";
+import { Check, Clock, Shield, Sparkles, Calendar, ArrowRight, Activity, Mic, FileText, History, Zap, Users } from "lucide-react";
 
 interface PricingProps {
   onGetStarted: () => void;
@@ -15,30 +15,35 @@ export function Pricing({ onGetStarted }: PricingProps) {
   });
 
   const includedFeatures = [
-    "Dictée vocale illimitée",
-    "Génération d'annotations illimitée",
-    "Tous les templates disponibles",
-    "Historique complet",
-    "Support par email prioritaire",
-    "Mises à jour automatiques",
+    { icon: Mic, text: "Dictée vocale illimitée" },
+    { icon: FileText, text: "Annotations médicales complètes" },
+    { icon: Activity, text: "Suivi des signes vitaux" },
+    { icon: Users, text: "Patients illimités" },
+    { icon: History, text: "Historique complet" },
+    { icon: Zap, text: "Support prioritaire" },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white" id="pricing">
-      <div className="container mx-auto px-4">
+    <section className="relative py-20 md:py-28 bg-slate-950 overflow-hidden" id="pricing">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-cyan-950/10 to-slate-900" />
+      </div>
+
+      <div className="relative container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-12">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-medium mb-4">
             <Calendar className="w-4 h-4" />
             Tarification transparente
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
             Commencez gratuitement.{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">
               Puis payez si vous continuez.
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
             7 jours d'essai sans engagement. Annulez avant le {formattedTrialEnd} et vous ne payez rien.
           </p>
         </div>
@@ -47,103 +52,111 @@ export function Pricing({ onGetStarted }: PricingProps) {
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8">
             {/* Monthly plan */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 md:p-8 hover:shadow-xl transition-all duration-300 flex flex-col">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 md:p-8 hover:border-cyan-500/30 hover:bg-slate-800/80 transition-all duration-300 flex flex-col">
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-white/60" />
+                  </div>
+                  <span className="text-sm font-medium text-white/50 uppercase tracking-wide">
                     Mensuel
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-5xl font-bold text-gray-900">149</span>
-                  <span className="text-2xl font-medium text-gray-500 ml-1">CHF</span>
-                  <span className="text-gray-500 ml-2">/mois</span>
+                  <span className="text-5xl font-bold text-white">149</span>
+                  <span className="text-2xl font-medium text-white/50 ml-1">CHF</span>
+                  <span className="text-white/50 ml-2">/mois</span>
                 </div>
-                <p className="text-gray-400 mt-2 text-sm">
+                <p className="text-white/40 mt-2 text-sm">
                   Sans engagement, résiliable à tout moment
                 </p>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-gray-600">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  Annotations illimitées
-                </li>
-                <li className="flex items-center gap-3 text-gray-600">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  Patients illimités
-                </li>
-                <li className="flex items-center gap-3 text-gray-600">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  7 jours d'essai gratuit
-                </li>
-                <li className="flex items-center gap-3 text-gray-600">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  Sans engagement
-                </li>
+                {[
+                  "Annotations illimitées",
+                  "Patients illimités",
+                  "7 jours d'essai gratuit",
+                  "Sans engagement",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-white/70">
+                    <Check className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                    {feature}
+                  </li>
+                ))}
               </ul>
 
               <Button
                 onClick={onGetStarted}
                 variant="outline"
-                className="w-full py-6 h-auto text-lg font-semibold border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                className="w-full py-6 h-auto text-lg font-semibold border-white/20 hover:border-cyan-500/50 hover:text-white hover:bg-cyan-500/10 transition-all bg-transparent text-white"
               >
                 Commencer l'essai gratuit
               </Button>
             </div>
 
             {/* Annual plan - RECOMMENDED */}
-            <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 md:p-8 text-white shadow-xl flex flex-col">
+            <div className="relative bg-gradient-to-br from-cyan-600 to-teal-600 rounded-2xl p-6 md:p-8 text-white shadow-xl shadow-cyan-500/20 flex flex-col overflow-hidden">
+              {/* Background pattern */}
+              <div 
+                className="absolute inset-0 opacity-10"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                  backgroundSize: '24px 24px'
+                }}
+              />
+
               {/* Recommended badge */}
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                <span className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-white text-cyan-600 text-sm font-bold shadow-lg">
                   <Sparkles className="w-4 h-4" />
                   RECOMMANDÉ — Économisez 288 CHF/an
                 </span>
               </div>
 
-              <div className="mb-6 pt-2">
+              <div className="relative mb-6 pt-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-5 h-5 text-blue-200" />
-                  <span className="text-sm font-medium text-blue-200 uppercase tracking-wide">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-white/80 uppercase tracking-wide">
                     Annuel
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline">
                   <span className="text-5xl font-bold">125</span>
-                  <span className="text-2xl font-medium text-blue-200 ml-1">CHF</span>
-                  <span className="text-blue-200 ml-2">/mois</span>
+                  <span className="text-2xl font-medium text-white/70 ml-1">CHF</span>
+                  <span className="text-white/70 ml-2">/mois</span>
                 </div>
                 <div className="mt-2 space-y-1">
-                  <p className="text-blue-200 text-sm">
+                  <p className="text-white/70 text-sm">
                     Engagement 12 mois — paiement mensuel
                   </p>
                 </div>
               </div>
 
-              <ul className="space-y-3 mb-8 flex-1">
+              <ul className="relative space-y-3 mb-8 flex-1">
                 <li className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-emerald-300 flex-shrink-0" />
+                  <Check className="w-5 h-5 text-white flex-shrink-0" />
                   <span><strong>Tout inclus</strong> du plan mensuel</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-emerald-300 flex-shrink-0" />
+                  <Check className="w-5 h-5 text-white flex-shrink-0" />
                   7 jours d'essai gratuit
                 </li>
                 <li className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-emerald-300 flex-shrink-0" />
+                  <Check className="w-5 h-5 text-white flex-shrink-0" />
                   Support prioritaire
                 </li>
                 <li className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-emerald-300 flex-shrink-0" />
+                  <Check className="w-5 h-5 text-white flex-shrink-0" />
                   Économisez 16% par an
                 </li>
               </ul>
 
               <Button
                 onClick={onGetStarted}
-                className="w-full py-6 h-auto text-lg font-bold bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-lg"
+                className="relative w-full py-6 h-auto text-lg font-bold bg-white text-cyan-600 hover:bg-cyan-50 transition-all shadow-lg"
               >
                 Commencer l'essai gratuit
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -152,17 +165,17 @@ export function Pricing({ onGetStarted }: PricingProps) {
           </div>
 
           {/* Payment explanation */}
-          <div className="mt-8 bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+          <div className="mt-8 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-emerald-600" />
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-cyan-400" />
               </div>
               <div>
-                <h3 className="font-bold text-emerald-900 text-lg mb-2">
+                <h3 className="font-bold text-white text-lg mb-2">
                   0 CHF aujourd'hui. Vraiment.
                 </h3>
-                <p className="text-emerald-800">
-                  Votre carte est demandée mais <strong>aucun prélèvement n'est effectué aujourd'hui</strong>. 
+                <p className="text-white/70">
+                  Votre carte est demandée mais <strong className="text-white">aucun prélèvement n'est effectué aujourd'hui</strong>. 
                   Vous avez 7 jours pour tester. Si vous annulez avant le {formattedTrialEnd}, 
                   vous ne payez rien. Si vous continuez, le premier prélèvement aura lieu ce jour-là.
                 </p>
@@ -171,23 +184,28 @@ export function Pricing({ onGetStarted }: PricingProps) {
           </div>
 
           {/* Included features */}
-          <div className="mt-10 bg-gray-50 rounded-2xl p-6 md:p-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+          <div className="mt-10 bg-slate-800/30 rounded-2xl p-6 md:p-8 border border-white/10">
+            <h3 className="text-lg font-semibold text-white mb-6 text-center">
               Inclus dans les deux formules
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {includedFeatures.map((feature, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  <span className="text-gray-700">{feature}</span>
-                </div>
-              ))}
+              {includedFeatures.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <span className="text-white/70">{feature.text}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* CTA micro-copy */}
           <div className="mt-8 text-center">
-            <p className="text-gray-500 flex items-center justify-center gap-2 flex-wrap">
+            <p className="text-white/50 flex items-center justify-center gap-2 flex-wrap">
               <Shield className="w-4 h-4" />
               Aucune carte bancaire requise pour l'essai. Annulation en 1 clic.
             </p>

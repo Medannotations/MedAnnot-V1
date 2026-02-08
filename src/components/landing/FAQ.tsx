@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown, HelpCircle, Mail } from "lucide-react";
 
 export function FAQ() {
   const faqs = [
@@ -41,20 +42,26 @@ export function FAQ() {
   };
 
   return (
-    <section className="py-12 md:py-20 bg-gray-50" id="faq">
-      <div className="container mx-auto px-4">
+    <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden" id="faq">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-teal-950/10 to-slate-950" />
+      </div>
+
+      <div className="relative container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-8 md:mb-12">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-medium mb-4">
+            <HelpCircle className="w-4 h-4" />
             FAQ
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
             Questions{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">
               fréquentes
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
             Tout ce que vous devez savoir avant de commencer.
           </p>
         </div>
@@ -65,36 +72,24 @@ export function FAQ() {
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
+                className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden transition-all duration-300 hover:border-cyan-500/30"
               >
                 <button
                   onClick={() => toggleFaq(index)}
                   className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-3 min-h-[56px] touch-manipulation"
                   aria-expanded={openIndex === index}
                 >
-                  <span className="text-base sm:text-lg font-semibold text-gray-900">
+                  <span className="text-base sm:text-lg font-semibold text-white">
                     {faq.question}
                   </span>
                   <span
                     className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                       openIndex === index
-                        ? "bg-blue-600 text-white rotate-180"
-                        : "bg-gray-100 text-gray-500"
+                        ? "bg-cyan-500 text-white rotate-180"
+                        : "bg-white/10 text-white/50"
                     }`}
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <ChevronDown className="w-5 h-5" />
                   </span>
                 </button>
                 <div
@@ -102,7 +97,7 @@ export function FAQ() {
                     openIndex === index ? "max-h-96" : "max-h-0"
                   }`}
                 >
-                  <div className="px-4 sm:px-6 pb-4 sm:pb-5 text-gray-600 leading-relaxed text-sm sm:text-base">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-5 text-white/70 leading-relaxed text-sm sm:text-base">
                     {faq.answer}
                   </div>
                 </div>
@@ -113,21 +108,14 @@ export function FAQ() {
 
         {/* Still have questions */}
         <div className="mt-8 md:mt-12 text-center">
-          <p className="text-gray-600 mb-4">
+          <p className="text-white/60 mb-4">
             Vous avez encore des questions?
           </p>
           <a
             href="mailto:support@medannot.ch"
-            className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 transition-colors py-2 px-4 min-h-[44px] touch-manipulation"
+            className="inline-flex items-center gap-2 text-cyan-400 font-medium hover:text-cyan-300 transition-colors py-2 px-4 min-h-[44px] touch-manipulation"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
+            <Mail className="w-5 h-5" />
             Contactez-nous
           </a>
         </div>
