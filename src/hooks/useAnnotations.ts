@@ -16,12 +16,25 @@ export interface AnnotationWithPatient extends Annotation {
   };
 }
 
-// Helper pour déchiffrer une annotation
-const decryptAnnotation = <T extends Annotation>(annotation: T, userId: string): T => ({
-  ...annotation,
-  content: decryptData(annotation.content, userId),
-  transcription: decryptData(annotation.transcription, userId),
-});
+// Helper pour déchiffrer une annotation (résilient aux données non chiffrées)
+const decryptAnnotation = <T extends Annotation>(annotation: T, userId: string): T => {
+  let content = annotation.content;
+  let transcription = annotation.transcription;
+
+  try {
+    content = decryptData(annotation.content, userId);
+  } catch {
+    // Données non chiffrées (legacy / signes vitaux) - garder le texte brut
+  }
+
+  try {
+    transcription = decryptData(annotation.transcription, userId);
+  } catch {
+    // Données non chiffrées - garder le texte brut
+  }
+
+  return { ...annotation, content, transcription };
+};
 
 // Helper pour déchiffrer les données patient jointes (aussi chiffrées)
 const decryptPatientData = (

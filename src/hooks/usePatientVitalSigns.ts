@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { encryptData } from "@/lib/encryption";
 
 export interface VitalSigns {
   temperature?: number;
@@ -91,8 +92,8 @@ export function useSaveVitalSigns() {
           patient_id: patientId,
           visit_date: date,
           visit_time: new Date().toTimeString().slice(0, 5),
-          content: "Signes vitaux enregistrés - Annotation à compléter",
-          transcription: "",
+          content: encryptData("Signes vitaux enregistrés - Annotation à compléter", user.id),
+          transcription: encryptData("", user.id),
           vital_signs: vitalSigns,
           user_id: user.id,
         });
