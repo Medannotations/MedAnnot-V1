@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { FileText, Users, Mic, TrendingUp, Clock, Calendar, Plus, ArrowRight, CheckCircle } from "lucide-react";
+import { FileText, Users, Mic, TrendingUp, Clock, Calendar, Plus, ArrowRight, CheckCircle, Activity, Lightbulb, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -57,25 +57,33 @@ export default function DashboardHome() {
 
   // Onboarding progress
   const onboardingSteps = useMemo(() => [
-    { 
-      label: "Configuration créée", 
+    {
+      label: "Définir votre structure d'annotation",
+      description: "Choisissez comment l'IA doit organiser vos annotations : par sections (motif, observations, soins...) ou chronologiquement. Plusieurs modèles sont proposés.",
       completed: !!config?.annotation_structure && config.annotation_structure.length > 50,
-      href: "/app/configuration"
+      href: "/app/configuration?tab=structure",
+      icon: Settings,
     },
-    { 
-      label: "Exemples ajoutés", 
+    {
+      label: "Ajouter des exemples d'annotations",
+      description: "Donnez à l'IA des exemples de vos annotations passées pour qu'elle apprenne votre style de rédaction et produise des résultats qui vous ressemblent.",
       completed: examples.length > 0,
-      href: "/app/configuration"
+      href: "/app/configuration?tab=examples",
+      icon: Lightbulb,
     },
-    { 
-      label: "Premier patient créé", 
+    {
+      label: "Créer votre premier patient",
+      description: "Ajoutez un patient avec ses pathologies et informations clés. L'IA les utilisera pour contextualiser chaque annotation automatiquement.",
       completed: patients.length > 0,
-      href: "/app/patients"
+      href: "/app/patients",
+      icon: Users,
     },
-    { 
-      label: "Première annotation", 
+    {
+      label: "Créer votre première annotation",
+      description: "Dictez vos observations vocalement après une visite. L'IA génère une annotation professionnelle structurée en quelques secondes.",
       completed: annotations.length > 0,
-      href: "/app/annotations/new"
+      href: "/app/annotations/new",
+      icon: Mic,
     },
   ], [config, examples, patients, annotations]);
 
@@ -166,54 +174,87 @@ export default function DashboardHome() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Onboarding Progress */}
         {!isOnboardingComplete && (
-          <Card>
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-secondary" />
                 Guide de démarrage
               </CardTitle>
               <CardDescription>
-                Complétez ces étapes pour tirer le meilleur de Medannot
+                Préparez votre compte en quelques minutes pour obtenir les meilleures annotations possibles.
+                Plus votre configuration est complète, plus l'IA sera précise et adaptée à votre pratique.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Progression</span>
-                  <span className="font-medium">{completedSteps}/{onboardingSteps.length}</span>
+                  <span className="font-medium">{completedSteps}/{onboardingSteps.length} étapes</span>
                 </div>
                 <Progress value={onboardingProgress} className="h-2" />
               </div>
-              
-              <div className="space-y-3">
-                {onboardingSteps.map((step, index) => (
-                  <Link
-                    key={index}
-                    to={step.href}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent transition-colors"
-                  >
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                      step.completed 
-                        ? "bg-secondary text-secondary-foreground" 
-                        : "bg-muted text-muted-foreground"
-                    }`}>
-                      {step.completed ? "✓" : index + 1}
-                    </div>
-                    <span className={step.completed ? "text-muted-foreground line-through" : "text-foreground"}>
-                      {step.label}
-                    </span>
-                    {!step.completed && (
-                      <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    )}
-                  </Link>
-                ))}
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {onboardingSteps.map((step, index) => {
+                  const StepIcon = step.icon;
+                  return (
+                    <Link
+                      key={index}
+                      to={step.href}
+                      className={`flex flex-col gap-3 p-4 rounded-xl border transition-all ${
+                        step.completed
+                          ? "border-secondary/30 bg-secondary/5"
+                          : "border-border hover:border-primary/30 hover:bg-accent hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          step.completed
+                            ? "bg-secondary text-secondary-foreground"
+                            : "bg-primary/10 text-primary"
+                        }`}>
+                          {step.completed ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : (
+                            <StepIcon className="w-4 h-4" />
+                          )}
+                        </div>
+                        <span className={`font-medium text-sm ${step.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                          {step.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {step.description}
+                      </p>
+                      {!step.completed && (
+                        <span className="text-xs text-primary font-medium flex items-center gap-1 mt-auto">
+                          Configurer
+                          <ArrowRight className="w-3 h-3" />
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Tips section */}
+              <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-3">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-primary" />
+                  Astuce : les signes vitaux
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Sur la fiche de chaque patient, vous pouvez enregistrer les signes vitaux (tension, pouls, température, saturation, glycémie...)
+                  directement depuis l'application. Plus besoin de noter sur un papier ou de garder en tête :
+                  tout est centralisé et historisé par date, accessible en un clic lors de votre prochaine visite.
+                </p>
               </div>
             </CardContent>
           </Card>
         )}
 
         {/* Quick Actions */}
-        <Card className={isOnboardingComplete ? "lg:col-span-2" : ""}>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Actions rapides</CardTitle>
             <CardDescription>Accès direct à vos fonctionnalités principales</CardDescription>

@@ -3,9 +3,11 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Loader2, Copy, Calendar, Clock, User, FileText } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Copy, Calendar, Clock, User, FileText, Timer } from "lucide-react";
 import { useAnnotation, useUpdateAnnotation } from "@/hooks/useAnnotations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhraseTemplatePicker } from "@/components/annotations/PhraseTemplatePicker";
@@ -21,22 +23,37 @@ export default function EditAnnotationPage() {
   
   const [content, setContent] = useState("");
   const [originalContent, setOriginalContent] = useState("");
+  const [visitDate, setVisitDate] = useState("");
+  const [originalVisitDate, setOriginalVisitDate] = useState("");
+  const [visitTime, setVisitTime] = useState("");
+  const [originalVisitTime, setOriginalVisitTime] = useState("");
+  const [visitDuration, setVisitDuration] = useState("");
+  const [originalVisitDuration, setOriginalVisitDuration] = useState("");
 
   useEffect(() => {
     if (annotation) {
       setContent(annotation.content);
       setOriginalContent(annotation.content);
+      setVisitDate(annotation.visit_date || "");
+      setOriginalVisitDate(annotation.visit_date || "");
+      setVisitTime(annotation.visit_time ? annotation.visit_time.slice(0, 5) : "");
+      setOriginalVisitTime(annotation.visit_time ? annotation.visit_time.slice(0, 5) : "");
+      setVisitDuration(annotation.visit_duration ? String(annotation.visit_duration) : "");
+      setOriginalVisitDuration(annotation.visit_duration ? String(annotation.visit_duration) : "");
     }
   }, [annotation]);
 
   const handleSave = async () => {
     if (!id || !annotation) return;
-    
+
     try {
       await updateAnnotation.mutateAsync({
         id,
         content,
         was_content_edited: content !== originalContent,
+        visit_date: visitDate || undefined,
+        visit_time: visitTime ? `${visitTime}:00` : undefined,
+        visit_duration: visitDuration ? parseInt(visitDuration) : undefined,
       });
       
       toast({
@@ -90,7 +107,7 @@ export default function EditAnnotationPage() {
     });
   };
 
-  const hasChanges = content !== originalContent;
+  const hasChanges = content !== originalContent || visitDate !== originalVisitDate || visitTime !== originalVisitTime || visitDuration !== originalVisitDuration;
 
   if (isLoading) {
     return (
@@ -134,22 +151,10 @@ export default function EditAnnotationPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Modifier l'annotation</h1>
-            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <User className="w-4 h-4" />
-                {annotation.patients?.last_name} {annotation.patients?.first_name}
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {format(parseISO(annotation.visit_date), "d MMMM yyyy", { locale: fr })}
-              </span>
-              {annotation.visit_time && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {annotation.visit_time.slice(0, 5)}
-                </span>
-              )}
-            </div>
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+              <User className="w-4 h-4" />
+              {annotation.patients?.last_name} {annotation.patients?.first_name}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -171,20 +176,64 @@ export default function EditAnnotationPage() {
         </div>
       </div>
 
-      {/* Info badges */}
-      <div className="flex flex-wrap gap-2">
-        {annotation.was_content_edited && (
-          <Badge variant="secondary">Modifiée</Badge>
-        )}
-        {annotation.visit_duration && (
-          <Badge variant="outline">{annotation.visit_duration} min</Badge>
-        )}
-        {annotation.audio_duration && (
-          <Badge variant="outline">
-            Audio: {Math.floor(annotation.audio_duration / 60)}:{String(annotation.audio_duration % 60).padStart(2, "0")}
-          </Badge>
-        )}
-      </div>
+      {/* Editable visit info */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="visit-date" className="text-xs text-muted-foreground flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                Date de visite
+              </Label>
+              <Input
+                id="visit-date"
+                type="date"
+                value={visitDate}
+                onChange={(e) => setVisitDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="visit-time" className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                Heure de visite
+              </Label>
+              <Input
+                id="visit-time"
+                type="time"
+                value={visitTime}
+                onChange={(e) => setVisitTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="visit-duration" className="text-xs text-muted-foreground flex items-center gap-1">
+                <Timer className="w-3.5 h-3.5" />
+                Durée (minutes)
+              </Label>
+              <Input
+                id="visit-duration"
+                type="number"
+                min="1"
+                max="480"
+                value={visitDuration}
+                onChange={(e) => setVisitDuration(e.target.value)}
+                placeholder="Ex: 30"
+              />
+            </div>
+          </div>
+          {(annotation.was_content_edited || annotation.audio_duration) && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+              {annotation.was_content_edited && (
+                <Badge variant="secondary">Modifiée</Badge>
+              )}
+              {annotation.audio_duration && (
+                <Badge variant="outline">
+                  Audio: {Math.floor(annotation.audio_duration / 60)}:{String(annotation.audio_duration % 60).padStart(2, "0")}
+                </Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Editor */}
       <Card>

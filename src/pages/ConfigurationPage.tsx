@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,6 +151,8 @@ const TAG_COLORS = [
 ];
 
 export default function ConfigurationPage() {
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "structure";
   const [structure, setStructure] = useState(DEFAULT_STRUCTURE);
   
   // Dialog states
@@ -400,7 +403,7 @@ export default function ConfigurationPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="structure" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="structure" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
