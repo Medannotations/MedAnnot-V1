@@ -45,7 +45,7 @@ export default function DashboardLayout() {
           </header>
           
           {/* Mobile Header */}
-          <header className="lg:hidden h-14 border-b border-border flex items-center px-4 sticky top-0 bg-background/95 backdrop-blur z-10">
+          <header className="lg:hidden h-14 border-b border-border flex items-center justify-center px-4 sticky top-0 bg-background/95 backdrop-blur z-10">
             <Logo size="xs" />
           </header>
           
