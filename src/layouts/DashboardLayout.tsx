@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/dashboard/AppSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function DashboardLayout() {
   const { user, isLoading } = useAuth();
@@ -45,7 +46,7 @@ export default function DashboardLayout() {
           
           {/* Mobile Header */}
           <header className="lg:hidden h-14 border-b border-border flex items-center px-4 sticky top-0 bg-background/95 backdrop-blur z-10">
-            <h1 className="text-lg font-semibold text-foreground">Medannot</h1>
+            <Logo size="xs" />
           </header>
           
           <main className="flex-1 p-4 md:p-6">
