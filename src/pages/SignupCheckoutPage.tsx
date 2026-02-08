@@ -95,19 +95,20 @@ export function SignupCheckoutPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 2. Redirect to Stripe checkout
+      const { data: sessionData } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            "Authorization": `Bearer ${sessionData.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
             priceId: import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY,
             userId: authData.user.id,
             email: email,
-            name: name,
           }),
         }
       );
