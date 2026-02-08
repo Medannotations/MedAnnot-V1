@@ -357,29 +357,16 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
                   <FileAudio className="w-4 h-4" />
                   <span>Durée: {formatTime(audioDuration)}</span>
                 </div>
-                
-                <audio
-                  ref={audioRef}
-                  src={audioUrl}
-                  onEnded={() => setIsPlaying(false)}
-                  preload="auto"
-                />
-                
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
-                  <Button variant="outline" onClick={togglePlayback} disabled={isProcessing} className="flex-1 sm:flex-none">
-                    {isPlaying ? (
-                      <>
-                        <Pause className="w-4 h-4 mr-2" />
-                        Pause
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        Écouter
-                      </>
-                    )}
-                  </Button>
 
+                {/* Player natif - fonctionne sur tous les mobiles */}
+                <audio
+                  src={audioUrl}
+                  controls
+                  preload="auto"
+                  className="w-full"
+                />
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
                   <Button variant="ghost" onClick={resetRecording} disabled={isProcessing} className="flex-1 sm:flex-none">
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Réenregistrer
