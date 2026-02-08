@@ -61,10 +61,10 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
           : 'bg-transparent'
       }`}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             {/* Logo élégant */}
             <a href="/" className="flex items-center group">
-              <Logo size="md" className="group-hover:opacity-90 transition-opacity" />
+              <Logo size="sm" className="group-hover:opacity-90 transition-opacity" />
             </a>
             
             {/* Desktop menu */}
@@ -132,7 +132,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
 
       {/* Mobile menu panel */}
       {isMenuOpen && (
-        <div className="fixed top-16 left-0 right-0 bg-slate-800 border-b border-white/15 shadow-2xl z-50 md:hidden animate-fade-in">
+        <div className="fixed top-20 left-0 right-0 bg-slate-800 border-b border-white/15 shadow-2xl z-50 md:hidden animate-fade-in">
           <div className="container mx-auto px-4 py-4 space-y-1">
             <a 
               href="#features" 

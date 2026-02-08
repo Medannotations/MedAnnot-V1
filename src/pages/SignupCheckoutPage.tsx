@@ -164,7 +164,7 @@ export function SignupCheckoutPage() {
             onClick={() => navigate("/")}
             className="flex items-center group"
           >
-            <Logo size="lg" className="group-hover:opacity-90 transition-opacity" />
+            <Logo size="md" className="group-hover:opacity-90 transition-opacity" />
           </button>
           <Button
             variant="ghost"

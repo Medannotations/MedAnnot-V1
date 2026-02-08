@@ -72,7 +72,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center">
-          <Logo size="md" />
+          <Logo size="sm" />
         </div>
         
         {/* Sélecteur de thème dans le header */}
