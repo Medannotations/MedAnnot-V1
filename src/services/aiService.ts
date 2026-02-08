@@ -18,7 +18,16 @@ export async function transcribeAudio(
 
     // Create FormData with proper filename for Whisper API format detection
     const formData = new FormData();
-    const fileName = audioFile instanceof File ? audioFile.name : "recording.webm";
+    // Derive extension from MIME type (iOS Safari records mp4, Chrome records webm)
+    const mimeToExt: Record<string, string> = {
+      "audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "mp4",
+      "audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/wav": "wav",
+      "audio/x-wav": "wav", "audio/m4a": "m4a", "audio/x-m4a": "m4a",
+      "audio/flac": "flac",
+    };
+    const blobType = audioFile.type?.split(";")[0] || "";
+    const ext = mimeToExt[blobType] || "webm";
+    const fileName = audioFile instanceof File ? audioFile.name : `recording.${ext}`;
     formData.append("audio", audioFile, fileName);
 
     if (onProgress) onProgress(50);

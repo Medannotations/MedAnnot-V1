@@ -104,7 +104,8 @@ export function VoiceRecorderDual({ onAudioReady, isProcessing }: VoiceRecorderD
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const mimeType = mediaRecorder.mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
