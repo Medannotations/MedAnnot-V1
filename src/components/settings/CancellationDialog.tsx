@@ -52,6 +52,8 @@ export function CancellationDialog({
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
+      console.log("[Cancel] Sending request for userId:", userId);
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel-subscription`,
         {
@@ -65,12 +67,22 @@ export function CancellationDialog({
         }
       );
 
+      console.log("[Cancel] Response status:", response.status);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Erreur lors de la résiliation");
+        const errorText = await response.text();
+        console.error("[Cancel] Error response:", errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = {};
+        }
+        throw new Error(errorData.error || `Erreur serveur (${response.status})`);
       }
 
       const data = await response.json();
+      console.log("[Cancel] Success response:", data);
 
       // Vérifier et parser la date de fin de période
       let periodEndDate: Date | null = null;
@@ -91,9 +103,10 @@ export function CancellationDialog({
       onCancelled();
       handleClose();
     } catch (error: any) {
+      console.error("[Cancel] Exception caught:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Impossible de résilier l'abonnement",
+        description: error.message || "Impossible de résilier l'abonnement. Vérifiez la console pour plus de détails.",
         variant: "destructive",
       });
     } finally {
