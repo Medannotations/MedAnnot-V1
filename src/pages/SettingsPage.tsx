@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   User,
   CreditCard,
@@ -17,7 +18,9 @@ import {
   Loader2,
   Save,
   Mail,
-  Key
+  Key,
+  Smartphone,
+  LogOut
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -29,7 +32,6 @@ export default function SettingsPage() {
   const handleUpdateProfile = async () => {
     setIsUpdating(true);
     try {
-      // Simuler la mise à jour - à connecter avec votre API
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast({
         title: "Profil mis à jour",
@@ -49,38 +51,45 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Paramètres</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold">Paramètres</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Gérez votre compte et vos préférences
         </p>
       </div>
 
       <Tabs defaultValue="account" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-auto">
-          <TabsTrigger value="account" className="gap-2">
-            <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Compte</span>
-          </TabsTrigger>
-          <TabsTrigger value="subscription" className="gap-2">
-            <CreditCard className="w-4 h-4" />
-            <span className="hidden sm:inline">Abonnement</span>
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2">
-            <Bell className="w-4 h-4" />
-            <span className="hidden sm:inline">Apparence</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">Sécurité</span>
-          </TabsTrigger>
-        </TabsList>
+        {/* TabsList responsive - scrollable sur mobile */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="w-max min-w-full sm:w-auto sm:min-w-0 grid grid-cols-4 sm:inline-flex">
+            <TabsTrigger value="account" className="gap-1 sm:gap-2 px-2 sm:px-4">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Compte</span>
+              <span className="sm:hidden text-xs">Compte</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="gap-1 sm:gap-2 px-2 sm:px-4">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden sm:inline">Abonnement</span>
+              <span className="sm:hidden text-xs">Abonn.</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="gap-1 sm:gap-2 px-2 sm:px-4">
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Apparence</span>
+              <span className="sm:hidden text-xs">Appar.</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-1 sm:gap-2 px-2 sm:px-4">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Sécurité</span>
+              <span className="sm:hidden text-xs">Sécur.</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Onglet Compte */}
-        <TabsContent value="account" className="space-y-6">
+        <TabsContent value="account" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Informations personnelles</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Informations personnelles</CardTitle>
+              <CardDescription className="text-sm">
                 Mettez à jour vos informations de profil
               </CardDescription>
             </CardHeader>
@@ -88,13 +97,13 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <Input
                     id="email"
                     type="email"
                     value={user?.email || ""}
                     disabled
-                    className="bg-muted"
+                    className="bg-muted text-sm"
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -109,13 +118,15 @@ export default function SettingsPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Marie Dupont"
+                  className="text-sm"
                 />
               </div>
 
               <Button 
                 onClick={handleUpdateProfile}
                 disabled={isUpdating}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 {isUpdating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -128,14 +139,14 @@ export default function SettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Identifiant utilisateur</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Identifiant utilisateur</CardTitle>
+              <CardDescription className="text-sm">
                 Votre identifiant unique MedAnnot
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <code className="bg-muted px-2 py-1 rounded text-sm">
+              <code className="bg-muted px-2 py-1.5 rounded text-xs sm:text-sm block overflow-x-auto">
                 {user?.id}
               </code>
             </CardContent>
@@ -148,18 +159,18 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Onglet Apparence */}
-        <TabsContent value="appearance" className="space-y-6">
+        <TabsContent value="appearance" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Thème</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Thème</CardTitle>
+              <CardDescription className="text-sm">
                 Choisissez l'apparence de l'interface
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+            <CardContent>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <p className="font-medium">Mode d'affichage</p>
+                  <p className="font-medium text-sm sm:text-base">Mode d'affichage</p>
                   <p className="text-sm text-muted-foreground">
                     Sélectionnez le thème qui vous convient
                   </p>
@@ -170,40 +181,43 @@ export default function SettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Langue</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Langue</CardTitle>
+              <CardDescription className="text-sm">
                 Langue de l'interface
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-3 text-muted-foreground">
                 <span className="text-2xl">🇫🇷</span>
-                <span>Français (Suisse)</span>
+                <div>
+                  <p className="font-medium text-sm sm:text-base text-foreground">Français (Suisse)</p>
+                  <p className="text-xs sm:text-sm">Autres langues bientôt disponibles</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Onglet Sécurité */}
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent value="security" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Key className="w-5 h-5" />
                 Mot de passe
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Réinitialisez votre mot de passe via un lien envoyé par email
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Pour des raisons de sécurité, la réinitialisation du mot de passe se fait par email.
-                Un lien vous sera envoyé à <strong>{user?.email}</strong> pour choisir un nouveau mot de passe.
+                Un lien vous sera envoyé à <strong className="break-all">{user?.email}</strong> pour choisir un nouveau mot de passe.
               </p>
               <Button
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
                 disabled={isResettingPassword}
                 onClick={async () => {
                   if (!user?.email) return;
@@ -224,34 +238,63 @@ export default function SettingsPage() {
                     setIsResettingPassword(false);
                   }
                 }}
+                size="sm"
               >
                 {isResettingPassword ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Mail className="w-4 h-4" />
                 )}
-                Envoyer le lien de réinitialisation
+                Envoyer le lien
               </Button>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Sessions actives</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Sessions actives</CardTitle>
+              <CardDescription className="text-sm">
                 Gérez vos sessions de connexion
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="font-medium">Cette session</p>
-                  <p className="text-sm text-muted-foreground">
-                    {navigator.userAgent.includes("Mobile") ? "Mobile" : "Desktop"} • Actuel
-                  </p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-2">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Smartphone className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm sm:text-base">Cette session</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'} • Actif maintenant
+                    </p>
+                  </div>
                 </div>
-                <Badge variant="secondary">Active</Badge>
+                <Badge variant="secondary" className="w-fit text-xs">Actuelle</Badge>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-destructive/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-destructive flex items-center gap-2 text-lg sm:text-xl">
+                <LogOut className="w-5 h-5" />
+                Déconnexion
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Déconnectez-vous de votre compte sur cet appareil
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="destructive" 
+                className="gap-2 w-full sm:w-auto"
+                onClick={() => {}}
+                size="sm"
+              >
+                <LogOut className="w-4 h-4" />
+                Se déconnecter
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

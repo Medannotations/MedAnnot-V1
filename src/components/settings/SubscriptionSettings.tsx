@@ -158,16 +158,16 @@ export function SubscriptionSettings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <CreditCard className="w-5 h-5" />
                 Mon abonnement
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 149 CHF/mois — Sans engagement
               </CardDescription>
             </div>
@@ -176,12 +176,12 @@ export function SubscriptionSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           {(isActive || isTrialing) && (
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>Prochaine échéance</span>
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm sm:text-base">Prochaine échéance</span>
               </div>
-              <span>
+              <span className="font-medium text-sm sm:text-base">
                 {periodEnd
                   ? format(periodEnd, "d MMMM yyyy", { locale: fr })
                   : "Non définie"
@@ -210,7 +210,7 @@ export function SubscriptionSettings() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
+        <CardFooter className="flex flex-col gap-2 sm:gap-3">
           {/* Bouton Gérer l'abonnement - toujours visible si abonnement existe */}
           {(isActive || isTrialing || isPastDue || isCanceled) && (
             <Button
@@ -218,13 +218,14 @@ export function SubscriptionSettings() {
               disabled={isLoading}
               className="w-full"
               variant="outline"
+              size="sm"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <CreditCard className="w-4 h-4 mr-2" />
               )}
-              Gérer mon abonnement sur Stripe
+              Gérer sur Stripe
             </Button>
           )}
           
@@ -234,8 +235,9 @@ export function SubscriptionSettings() {
               variant="ghost"
               onClick={() => setCancelDialogOpen(true)}
               className="w-full text-muted-foreground hover:text-red-600"
+              size="sm"
             >
-              Résilier mon abonnement
+              Résilier
             </Button>
           )}
 
@@ -245,13 +247,14 @@ export function SubscriptionSettings() {
               onClick={handleManagePayment}
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600"
+              size="sm"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Sparkles className="w-4 h-4 mr-2" />
               )}
-              Réactiver mon abonnement
+              Réactiver
             </Button>
           )}
 
@@ -260,9 +263,10 @@ export function SubscriptionSettings() {
             <Button
               onClick={handleUpgrade}
               className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600"
+              size="sm"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              S'abonner maintenant
+              S'abonner
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
@@ -270,8 +274,8 @@ export function SubscriptionSettings() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Inclus dans votre abonnement</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base sm:text-lg">Inclus dans votre abonnement</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-3">
@@ -293,8 +297,8 @@ export function SubscriptionSettings() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base sm:text-lg flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Sécurité & Confidentialité
           </CardTitle>
