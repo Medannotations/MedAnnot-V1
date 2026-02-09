@@ -1,0 +1,268 @@
+# =====================================================
+# Docker Compose - MedAnnot Production
+# Swiss Safe Cloud Deployment
+# =====================================================
+
+version: '3.8'
+
+services:
+  # ===================================================
+  # Application MedAnnot
+  # ===================================================
+  app:
+    build:
+      context: .
+      target: server
+    container_name: medannot-app
+    restart: unless-stopped
+    
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      PGHOST: ${PGHOST}
+      PGPORT: ${PGPORT}
+      PGDATABASE: ${PGDATABASE}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      
+      # App
+      NODE_ENV: production
+      PORT: 3000
+      VITE_APP_URL: ${VITE_APP_URL:-https://medannot.ch}
+      
+      # Auth
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 7d
+      BCRYPT_ROUNDS: 12
+      
+      # Stripe
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      
+      # Email
+      SMTP_HOST: ${SMTP_HOST:-mail.infomaniak.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-MedAnnot <noreply@medannot.ch>}
+      
+      # Redis (optionnel pour sessions)
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    
+    ports:
+      - "3000:3000"
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    networks:
+      - medannot-network
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===================================================
+  # PostgreSQL (si auto-hébergé, sinon commenter)
+  # ===================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: medannot-postgres
+    restart: unless-stopped
+    
+    environment:
+      POSTGRES_USER: ${PGUSER:-medannot}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-changeme}
+      POSTGRES_DB: ${PGDATABASE:-medannot}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    
+    ports:
+      - "127.0.0.1:5432:5432"  # Local only pour sécurité
+    
+    networks:
+      - medannot-network
+    
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=1310kB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-medannot} -d ${PGDATABASE:-medannot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===================================================
+  # Redis (Cache + Sessions)
+  # ===================================================
+  redis:
+    image: redis:7-alpine
+    container_name: medannot-redis
+    restart: unless-stopped
+    
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    
+    volumes:
+      - redis_data:/data
+    
+    ports:
+      - "127.0.0.1:6379:6379"  # Local only
+    
+    networks:
+      - medannot-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ===================================================
+  # Nginx (Reverse Proxy)
+  # ===================================================
+  nginx:
+    image: nginx:alpine
+    container_name: medannot-nginx
+    restart: unless-stopped
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    
+    depends_on:
+      - app
+    
+    networks:
+      - medannot-network
+    
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================================
+  # Certbot (SSL Let's Encrypt)
+  # ===================================================
+  certbot:
+    image: certbot/certbot
+    container_name: medannot-certbot
+    restart: unless-stopped
+    
+    volumes:
+      - certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    
+    networks:
+      - medannot-network
+
+  # ===================================================
+  # Backup (Automatique)
+  # ===================================================
+  backup:
+    image: postgres:15-alpine
+    container_name: medannot-backup
+    restart: unless-stopped
+    
+    environment:
+      PGHOST: postgres
+      PGUSER: ${PGUSER:-medannot}
+      PGPASSWORD: ${PGPASSWORD:-changeme}
+      PGDATABASE: ${PGDATABASE:-medannot}
+      BACKUP_DIR: /backups
+      RETENTION_DAYS: 30
+    
+    volumes:
+      - ./backups:/backups
+    
+    command: >
+      sh -c '
+        apk add --no-cache tzdata
+        cp /usr/share/zoneinfo/Europe/Zurich /etc/localtime
+        echo "Europe/Zurich" > /etc/timezone
+        
+        while true; do
+          BACKUP_FILE="/backups/medannot_$$(date +%Y%m%d_%H%M%S).sql.gz"
+          echo "[$$(date)] Starting backup: $$BACKUP_FILE"
+          pg_dump -h postgres -U $$PGUSER $$PGDATABASE | gzip > $$BACKUP_FILE
+          echo "[$$(date)] Backup completed: $$BACKUP_FILE"
+          
+          # Cleanup old backups
+          find /backups -name "medannot_*.sql.gz" -mtime +$$RETENTION_DAYS -delete
+          
+          # Sleep 6 hours
+          sleep 6h
+        done
+      '
+    
+    depends_on:
+      - postgres
+    
+    networks:
+      - medannot-network
+
+# ===================================================
+# Volumes
+# ===================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  certbot_data:
+    driver: local
+  certbot_www:
+    driver: local
+
+# ===================================================
+# Networks
+# ===================================================
+networks:
+  medannot-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
