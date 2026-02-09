@@ -7,6 +7,19 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
+// Décoder le JWT localement (ne pas appeler Supabase Auth)
+function decodeJwt(token: string): { sub?: string; email?: string } | null {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = atob(base64);
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error("JWT decode error:", e);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -14,12 +27,13 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
-    // Récupérer le token du header Authorization
+    // Récupérer le token
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Authorization header missing" }),
@@ -27,34 +41,29 @@ serve(async (req) => {
       );
     }
 
-    // Créer un client Supabase avec le token de l'utilisateur
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    });
-
-    // Vérifier l'utilisateur authentifié
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
-    if (userError || !user) {
-      console.error("Auth error:", userError);
+    const token = authHeader.replace("Bearer ", "");
+    if (!token || token === authHeader) {
       return new Response(
-        JSON.stringify({ error: "Invalid or expired session" }),
+        JSON.stringify({ error: "Invalid Authorization format" }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    const userId = user.id;
-    console.log("Authenticated user:", userId);
+    // Décoder le JWT localement (Supabase l'a déjà validé en mode Protected)
+    const decoded = decodeJwt(token);
+    console.log("Decoded JWT payload:", decoded);
+    
+    if (!decoded?.sub) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JWT: no sub claim" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
 
-    // Client admin pour accéder aux données sensibles
+    const userId = decoded.sub;
+    console.log("User ID from JWT:", userId);
+
+    // Client admin pour accéder aux données
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -66,7 +75,12 @@ serve(async (req) => {
       .eq("user_id", userId)
       .single();
 
-    console.log("Profile:", { found: !!profile, customerId: profile?.stripe_customer_id });
+    console.log("Profile lookup:", { 
+      userId, 
+      found: !!profile, 
+      customerId: profile?.stripe_customer_id,
+      error: profileError?.message 
+    });
 
     if (profileError || !profile?.stripe_customer_id) {
       return new Response(
@@ -89,13 +103,14 @@ serve(async (req) => {
       const errorText = await listResponse.text();
       console.error("Stripe list error:", errorText);
       return new Response(
-        JSON.stringify({ error: "Impossible de récupérer les abonnements" }),
+        JSON.stringify({ error: "Erreur lors de la récupération des abonnements" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
     const allSubscriptions = await listResponse.json();
-    
+    console.log("Stripe subscriptions:", allSubscriptions.data?.length);
+
     // Trouver un abonnement annulable
     const cancellableStatuses = ["active", "trialing", "past_due", "incomplete"];
     const subscription = allSubscriptions.data?.find(
@@ -107,6 +122,7 @@ serve(async (req) => {
     );
 
     if (!anySubscription) {
+      console.error("No cancellable subscription found");
       return new Response(
         JSON.stringify({ error: "Aucun abonnement actif trouvé" }),
         { status: 404, headers: corsHeaders }
@@ -118,6 +134,7 @@ serve(async (req) => {
       const periodEnd = anySubscription.current_period_end
         ? new Date(anySubscription.current_period_end * 1000).toISOString()
         : null;
+      console.log("Already cancelled, period end:", periodEnd);
       return new Response(
         JSON.stringify({ success: true, periodEnd, alreadyCancelled: true }),
         { headers: corsHeaders }
@@ -125,6 +142,7 @@ serve(async (req) => {
     }
 
     // Annuler l'abonnement
+    console.log("Cancelling subscription:", anySubscription.id);
     const cancelResponse = await fetch(
       `https://api.stripe.com/v1/subscriptions/${anySubscription.id}`,
       {
@@ -150,6 +168,8 @@ serve(async (req) => {
     const periodEnd = cancelledSub.current_period_end
       ? new Date(cancelledSub.current_period_end * 1000).toISOString()
       : null;
+
+    console.log("Cancelled successfully, period end:", periodEnd);
 
     return new Response(
       JSON.stringify({ success: true, periodEnd }),

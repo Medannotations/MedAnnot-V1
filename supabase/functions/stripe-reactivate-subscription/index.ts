@@ -7,6 +7,18 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
+// Décoder le JWT localement
+function decodeJwt(token: string): { sub?: string } | null {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = atob(base64);
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -14,11 +26,9 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
-    // Récupérer le token du header Authorization
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -27,34 +37,19 @@ serve(async (req) => {
       );
     }
 
-    // Créer un client Supabase avec le token de l'utilisateur
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    });
-
-    // Vérifier l'utilisateur authentifié
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = decodeJwt(token);
     
-    if (userError || !user) {
-      console.error("Auth error:", userError);
+    if (!decoded?.sub) {
       return new Response(
-        JSON.stringify({ error: "Invalid or expired session" }),
+        JSON.stringify({ error: "Invalid JWT" }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    const userId = user.id;
+    const userId = decoded.sub;
     console.log("Reactivate - User:", userId);
 
-    // Client admin pour accéder aux données
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -74,7 +69,6 @@ serve(async (req) => {
 
     const customerId = profile.stripe_customer_id;
 
-    // Lister les abonnements
     const listRes = await fetch(
       `https://api.stripe.com/v1/subscriptions?customer=${customerId}&limit=10`,
       { headers: { "Authorization": `Bearer ${stripeSecretKey}` } }
@@ -88,11 +82,7 @@ serve(async (req) => {
     }
 
     const subscriptions = await listRes.json();
-    
-    // Trouver l'abonnement programmé pour annulation
-    const sub = subscriptions.data?.find((s: any) => 
-      s.cancel_at_period_end === true
-    );
+    const sub = subscriptions.data?.find((s: any) => s.cancel_at_period_end === true);
 
     if (!sub) {
       return new Response(
@@ -101,7 +91,6 @@ serve(async (req) => {
       );
     }
 
-    // Réactiver l'abonnement
     const reactivateRes = await fetch(
       `https://api.stripe.com/v1/subscriptions/${sub.id}`,
       {
@@ -126,10 +115,7 @@ serve(async (req) => {
     const reactivated = await reactivateRes.json();
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        status: reactivated.status,
-      }),
+      JSON.stringify({ success: true, status: reactivated.status }),
       { headers: corsHeaders }
     );
 

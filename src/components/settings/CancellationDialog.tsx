@@ -79,7 +79,7 @@ export function CancellationDialog({
         console.error("[Cancel] Error response:", errorText);
         
         if (response.status === 401) {
-          throw new Error("Session invalide. Veuillez vous déconnecter et reconnecter.");
+          throw new Error("Votre session a expiré. Veuillez rafraîchir la page et réessayer.");
         }
         
         let errorData;
