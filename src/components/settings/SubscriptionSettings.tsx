@@ -16,7 +16,7 @@ import {
   Shield,
   Clock
 } from "lucide-react";
-import { format, parseISO, isValid, isAfter } from "date-fns";
+import { format, parseISO, isValid, isAfter, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { CancellationDialog } from "./CancellationDialogSimple";
@@ -46,13 +46,19 @@ export function SubscriptionSettings() {
 
   // Utiliser le statut frais ou celui du profil
   const subscriptionStatus = localStatus || profile?.subscription_status || "none";
-  const isActive = subscriptionStatus === "active";
+  const isActive = subscriptionStatus === "active" || subscriptionStatus === "canceled";
   const isTrialing = subscriptionStatus === "trialing";
   const isCanceled = subscriptionStatus === "canceled";
   const isPastDue = subscriptionStatus === "past_due";
 
   const periodEnd = (() => {
-    if (!profile?.subscription_current_period_end) return null;
+    if (!profile?.subscription_current_period_end) {
+      // Si trialing ou actif sans date, supposer dans 30 jours
+      if (isTrialing || isActive) {
+        return addDays(new Date(), 30);
+      }
+      return null;
+    }
     const parsed = parseISO(profile.subscription_current_period_end);
     return isValid(parsed) ? parsed : null;
   })();

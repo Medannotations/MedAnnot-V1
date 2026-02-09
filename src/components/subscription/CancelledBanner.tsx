@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X, Sparkles, AlertCircle, RotateCcw, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSearchParams } from "react-router-dom";
-import { format, parseISO, isValid, isAfter } from "date-fns";
+import { format, parseISO, isValid, isAfter, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,37 +20,44 @@ export function CancelledBanner() {
   // Nettoyer l'URL après détection
   useEffect(() => {
     if (isReturningFromPortal) {
-      // Enlever le paramètre de l'URL sans recharger
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("portal");
       setSearchParams(newParams, { replace: true });
     }
   }, [isReturningFromPortal, searchParams, setSearchParams]);
   
-  // Récupérer le statut depuis sessionStorage
-  const storageKey = `cancelled-banner-closed-${user?.id}`;
+  // Vérifier si résilié
+  const isCanceled = profile?.subscription_status === "canceled";
   
+  // Parser la date de fin (avec fallback dans 30 jours si on revient du portail)
+  const periodEnd = (() => {
+    if (profile?.subscription_current_period_end) {
+      const parsed = parseISO(profile.subscription_current_period_end);
+      if (isValid(parsed)) return parsed;
+    }
+    // Si on revient du portail mais pas de date, supposer 30 jours
+    if (isReturningFromPortal) {
+      return addDays(new Date(), 30);
+    }
+    return null;
+  })();
+  
+  // Calculer les jours restants
+  const daysLeft = periodEnd ? Math.max(0, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
+  
+  // Afficher SI:
+  // 1. On revient du portail
+  // 2. OU si résilié avec période active
+  const shouldShow = isReturningFromPortal || (isCanceled && periodEnd && isAfter(periodEnd, new Date()));
+  
+  // Vérifier sessionStorage
+  const storageKey = `cancelled-banner-closed-${user?.id}`;
   useEffect(() => {
     const wasClosed = sessionStorage.getItem(storageKey);
     if (wasClosed && !isReturningFromPortal) {
       setIsVisible(false);
     }
   }, [storageKey, isReturningFromPortal]);
-
-  // Vérifier si résilié
-  const isCanceled = profile?.subscription_status === "canceled";
-  
-  // Parser la date de fin
-  const periodEnd = (() => {
-    if (!profile?.subscription_current_period_end) return null;
-    const parsed = parseISO(profile.subscription_current_period_end);
-    return isValid(parsed) ? parsed : null;
-  })();
-  
-  // Afficher SI:
-  // 1. On revient du portail (pour permettre de réactiver)
-  // 2. OU si résilié avec période active
-  const shouldShow = (isReturningFromPortal) || (isCanceled && periodEnd && isAfter(periodEnd, new Date()));
   
   if (!shouldShow || !isVisible) return null;
 
@@ -85,7 +92,6 @@ export function CancelledBanner() {
       }
 
       const data = await response.json();
-
       if (data.url) {
         window.open(data.url, "_blank");
       }
@@ -100,7 +106,7 @@ export function CancelledBanner() {
     }
   };
 
-  const daysLeft = periodEnd ? Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+  const isActive = profile?.subscription_status === "active" || profile?.subscription_status === "trialing";
 
   return (
     <div className="sticky top-14 z-30 w-full bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-b border-amber-200 shadow-sm">
@@ -113,19 +119,17 @@ export function CancelledBanner() {
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-amber-900 text-sm sm:text-base">
-                {isReturningFromPortal && !isCanceled 
-                  ? "Gérez votre abonnement sur Stripe" 
+                {!isActive 
+                  ? "Votre abonnement est inactif" 
                   : "Votre abonnement se termine bientôt"}
               </p>
               <p className="text-amber-700 text-xs sm:text-sm">
-                {isCanceled && periodEnd ? (
+                {periodEnd && daysLeft > 0 ? (
                   <>
                     Plus que <strong>{daysLeft} jour{daysLeft > 1 ? 's' : ''}</strong> jusqu'au{" "}
                     <strong>{format(periodEnd, "d MMMM", { locale: fr })}</strong>. 
-                    Réactivez maintenant pour ne pas perdre l'accès.
+                    {!isActive ? "Réactivez maintenant pour retrouver l'accès." : "Réactivez maintenant pour ne pas perdre l'accès."}
                   </>
-                ) : isReturningFromPortal ? (
-                  "Vous pouvez annuler ou modifier votre abonnement depuis le portail Stripe."
                 ) : (
                   "Votre accès expire bientôt. Réactivez maintenant !"
                 )}
@@ -150,10 +154,10 @@ export function CancelledBanner() {
                 </>
               )}
               <span className="hidden sm:inline">
-                {isReturningFromPortal && !isCanceled ? "Gérer sur Stripe" : "Réactiver mon abonnement"}
+                {isActive ? "Gérer mon abonnement" : "Réactiver mon abonnement"}
               </span>
               <span className="sm:hidden">
-                {isReturningFromPortal && !isCanceled ? "Gérer" : "Réactiver"}
+                {isActive ? "Gérer" : "Réactiver"}
               </span>
             </Button>
             
