@@ -222,15 +222,40 @@ Tu dois voir dans le portal :
 ### 3.1 Installer les outils nécessaires
 
 **Sur Mac :**
+
+#### Option A : Installer Homebrew (recommandé)
+
+Homebrew est l'outil de gestion de paquets pour Mac. Ouvre Terminal et tape :
+
 ```bash
-# Ouvre Terminal (Cmd+Space, tape "Terminal")
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-# Vérifier que SSH est installé
-ssh -V
+Suivi les instructions à l'écran (appuie sur Entrée quand on te demande).
 
-# Installer PostgreSQL client (pour la migration)
+**Après installation, ferme et rouvre Terminal**, puis vérifie :
+```bash
+brew --version
+```
+
+Puis installe PostgreSQL client :
+```bash
 brew install postgresql@15
 ```
+
+#### Option B : Sans Homebrew (alternative)
+
+Si tu ne veux pas installer Homebrew :
+1. Télécharge **PostgreSQL.app** : https://postgresapp.com/
+2. Déplace-le dans Applications
+3. Lance-le (icône éléphant dans la barre de menu)
+4. Clique sur l'icône → "Open psql"
+
+#### Vérifier SSH (déjà sur Mac)
+```bash
+ssh -V
+```
+Doit afficher une version.
 
 **Sur Windows :**
 1. Télécharge **PuTTY** : https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
@@ -510,10 +535,20 @@ SMTP_PASS=MOT_DE_PASSE
 ```
 
 **Pour générer le JWT_SECRET :**
-Sur ton Mac, dans un autre terminal :
+
+Sur ton Mac, dans un autre terminal, exécute l'une de ces commandes :
+
 ```bash
+# Option 1 : Avec openssl (généralement déjà installé)
 openssl rand -base64 64
+
+# Option 2 : Si openssl n'est pas installé
+node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
+
+# Option 3 : Générer manuellement (aller sur https://www.grc.com/passwords.htm)
+# Copie 64 caractères aléatoires
 ```
+
 Copie le résultat dans le fichier.
 
 Sauvegarde : Ctrl+O, Entrée, Ctrl+X
@@ -637,38 +672,74 @@ Tu devrais voir le JSON de santé, et le certificat doit être valide !
 
 ## ÉTAPE 9 : Migrer les données (20 min)
 
-### 9.1 Exporter de Supabase
+### 9.1 Récupérer les infos Supabase
 
-Sur ton ordinateur :
+1. Va sur https://supabase.com/dashboard
+2. Clique sur ton projet
+3. Va dans **Settings** → **Database**
+4. Sous "Connection string", choisis "PSQL"
+5. Note ces informations :
+   - Host (ex: `db.XXX.supabase.co`)
+   - Port (généralement `5432`)
+   - Database (`postgres`)
+   - User (`postgres`)
+   - Password (clique sur "Show password")
+
+### 9.2 Option A : Migration depuis le serveur (plus simple)
+
+Connecte-toi au serveur Exoscale et fais tout depuis là :
 
 ```bash
-# Installer pg_dump si ce n'est pas déjà fait (Mac)
-brew install postgresql@15
+# Se connecter au serveur
+ssh medannot@IP_EXOSCALE
 
-# Exporter les données
-echo "ATTENTION : Remplacez les XXX par vos vraies infos Supabase"
+# Créer un fichier avec les variables (remplace les valeurs)
+export SUPABASE_HOST="db.XXX.supabase.co"
+export SUPABASE_USER="postgres"
+export SUPABASE_PASS="TON_MOT_DE_PASSE_SUPABASE"
+export EXO_HOST="abc123-0.db.exoscale.com"
+export EXO_USER="medannot_app"
+export EXO_PASS="TON_MOT_DE_PASSE_EXOSCALE"
+
+# Exporter depuis Supabase
+docker run --rm -v /tmp:/tmp postgres:15-alpine pg_dump \
+  "postgresql://$SUPABASE_USER:$SUPABASE_PASS@$SUPABASE_HOST:5432/postgres" \
+  --data-only \
+  --table=profiles \
+  --table=patients \
+  --table=annotations \
+  > /tmp/migration.sql
+
+# Vérifier que le fichier existe
+ls -lh /tmp/migration.sql
+
+# Importer dans Exoscale
+docker run --rm -v /tmp:/tmp postgres:15-alpine psql \
+  "postgresql://$EXO_USER:$EXO_PASS@$EXO_HOST:5432/medannot" \
+  -f /tmp/migration.sql
+
+# Vérifier
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM profiles;"
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM patients;"
+```
+
+### 9.3 Option B : Migration depuis ton Mac (si tu as Homebrew)
+
+Si tu as installé Homebrew et PostgreSQL sur ton Mac :
+
+```bash
+# Exporter depuis Supabase
 pg_dump "postgresql://postgres:MDP_SUPABASE@db.XXX.supabase.co:5432/postgres" \
   --data-only \
   --table=profiles \
   --table=patients \
   --table=annotations \
   > migration.sql
-```
 
-Pour trouver tes infos Supabase :
-1. Va sur https://supabase.com/dashboard
-2. Clique sur ton projet
-3. Va dans **Settings** → **Database**
-4. Sous "Connection string", choisis "PSQL"
-5. Copie les infos
-
-### 9.2 Importer dans Exoscale
-
-```bash
 # Transférer sur le serveur
 scp migration.sql medannot@IP_EXOSCALE:/tmp/
 
-# Importer dans la DB
+# Se connecter et importer
 ssh medannot@IP_EXOSCALE
 psql "$DATABASE_URL" < /tmp/migration.sql
 ```
