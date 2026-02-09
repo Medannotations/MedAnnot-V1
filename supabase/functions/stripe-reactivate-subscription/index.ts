@@ -1,4 +1,3 @@
-// Fonction pour réactiver un abonnement annulé (qui va s'arrêter à la fin de la période)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
@@ -8,18 +7,6 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
-function getUserIdFromToken(token: string): string | null {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = atob(base64);
-    const decoded = JSON.parse(jsonPayload);
-    return decoded.sub || null;
-  } catch {
-    return null;
-  }
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -27,27 +14,47 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
+    // Récupérer le token du header Authorization
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authorization header missing" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    // Créer un client Supabase avec le token de l'utilisateur
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
+    // Vérifier l'utilisateur authentifié
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
-    if (!token) {
+    if (userError || !user) {
+      console.error("Auth error:", userError);
       return new Response(
-        JSON.stringify({ error: "Token manquant" }),
+        JSON.stringify({ error: "Invalid or expired session" }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    const userId = getUserIdFromToken(token);
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ error: "Token invalide" }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
+    const userId = user.id;
+    console.log("Reactivate - User:", userId);
 
+    // Client admin pour accéder aux données
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -82,7 +89,7 @@ serve(async (req) => {
 
     const subscriptions = await listRes.json();
     
-    // Trouver l'abonnement qui est programmé pour annulation
+    // Trouver l'abonnement programmé pour annulation
     const sub = subscriptions.data?.find((s: any) => 
       s.cancel_at_period_end === true
     );
@@ -94,7 +101,7 @@ serve(async (req) => {
       );
     }
 
-    // Réactiver l'abonnement (annuler l'annulation)
+    // Réactiver l'abonnement
     const reactivateRes = await fetch(
       `https://api.stripe.com/v1/subscriptions/${sub.id}`,
       {
@@ -109,7 +116,7 @@ serve(async (req) => {
 
     if (!reactivateRes.ok) {
       const errorText = await reactivateRes.text();
-      console.error("Failed to reactivate:", errorText);
+      console.error("Reactivate error:", errorText);
       return new Response(
         JSON.stringify({ error: "Échec de la réactivation" }),
         { status: 500, headers: corsHeaders }
