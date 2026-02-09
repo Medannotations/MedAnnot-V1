@@ -21,14 +21,24 @@ import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { CancellationDialog } from "./CancellationDialogSimple";
 
+interface StripeSubscriptionData {
+  status: string;
+  currentPeriodEnd: number;
+  cancelAtPeriodEnd: boolean;
+}
+
 export function SubscriptionSettings() {
   const { profile, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [localStatus, setLocalStatus] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCancelledPending, setIsCancelledPending] = useState(false);
+  
+  // Données fraîches de Stripe
+  const [stripeData, setStripeData] = useState<StripeSubscriptionData | null>(null);
+  const [isFetchingStripe, setIsFetchingStripe] = useState(true);
 
-  // Récupérer le statut frais depuis la base
+  // Récupérer le statut frais depuis la base (fallback)
   useEffect(() => {
     const fetchFreshStatus = async () => {
       if (!user?.id) return;
@@ -44,6 +54,50 @@ export function SubscriptionSettings() {
     fetchFreshStatus();
   }, [user?.id]);
 
+  // Récupérer les données fraîches de Stripe
+  useEffect(() => {
+    const fetchStripeSubscription = async () => {
+      if (!user?.id) {
+        setIsFetchingStripe(false);
+        return;
+      }
+      
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-subscription`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`,
+              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.hasSubscription && data.subscription) {
+            setStripeData({
+              status: data.subscription.status,
+              currentPeriodEnd: data.subscription.currentPeriodEnd,
+              cancelAtPeriodEnd: data.subscription.cancelAtPeriodEnd,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching Stripe subscription:", error);
+      } finally {
+        setIsFetchingStripe(false);
+      }
+    };
+
+    fetchStripeSubscription();
+  }, [user?.id]);
+
   // Utiliser le statut frais ou celui du profil
   const subscriptionStatus = localStatus || profile?.subscription_status || "none";
   const isActive = subscriptionStatus === "active" || subscriptionStatus === "canceled";
@@ -51,17 +105,31 @@ export function SubscriptionSettings() {
   const isCanceled = subscriptionStatus === "canceled";
   const isPastDue = subscriptionStatus === "past_due";
 
+  // Utiliser la date fraîche de Stripe si disponible, sinon fallback sur Supabase
   const periodEnd = (() => {
-    if (!profile?.subscription_current_period_end) {
-      // Si trialing ou actif sans date, supposer dans 30 jours
-      if (isTrialing || isActive) {
-        return addDays(new Date(), 30);
-      }
-      return null;
+    // Priorité 1: Données fraîches de Stripe
+    if (stripeData?.currentPeriodEnd) {
+      return new Date(stripeData.currentPeriodEnd * 1000);
     }
-    const parsed = parseISO(profile.subscription_current_period_end);
-    return isValid(parsed) ? parsed : null;
+    
+    // Priorité 2: Base Supabase (webhook)
+    if (profile?.subscription_current_period_end) {
+      const parsed = parseISO(profile.subscription_current_period_end);
+      if (isValid(parsed)) return parsed;
+    }
+    
+    // Fallback: +30 jours si actif/essai
+    if (isTrialing || isActive) {
+      return addDays(new Date(), 30);
+    }
+    
+    return null;
   })();
+
+  // Statut annulé depuis Stripe (plus fiable que Supabase)
+  const isCanceledFromStripe = stripeData?.status === "canceled" || 
+                                stripeData?.cancelAtPeriodEnd || 
+                                isCanceled;
 
   const handleManagePayment = async () => {
     setIsLoading(true);
@@ -190,7 +258,7 @@ export function SubscriptionSettings() {
             </div>
           )}
 
-          {(isCanceled || isCancelledPending) && periodEnd && (
+          {(isCanceledFromStripe || isCancelledPending) && periodEnd && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <p className="text-sm text-amber-800">
                 <span className="font-medium">Résiliation programmée.</span>
@@ -242,7 +310,7 @@ export function SubscriptionSettings() {
           )}
 
           {/* Bouton Réactiver - visible si annulé mais période active */}
-          {isCanceled && periodEnd && isAfter(periodEnd, new Date()) && (
+          {isCanceledFromStripe && periodEnd && isAfter(periodEnd, new Date()) && (
             <Button
               onClick={handleManagePayment}
               disabled={isLoading}
