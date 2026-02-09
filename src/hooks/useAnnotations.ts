@@ -1,34 +1,56 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { encryptData, decryptData } from "@/lib/encryption";
-import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+/**
+ * Annotations Hooks - Version API Maison (Infomaniak)
+ * Remplace Supabase par notre API
+ */
 
-export type Annotation = Tables<"annotations">;
-export type AnnotationInsert = TablesInsert<"annotations">;
-export type AnnotationUpdate = TablesUpdate<"annotations">;
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { annotations as annotationsApi } from "@/services/api";
+import { encryptData, decryptData } from "@/lib/encryption";
+
+export interface Annotation {
+  id: string;
+  user_id: string;
+  patient_id?: string | null;
+  content: string;
+  type?: string;
+  audio_url?: string | null;
+  transcription?: string | null;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  vital_signs?: Record<string, unknown>;
+  is_archived?: boolean;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  patient_first_name?: string;
+  patient_last_name?: string;
+}
 
 export interface AnnotationWithPatient extends Annotation {
-  patients: {
+  patients?: {
     first_name: string;
     last_name: string;
     pathologies: string | null;
   };
 }
 
-// Helper pour déchiffrer une annotation (résilient aux données non chiffrées)
-const decryptAnnotation = <T extends Annotation>(annotation: T, userId: string): T => {
+export type AnnotationInsert = Omit<Annotation, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
+export type AnnotationUpdate = Partial<AnnotationInsert>;
+
+// Helper pour déchiffrer une annotation
+const decryptAnnotation = (annotation: Annotation, userId: string): Annotation => {
   let content = annotation.content;
   let transcription = annotation.transcription;
 
   try {
-    content = decryptData(annotation.content, userId);
+    if (content) content = decryptData(content, userId);
   } catch {
-    // Données non chiffrées (legacy / signes vitaux) - garder le texte brut
+    // Données non chiffrées - garder le texte brut
   }
 
   try {
-    transcription = decryptData(annotation.transcription, userId);
+    if (transcription) transcription = decryptData(transcription, userId);
   } catch {
     // Données non chiffrées - garder le texte brut
   }
@@ -36,15 +58,19 @@ const decryptAnnotation = <T extends Annotation>(annotation: T, userId: string):
   return { ...annotation, content, transcription };
 };
 
-// Helper pour déchiffrer les données patient jointes (aussi chiffrées)
-const decryptPatientData = (
-  patient: { first_name: string; last_name: string; pathologies: string | null },
-  userId: string
-) => ({
-  first_name: decryptData(patient.first_name, userId),
-  last_name: decryptData(patient.last_name, userId),
-  pathologies: patient.pathologies,
-});
+// Helper pour chiffrer une annotation
+const encryptAnnotation = (annotation: Partial<Annotation>, userId: string): Partial<Annotation> => {
+  const encrypted: Partial<Annotation> = { ...annotation };
+  
+  if (annotation.content) {
+    encrypted.content = encryptData(annotation.content, userId);
+  }
+  if (annotation.transcription) {
+    encrypted.transcription = encryptData(annotation.transcription, userId);
+  }
+  
+  return encrypted;
+};
 
 export function useAnnotations(filters?: {
   patientId?: string;
@@ -59,52 +85,41 @@ export function useAnnotations(filters?: {
     queryFn: async () => {
       if (!user) throw new Error("User not authenticated");
 
-      let query = supabase
-        .from("annotations")
-        .select(`
-          *,
-          patients (
-            first_name,
-            last_name,
-            pathologies
-          )
-        `)
-        .eq("is_archived", false)
-        .order("visit_date", { ascending: false })
-        .order("created_at", { ascending: false });
-
+      const data = await annotationsApi.list();
+      
+      // Déchiffrer et filtrer
+      let result = data
+        .filter((a: Annotation) => !a.is_archived)
+        .map((a: Annotation) => decryptAnnotation(a, user.id));
+      
+      // Filtre par patient
       if (filters?.patientId) {
-        query = query.eq("patient_id", filters.patientId);
+        result = result.filter((a: Annotation) => a.patient_id === filters.patientId);
       }
-
+      
+      // Filtre par date
       if (filters?.startDate) {
-        query = query.gte("visit_date", filters.startDate);
+        result = result.filter((a: Annotation) => a.created_at >= filters.startDate!);
       }
-
       if (filters?.endDate) {
-        query = query.lte("visit_date", filters.endDate);
+        result = result.filter((a: Annotation) => a.created_at <= filters.endDate!);
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      // Déchiffrer les annotations et les données patient jointes
-      let result = (data as AnnotationWithPatient[]).map((a) => ({
-        ...decryptAnnotation(a, user.id),
-        patients: decryptPatientData(a.patients, user.id),
-      }));
-
-      // Client-side search in decrypted content/transcription
+      
+      // Recherche texte
       if (filters?.searchQuery) {
         const search = filters.searchQuery.toLowerCase();
         result = result.filter(
-          (a) =>
-            a.content.toLowerCase().includes(search) ||
-            a.transcription.toLowerCase().includes(search) ||
-            `${a.patients.last_name} ${a.patients.first_name}`.toLowerCase().includes(search)
+          (a: Annotation) =>
+            a.content?.toLowerCase().includes(search) ||
+            a.transcription?.toLowerCase().includes(search) ||
+            `${a.patient_last_name} ${a.patient_first_name}`.toLowerCase().includes(search)
         );
       }
+      
+      // Trier par date
+      result.sort((a: Annotation, b: Annotation) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
 
       return result;
     },
@@ -120,28 +135,12 @@ export function useAnnotation(annotationId: string | undefined) {
     queryFn: async () => {
       if (!annotationId || !user) return null;
 
-      const { data, error } = await supabase
-        .from("annotations")
-        .select(`
-          *,
-          patients (
-            first_name,
-            last_name,
-            pathologies
-          )
-        `)
-        .eq("id", annotationId)
-        .single();
-
-      if (error) throw error;
-
-      const annotation = data as AnnotationWithPatient;
+      const allAnnotations = await annotationsApi.list();
+      const annotation = allAnnotations.find((a: Annotation) => a.id === annotationId);
       
-      // Déchiffrer l'annotation et les données patient
-      return {
-        ...decryptAnnotation(annotation, user.id),
-        patients: decryptPatientData(annotation.patients, user.id),
-      };
+      if (!annotation) throw new Error("Annotation not found");
+      
+      return decryptAnnotation(annotation, user.id);
     },
     enabled: !!user && !!annotationId,
   });
@@ -155,17 +154,14 @@ export function useAnnotationsByPatient(patientId: string | undefined) {
     queryFn: async () => {
       if (!patientId || !user) return [];
 
-      const { data, error } = await supabase
-        .from("annotations")
-        .select("*")
-        .eq("patient_id", patientId)
-        .eq("is_archived", false)
-        .order("visit_date", { ascending: false });
-
-      if (error) throw error;
-
-      // Déchiffrer les annotations
-      return (data as Annotation[]).map((a) => decryptAnnotation(a, user.id));
+      const data = await annotationsApi.list();
+      
+      return data
+        .filter((a: Annotation) => a.patient_id === patientId && !a.is_archived)
+        .map((a: Annotation) => decryptAnnotation(a, user.id))
+        .sort((a: Annotation, b: Annotation) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
     },
     enabled: !!user && !!patientId,
   });
@@ -176,45 +172,16 @@ export function useCreateAnnotation() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (annotation: Omit<AnnotationInsert, "user_id">) => {
+    mutationFn: async (annotation: AnnotationInsert) => {
       if (!user) throw new Error("User not authenticated");
 
-      console.log("[useCreateAnnotation] Creating annotation:", {
-        patient_id: annotation.patient_id,
-        visit_date: annotation.visit_date,
-        has_content: !!annotation.content,
-        content_length: annotation.content?.length,
-      });
-
-      // Chiffrer les données PII avant insertion
-      const encryptedContent = encryptData(annotation.content, user.id);
-      const encryptedTranscription = encryptData(annotation.transcription || "", user.id);
-
-      const insertData = {
-        ...annotation,
-        user_id: user.id,
-        content: encryptedContent,
-        transcription: encryptedTranscription,
-        visit_duration: annotation.visit_duration || null,
-      };
-
-      console.log("[useCreateAnnotation] Inserting data:", insertData);
-
-      const { data, error } = await supabase
-        .from("annotations")
-        .insert(insertData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("[useCreateAnnotation] Supabase error:", error);
-        throw new Error(`Erreur création annotation: ${error.message} (${error.code})`);
-      }
-
-      console.log("[useCreateAnnotation] Success:", data);
-
-      // Retourner les données déchiffrées
-      return decryptAnnotation(data as Annotation, user.id);
+      // Chiffrer les données sensibles
+      const encryptedAnnotation = encryptAnnotation(annotation, user.id);
+      
+      const newAnnotation = await annotationsApi.create(encryptedAnnotation as AnnotationInsert);
+      
+      // Retourner déchiffré pour l'UI
+      return decryptAnnotation(newAnnotation, user.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
@@ -230,27 +197,13 @@ export function useUpdateAnnotation() {
     mutationFn: async ({ id, ...updates }: AnnotationUpdate & { id: string }) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Chiffrer les champs PII si présents dans la mise à jour
-      const encryptedUpdates: Record<string, unknown> = { ...updates };
+      // Chiffrer les données sensibles
+      const encryptedUpdates = encryptAnnotation(updates, user.id);
       
-      if (updates.content !== undefined) {
-        encryptedUpdates.content = encryptData(updates.content, user.id);
-      }
-      if (updates.transcription !== undefined) {
-        encryptedUpdates.transcription = encryptData(updates.transcription, user.id);
-      }
-
-      const { data, error } = await supabase
-        .from("annotations")
-        .update(encryptedUpdates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Retourner les données déchiffrées
-      return decryptAnnotation(data as Annotation, user.id);
+      const updated = await annotationsApi.update(id, encryptedUpdates);
+      
+      // Retourner déchiffré pour l'UI
+      return decryptAnnotation(updated, user.id);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
@@ -264,12 +217,8 @@ export function useDeleteAnnotation() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("annotations")
-        .update({ is_archived: true })
-        .eq("id", id);
-
-      if (error) throw error;
+      // Soft delete (archive)
+      return annotationsApi.update(id, { is_archived: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
@@ -283,53 +232,32 @@ export function useAnnotationStats() {
   return useQuery({
     queryKey: ["annotation-stats", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+
+      const annotations = await annotationsApi.list();
+      const activeAnnotations = annotations.filter((a: Annotation) => !a.is_archived);
+      
       // Get current month's annotations
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-
-      const { data: monthlyAnnotations, error: monthlyError } = await supabase
-        .from("annotations")
-        .select("id, created_at")
-        .eq("is_archived", false)
-        .gte("created_at", startOfMonth.toISOString());
-
-      if (monthlyError) throw monthlyError;
-
-      // Get total annotations
-      const { count: totalCount, error: totalError } = await supabase
-        .from("annotations")
-        .select("id", { count: "exact", head: true })
-        .eq("is_archived", false);
-
-      if (totalError) throw totalError;
-
-      // Get active patients count
-      const { count: patientsCount, error: patientsError } = await supabase
-        .from("patients")
-        .select("id", { count: "exact", head: true })
-        .eq("is_archived", false);
-
-      if (patientsError) throw patientsError;
-
-      // Get last annotation
-      const { data: lastAnnotation, error: lastError } = await supabase
-        .from("annotations")
-        .select("created_at")
-        .eq("is_archived", false)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lastError) throw lastError;
+      
+      const monthlyAnnotations = activeAnnotations.filter(
+        (a: Annotation) => new Date(a.created_at) >= startOfMonth
+      );
+      
+      // Get last annotation date
+      const sortedAnnotations = [...activeAnnotations].sort(
+        (a: Annotation, b: Annotation) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
 
       return {
-        monthlyCount: monthlyAnnotations?.length || 0,
-        totalCount: totalCount || 0,
-        patientsCount: patientsCount || 0,
-        lastAnnotationDate: lastAnnotation?.created_at || null,
-        // Estimate: 10 minutes saved per annotation
-        timeSavedMinutes: (monthlyAnnotations?.length || 0) * 10,
+        monthlyCount: monthlyAnnotations.length,
+        totalCount: activeAnnotations.length,
+        patientsCount: new Set(activeAnnotations.map((a: Annotation) => a.patient_id)).size,
+        lastAnnotationDate: sortedAnnotations[0]?.created_at || null,
+        timeSavedMinutes: monthlyAnnotations.length * 10,
       };
     },
     enabled: !!user,

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { format, parseISO, isValid, isAfter, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
+import { subscription as subscriptionApi } from "@/services/api";
 import { CancellationDialog } from "./CancellationDialogSimple";
 
 interface StripeSubscriptionData {
@@ -38,23 +38,7 @@ export function SubscriptionSettings() {
   const [stripeData, setStripeData] = useState<StripeSubscriptionData | null>(null);
   const [isFetchingStripe, setIsFetchingStripe] = useState(true);
 
-  // Récupérer le statut frais depuis la base (fallback)
-  useEffect(() => {
-    const fetchFreshStatus = async () => {
-      if (!user?.id) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("subscription_status, subscription_current_period_end")
-        .eq("user_id", user.id)
-        .single();
-      if (data) {
-        setLocalStatus(data.subscription_status);
-      }
-    };
-    fetchFreshStatus();
-  }, [user?.id]);
-
-  // Récupérer les données fraîches de Stripe
+  // Récupérer les données fraîches de Stripe via notre API
   useEffect(() => {
     const fetchStripeSubscription = async () => {
       if (!user?.id) {
@@ -63,30 +47,15 @@ export function SubscriptionSettings() {
       }
       
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
-
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-subscription`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`,
-              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.hasSubscription && data.subscription) {
-            setStripeData({
-              status: data.subscription.status,
-              currentPeriodEnd: data.subscription.currentPeriodEnd,
-              cancelAtPeriodEnd: data.subscription.cancelAtPeriodEnd,
-            });
-          }
+        const data = await subscriptionApi.get();
+        
+        if (data.hasSubscription && data.subscription) {
+          setStripeData({
+            status: data.subscription.status,
+            currentPeriodEnd: data.subscription.currentPeriodEnd,
+            cancelAtPeriodEnd: data.subscription.cancelAtPeriodEnd,
+          });
+          setLocalStatus(data.subscription.status);
         }
       } catch (error) {
         console.error("Error fetching Stripe subscription:", error);
@@ -134,46 +103,12 @@ export function SubscriptionSettings() {
   const handleManagePayment = async () => {
     setIsLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-portal`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ 
-            returnUrl: `${window.location.origin}/app/settings?portal=return`
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Portal response error:", response.status, errorText);
-        throw new Error(
-          response.status === 404
-            ? "La fonction stripe-portal n'est pas déployée."
-            : `Erreur serveur (${response.status})`
-        );
-      }
-
-      const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("Portal response without URL:", data);
-        throw new Error(data.error || "Impossible d'accéder au portail de gestion");
-      }
+      const url = await subscriptionApi.createPortal();
+      window.location.href = url;
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message || "Impossible d'accéder à la gestion de paiement",
+        description: error.message || "Impossible d'accéder au portail de gestion",
         variant: "destructive",
       });
     } finally {

@@ -1,194 +1,129 @@
+/**
+ * Auth Context - Version Infomaniak (Sans Supabase)
+ * Auth maison avec JWT
+ */
+
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import { auth, profile, setToken, removeToken, getToken } from "@/services/api";
+
+interface User {
+  id: string;
+  email: string;
+  fullName?: string;
+}
 
 interface Profile {
   id: string;
+  user_id: string;
   email: string;
   full_name: string | null;
-  subscription_status?: "none" | "active" | "past_due" | "canceled";
-  subscription_current_period_end?: string | null;
-  stripe_customer_id?: string | null;
+  subscription_status: "none" | "active" | "past_due" | "canceled" | "trialing";
+  subscription_current_period_end: string | null;
+  stripe_customer_id: string | null;
   created_at: string;
   updated_at: string;
-  user_id: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   profile: Profile | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
   resetPassword: (email: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user profile from profiles table - version simplifiée qui ne bloque jamais
-  const fetchProfile = async (userId: string) => {
-    try {
-      console.log("Fetching profile for user:", userId);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (error) {
-        console.log("Profile fetch error (non bloquant):", error.message);
-        // Créer un profil virtuel en mémoire si pas trouvé
-        setProfile({
-          id: userId,
-          user_id: userId,
-          email: user?.email || "",
-          full_name: user?.user_metadata?.full_name || null,
-          subscription_status: "active", // Permettre l'accès par défaut
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as Profile);
+  // Charger l'utilisateur au démarrage
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = getToken();
+      
+      if (!token) {
+        setIsLoading(false);
         return;
       }
 
-      if (data) {
-        console.log("Profile found:", data);
-        setProfile(data as Profile);
-      } else {
-        console.log("No profile found - using virtual profile");
-        // Créer un profil virtuel en mémoire
-        setProfile({
-          id: userId,
-          user_id: userId,
-          email: user?.email || "",
-          full_name: user?.user_metadata?.full_name || null,
-          subscription_status: "active", // Permettre l'accès par défaut
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as Profile);
+      try {
+        // Récupérer le profil avec le token existant
+        const profileData = await profile.get();
+        setProfile(profileData);
+        setUser({
+          id: profileData.user_id,
+          email: profileData.email,
+          fullName: profileData.full_name || undefined,
+        });
+      } catch (error) {
+        console.error("Auth init error:", error);
+        // Token invalide
+        removeToken();
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error("Profile fetch exception (non bloquant):", err);
-      // Créer un profil virtuel même en cas d'erreur
-      setProfile({
-        id: userId,
-        user_id: userId,
-        email: user?.email || "",
-        full_name: user?.user_metadata?.full_name || null,
-        subscription_status: "active",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as Profile);
+    };
+
+    initAuth();
+  }, []);
+
+  const refreshProfile = async () => {
+    try {
+      const data = await profile.get();
+      setProfile(data);
+    } catch (error) {
+      console.error("Profile refresh error:", error);
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!isMounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        // Fetch profile en arrière-plan (ne bloque pas)
-        if (session?.user?.id) {
-          fetchProfile(session.user.id); // Pas de await - ne bloque pas
-        }
-      } catch (error) {
-        console.error("Auth init error:", error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initializeAuth();
-
-    // Set up auth state listener for future changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!isMounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        // Fetch profile en arrière-plan (ne bloque pas)
-        if (session?.user?.id) {
-          fetchProfile(session.user.id); // Pas de await
-        } else {
-          setProfile(null);
-        }
-      }
-    );
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const signup = async (email: string, password: string, name?: string) => {
-    // Create user without email verification
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-        },
-      },
-    });
-
-    if (error) throw error;
-
-    // Note: Email confirmation is handled server-side via Supabase Auth settings
-    // The admin API cannot be called from client-side for security reasons
-
-    // Sign in immediately after signup
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError) throw signInError;
+    const data = await auth.register(email, password, name || "");
+    setUser(data.user);
+    
+    // Récupérer le profil après inscription
+    await refreshProfile();
   };
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
+    const data = await auth.login(email, password);
+    setUser(data.user);
+    
+    // Récupérer le profil après connexion
+    await refreshProfile();
   };
 
-  const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+  const logout = () => {
+    auth.logout();
+    setUser(null);
     setProfile(null);
+    window.location.href = "/login";
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) throw error;
+    // TODO: Implémenter côté serveur
+    // Pour l'instant, on redirige vers le support
+    throw new Error("Contactez support@medannot.ch pour réinitialiser votre mot de passe");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, isLoading, login, signup, logout, resetPassword }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      isLoading, 
+      isAuthenticated: !!user,
+      login, 
+      signup, 
+      logout, 
+      resetPassword,
+      refreshProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

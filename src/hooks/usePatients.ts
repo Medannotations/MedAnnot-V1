@@ -1,40 +1,87 @@
+/**
+ * Patients Hooks - Version API Maison (Infomaniak)
+ * Remplace Supabase par notre API
+ */
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { patients as patientsApi } from "@/services/api";
 import { encryptData, decryptData } from "@/lib/encryption";
-import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
-export type Patient = Tables<"patients">;
-export type PatientInsert = TablesInsert<"patients">;
-export type PatientUpdate = TablesUpdate<"patients">;
+export interface Patient {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  country?: string;
+  notes?: string | null;
+  medical_history?: string | null;
+  allergies?: string | null;
+  current_medications?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  insurance_provider?: string | null;
+  insurance_number?: string | null;
+  is_archived?: boolean;
+  created_at: string;
+  updated_at: string;
+  // UI fields
+  exampleAnnotations?: unknown[];
+}
 
-// Vérifie si une chaîne est chiffrée (format CryptoJS)
+export type PatientInsert = Omit<Patient, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
+export type PatientUpdate = Partial<PatientInsert>;
+
+// Vérifie si une chaîne est chiffrée
 const isEncrypted = (data: string): boolean => {
-  return data.startsWith('U2FsdGVkX1') || data.startsWith('U2F');
+  return data?.startsWith('U2FsdGVkX1') || data?.startsWith('U2F');
 };
 
-// Helper pour déchiffrer en toute sécurité (gère les données non chiffrées legacy)
+// Helper pour déchiffrer en toute sécurité
 const safeDecrypt = (data: string | null, userId: string): string | null => {
   if (!data) return null;
-  // Si ce n'est pas chiffré, retourner tel quel (compatibilité legacy)
   if (!isEncrypted(data)) return data;
   try {
     return decryptData(data, userId);
   } catch {
-    // En cas d'erreur de déchiffrement, retourner la donnée brute
     return data;
   }
 };
 
-// Helper pour déchiffrer un patient
+// Déchiffrer un patient
 const decryptPatient = (patient: Patient, userId: string): Patient => ({
   ...patient,
   first_name: decryptData(patient.first_name, userId),
   last_name: decryptData(patient.last_name, userId),
   address: safeDecrypt(patient.address, userId),
-  street: safeDecrypt(patient.street, userId),
   city: safeDecrypt(patient.city, userId),
 });
+
+// Chiffrer un patient avant envoi
+const encryptPatient = (patient: Partial<Patient>, userId: string): Partial<Patient> => {
+  const encrypted: Partial<Patient> = { ...patient };
+  
+  if (patient.first_name) {
+    encrypted.first_name = encryptData(patient.first_name, userId);
+  }
+  if (patient.last_name) {
+    encrypted.last_name = encryptData(patient.last_name, userId);
+  }
+  if (patient.address) {
+    encrypted.address = encryptData(patient.address, userId);
+  }
+  if (patient.city) {
+    encrypted.city = encryptData(patient.city, userId);
+  }
+  
+  return encrypted;
+};
 
 export function usePatients(includeArchived = false) {
   const { user } = useAuth();
@@ -44,29 +91,17 @@ export function usePatients(includeArchived = false) {
     queryFn: async () => {
       if (!user) throw new Error("User not authenticated");
 
-      let query = supabase
-        .from("patients")
-        .select("*")
-        .order("last_name", { ascending: true });
-
-      if (!includeArchived) {
-        query = query.eq("is_archived", false);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      // Déchiffrer et transformer les données
-      const patientsWithExamples = (data as Patient[]).map((p) => ({
-        ...decryptPatient(p, user.id),
-        exampleAnnotations: p.example_annotations || [],
-      }));
-
-      return patientsWithExamples as Patient[];
+      const data = await patientsApi.list();
+      
+      // Déchiffrer les données
+      const decryptedPatients = data
+        .map((p: Patient) => decryptPatient(p, user.id))
+        .filter((p: Patient) => includeArchived || !p.is_archived);
+      
+      return decryptedPatients;
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -78,21 +113,14 @@ export function usePatient(patientId: string | undefined) {
     queryFn: async () => {
       if (!patientId || !user) return null;
 
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("id", patientId)
-        .single();
-
-      if (error) throw error;
-
-      // Déchiffrer et transformer
-      const patientWithExamples = {
-        ...decryptPatient(data as Patient, user.id),
-        exampleAnnotations: data.example_annotations || [],
-      };
-
-      return patientWithExamples as Patient;
+      // Pour l'instant, on récupère tous les patients et on filtre
+      // TODO: Ajouter endpoint /patients/:id côté serveur
+      const allPatients = await patientsApi.list();
+      const patient = allPatients.find((p: Patient) => p.id === patientId);
+      
+      if (!patient) throw new Error("Patient not found");
+      
+      return decryptPatient(patient, user.id);
     },
     enabled: !!user && !!patientId,
     staleTime: 5 * 60 * 1000,
@@ -104,62 +132,19 @@ export function useCreatePatient() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (patient: Omit<PatientInsert, "user_id">) => {
-      if (!user) throw new Error("Vous devez être connecté pour créer un patient");
+    mutationFn: async (patientData: PatientInsert) => {
+      if (!user) throw new Error("Vous devez être connecté");
 
-      try {
-        // Chiffrer les données PII avant insertion
-        const encryptedFirstName = encryptData(patient.first_name, user.id);
-        const encryptedLastName = encryptData(patient.last_name, user.id);
-        const encryptedAddress = patient.address 
-          ? encryptData(patient.address, user.id) 
-          : null;
-        const encryptedStreet = patient.street
-          ? encryptData(patient.street, user.id)
-          : null;
-        const encryptedCity = patient.city
-          ? encryptData(patient.city, user.id)
-          : null;
-
-        const { data, error } = await supabase
-          .from("patients")
-          .insert({ 
-            ...patient, 
-            user_id: user.id,
-            first_name: encryptedFirstName,
-            last_name: encryptedLastName,
-            address: encryptedAddress,
-            street: encryptedStreet,
-            city: encryptedCity,
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Supabase error creating patient:", error);
-          throw new Error(`Erreur base de données: ${error.message}`);
-        }
-
-        // Retourner les données déchiffrées
-        const patientWithExamples = {
-          ...decryptPatient(data as Patient, user.id),
-          exampleAnnotations: data.example_annotations || [],
-        };
-
-        return patientWithExamples as Patient;
-      } catch (error: any) {
-        console.error("Error in createPatient mutation:", error);
-        throw error;
-      }
+      // Chiffrer les données sensibles
+      const encryptedPatient = encryptPatient(patientData, user.id);
+      
+      const newPatient = await patientsApi.create(encryptedPatient as PatientInsert);
+      
+      // Retourner déchiffré pour l'UI
+      return decryptPatient(newPatient, user.id);
     },
     onSuccess: (newPatient) => {
-      // Mise à jour immédiate du cache pour éviter le délai
-      queryClient.setQueryData(["patients", user?.id, true], (old: Patient[] | undefined) => {
-        return old ? [newPatient, ...old] : [newPatient];
-      });
-      queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
-        return old ? [newPatient, ...old] : [newPatient];
-      });
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
   });
 }
@@ -169,70 +154,20 @@ export function useUpdatePatient() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ id, exampleAnnotations, ...updates }: PatientUpdate & { id: string; exampleAnnotations?: unknown[] }) => {
+    mutationFn: async ({ id, ...updates }: PatientUpdate & { id: string }) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Chiffrer les champs PII si présents dans la mise à jour
-      const encryptedUpdates: Record<string, unknown> = { ...updates };
+      // Chiffrer les données sensibles
+      const encryptedUpdates = encryptPatient(updates, user.id);
       
-      if (updates.first_name !== undefined) {
-        encryptedUpdates.first_name = encryptData(updates.first_name, user.id);
-      }
-      if (updates.last_name !== undefined) {
-        encryptedUpdates.last_name = encryptData(updates.last_name, user.id);
-      }
-      if (updates.address !== undefined) {
-        encryptedUpdates.address = updates.address 
-          ? encryptData(updates.address, user.id) 
-          : null;
-      }
-      if (updates.street !== undefined) {
-        encryptedUpdates.street = updates.street
-          ? encryptData(updates.street, user.id)
-          : null;
-      }
-      if (updates.city !== undefined) {
-        encryptedUpdates.city = updates.city
-          ? encryptData(updates.city, user.id)
-          : null;
-      }
-
-      // Transform exampleAnnotations to example_annotations for database
-      const dbUpdates = {
-        ...encryptedUpdates,
-        ...(exampleAnnotations !== undefined && {
-          example_annotations: exampleAnnotations,
-        }),
-      };
-
-      const { data, error } = await supabase
-        .from("patients")
-        .update(dbUpdates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Retourner les données déchiffrées
-      const patientWithExamples = {
-        ...decryptPatient(data as Patient, user.id),
-        exampleAnnotations: data.example_annotations || [],
-      };
-
-      return patientWithExamples as Patient;
+      const updated = await patientsApi.update(id, encryptedUpdates);
+      
+      // Retourner déchiffré pour l'UI
+      return decryptPatient(updated, user.id);
     },
     onSuccess: (updatedPatient) => {
-      // Mise à jour immédiate du cache pour UX instantanée
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
       queryClient.setQueryData(["patient", updatedPatient.id], updatedPatient);
-      queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
-        if (!old) return old;
-        return old.map(p => p.id === updatedPatient.id ? updatedPatient : p);
-      });
-      queryClient.setQueryData(["patients", user?.id, true], (old: Patient[] | undefined) => {
-        if (!old) return old;
-        return old.map(p => p.id === updatedPatient.id ? updatedPatient : p);
-      });
     },
   });
 }
@@ -245,53 +180,11 @@ export function useArchivePatient() {
     mutationFn: async ({ id, isArchived }: { id: string; isArchived: boolean }) => {
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from("patients")
-        .update({ is_archived: isArchived })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Retourner les données déchiffrées
-      const patientWithExamples = {
-        ...decryptPatient(data as Patient, user.id),
-        exampleAnnotations: data.example_annotations || [],
-      };
-
-      return patientWithExamples as Patient;
+      return patientsApi.update(id, { is_archived: isArchived });
     },
-    // Mise à jour optimiste pour éviter le lag
-    onMutate: async ({ id, isArchived }) => {
-      // Annuler les requêtes en cours
-      await queryClient.cancelQueries({ queryKey: ["patients"] });
-      
-      // Sauvegarder l'état précédent
-      const previousPatients = queryClient.getQueryData<Patient[]>(["patients", user?.id, true]);
-      
-      // Mettre à jour le cache immédiatement
-      queryClient.setQueryData(["patients", user?.id, true], (old: Patient[] | undefined) => {
-        if (!old) return old;
-        return old.map(p => p.id === id ? { ...p, is_archived: isArchived } : p);
-      });
-      
-      queryClient.setQueryData(["patients", user?.id, false], (old: Patient[] | undefined) => {
-        if (!old) return old;
-        return old.map(p => p.id === id ? { ...p, is_archived: isArchived } : p);
-      });
-      
-      return { previousPatients };
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
-    onError: (err, variables, context) => {
-      // Restaurer l'état précédent en cas d'erreur
-      if (context?.previousPatients) {
-        queryClient.setQueryData(["patients", user?.id, true], context.previousPatients);
-        queryClient.setQueryData(["patients", user?.id, false], context.previousPatients);
-      }
-    },
-    // Pas de invalidateQueries ici pour éviter le re-fetch complet
-    // Le cache est déjà à jour grâce à onMutate
   });
 }
 
@@ -302,13 +195,7 @@ export function useDeletePatient() {
   return useMutation({
     mutationFn: async (id: string) => {
       if (!user) throw new Error("User not authenticated");
-
-      const { error } = await supabase
-        .from("patients")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      return patientsApi.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });

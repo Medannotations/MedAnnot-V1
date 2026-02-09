@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import { format, parseISO, isValid, isAfter, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { subscription as subscriptionApi } from "@/services/api";
 
 export function CancelledBanner() {
   const { profile, user } = useAuth();
@@ -69,32 +69,8 @@ export function CancelledBanner() {
   const handleOpenStripe = async () => {
     setIsLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-portal`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ 
-            returnUrl: `${window.location.origin}/app/settings?portal=return`
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'ouverture du portail");
-      }
-
-      const data = await response.json();
-      if (data.url) {
-        window.open(data.url, "_blank");
-      }
+      const url = await subscriptionApi.createPortal();
+      window.open(url, "_blank");
     } catch (error) {
       toast({
         title: "Erreur",

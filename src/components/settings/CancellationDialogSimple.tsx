@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { subscription as subscriptionApi } from "@/services/api";
 import {
   Mic,
   FileText,
@@ -49,42 +49,18 @@ export function CancellationDialog({
   const handleOpenStripePortal = async () => {
     setIsLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-portal`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({}),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'ouverture du portail");
-      }
-
-      const data = await response.json();
-
-      if (data.url) {
-        // Ouvrir Stripe dans un nouvel onglet
-        window.open(data.url, "_blank");
-        
-        toast({
-          title: "Portail Stripe ouvert",
-          description: "Annulez votre abonnement depuis Stripe, puis revenez ici. La page se mettra à jour automatiquement.",
-        });
-        
-        onCancelled();
-        handleClose();
-      } else {
-        throw new Error("URL du portail non disponible");
-      }
+      const url = await subscriptionApi.createPortal();
+      
+      // Ouvrir Stripe dans un nouvel onglet
+      window.open(url, "_blank");
+      
+      toast({
+        title: "Portail Stripe ouvert",
+        description: "Annulez votre abonnement depuis Stripe, puis revenez ici. La page se mettra à jour automatiquement.",
+      });
+      
+      onCancelled();
+      handleClose();
     } catch (error: any) {
       toast({
         title: "Erreur",
