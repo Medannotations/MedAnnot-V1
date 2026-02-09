@@ -15,10 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Thermometer, Heart, Activity, Wind, Sparkles, RotateCcw, X, Copy } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, Calendar, Clock, Save, User, FileText, Archive, ArchiveRestore, Loader2, BookOpen, Sparkles, RotateCcw, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { VoiceRecorderDual } from "@/components/annotations/VoiceRecorderDual";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
+import { AnnotationPreviewCard } from "@/components/annotations/AnnotationPreviewCard";
 import { PatientExamplesTab } from "@/components/patient/PatientExamplesTab";
 import { PatientVitalSignsPanel } from "@/components/patients/PatientVitalSignsPanel";
 import { usePatient, useUpdatePatient, useArchivePatient } from "@/hooks/usePatients";
@@ -619,112 +620,26 @@ export default function PatientDetailPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {annotations?.map((annotation) => {
-                  const vitalSigns = annotation.vital_signs as Record<string, number> | null;
-                  const hasVitals = vitalSigns && Object.keys(vitalSigns).length > 0;
-
-                  return (
-                    <Card key={annotation.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col gap-3">
-                          {/* Header avec date et actions */}
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground min-w-0">
-                              <Calendar className="w-4 h-4 shrink-0" />
-                              <span>{format(new Date(annotation.visit_date), "d MMMM yyyy", { locale: fr })}</span>
-                              {annotation.visit_time && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {annotation.visit_time.slice(0, 5)}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex gap-1 shrink-0">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(cleanAnnotationForCopy(annotation.content));
-                                  toast({ title: "Annotation copiée" });
-                                }}
-                              >
-                                <Copy className="w-3.5 h-3.5 mr-1" />
-                                Copier
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setViewAnnotation({
-                                  ...annotation,
-                                  patients: {
-                                    first_name: patient.first_name,
-                                    last_name: patient.last_name,
-                                    pathologies: patient.pathologies,
-                                  },
-                                } as AnnotationWithPatient)}
-                              >
-                                Voir
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => setDeleteAnnotationId(annotation.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Signes vitaux */}
-                          {hasVitals && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {vitalSigns.temperature && (
-                                <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 text-xs">
-                                  <Thermometer className="w-3 h-3 mr-1" />
-                                  {vitalSigns.temperature}°C
-                                </Badge>
-                              )}
-                              {vitalSigns.heartRate && (
-                                <Badge variant="outline" className="bg-red-50 border-red-200 text-red-700 text-xs">
-                                  <Heart className="w-3 h-3 mr-1" />
-                                  {vitalSigns.heartRate} bpm
-                                </Badge>
-                              )}
-                              {(vitalSigns.systolicBP || vitalSigns.diastolicBP) && (
-                                <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 text-xs">
-                                  <Activity className="w-3 h-3 mr-1" />
-                                  {vitalSigns.systolicBP}/{vitalSigns.diastolicBP}
-                                </Badge>
-                              )}
-                              {vitalSigns.oxygenSaturation && (
-                                <Badge variant="outline" className="bg-cyan-50 border-cyan-200 text-cyan-700 text-xs">
-                                  <Wind className="w-3 h-3 mr-1" />
-                                  {vitalSigns.oxygenSaturation}%
-                                </Badge>
-                              )}
-                              {vitalSigns.respiratoryRate && (
-                                <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 text-xs">
-                                  FR {vitalSigns.respiratoryRate}
-                                </Badge>
-                              )}
-                              {vitalSigns.bloodSugar && (
-                                <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700 text-xs">
-                                  Gly {vitalSigns.bloodSugar}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Contenu */}
-                          <p className="text-card-foreground line-clamp-3 whitespace-pre-line text-sm break-words">
-                            {annotation.content.substring(0, 200)}{annotation.content.length > 200 ? "..." : ""}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {annotations?.map((annotation) => (
+                  <AnnotationPreviewCard
+                    key={annotation.id}
+                    annotation={{
+                      ...annotation,
+                      patients: {
+                        first_name: patient.first_name,
+                        last_name: patient.last_name,
+                        pathologies: patient.pathologies,
+                      },
+                    } as AnnotationWithPatient}
+                    showPatient={false}
+                    onView={setViewAnnotation}
+                    onCopy={(content) => {
+                      navigator.clipboard.writeText(cleanAnnotationForCopy(content));
+                      toast({ title: "Annotation copiée" });
+                    }}
+                    onDelete={setDeleteAnnotationId}
+                  />
+                ))}
               </div>
             )}
           </div>

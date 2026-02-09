@@ -30,10 +30,6 @@ import {
   Calendar,
   Clock,
   User,
-  Copy,
-  Eye,
-  Pencil,
-  Trash2,
   Filter,
   X,
   Activity,
@@ -41,8 +37,6 @@ import {
   Wind,
   Thermometer,
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { useAnnotations, useDeleteAnnotation, type AnnotationWithPatient } from "@/hooks/useAnnotations";
 import { usePatients } from "@/hooks/usePatients";
@@ -50,6 +44,7 @@ import { format, isToday, parseISO, subDays, subWeeks, subMonths } from "date-fn
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnotationViewModal } from "@/components/annotations/AnnotationViewModal";
+import { AnnotationPreviewCard } from "@/components/annotations/AnnotationPreviewCard";
 import { cn, cleanAnnotationForCopy } from "@/lib/utils";
 
 // Type pour les signes vitaux
@@ -127,140 +122,7 @@ function VitalSignsBadge({ signs }: { signs: VitalSigns | null | undefined }) {
   );
 }
 
-// Composant carte d'annotation
-function AnnotationCard({ 
-  annotation, 
-  onView, 
-  onCopy, 
-  onDelete 
-}: { 
-  annotation: AnnotationWithPatient; 
-  onView: (a: AnnotationWithPatient) => void;
-  onCopy: (content: string) => void;
-  onDelete: (id: string) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const hasVitalSigns = annotation.vital_signs && Object.keys(annotation.vital_signs).length > 0;
-  
-  return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        {/* Header avec info patient et date */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <User className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="font-semibold text-lg">
-                {annotation.patients.last_name} {annotation.patients.first_name}
-              </span>
-              {hasVitalSigns && (
-                <Badge variant="secondary" className="text-xs">
-                  <Activity className="w-3 h-3 mr-1" />
-                  Constantes
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1 flex-wrap">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                {format(parseISO(annotation.visit_date), "EEEE d MMMM yyyy", { locale: fr })}
-              </span>
-              {annotation.visit_time && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {annotation.visit_time.slice(0, 5)}
-                </span>
-              )}
-              {annotation.visit_duration && (
-                <Badge variant="outline" className="text-xs">
-                  {annotation.visit_duration} min
-                </Badge>
-              )}
-            </div>
-          </div>
-          
-          {/* Actions rapides */}
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onCopy(annotation.content)}
-              className="h-8 w-8"
-              title="Copier"
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onView(annotation)}
-              className="h-8 w-8"
-              title="Voir détails"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(annotation.id)}
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              title="Supprimer"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
 
-        {/* Signes vitaux */}
-        <VitalSignsBadge signs={annotation.vital_signs as VitalSigns} />
-
-        {/* Contenu de l'annotation */}
-        <div className="mt-3">
-          <p className={cn(
-            "text-muted-foreground whitespace-pre-line text-sm",
-            !expanded && "line-clamp-3"
-          )}>
-            {annotation.content}
-          </p>
-          {annotation.content.length > 200 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded(!expanded)}
-              className="mt-2 h-7 text-xs"
-            >
-              {expanded ? (
-                <><ChevronUp className="w-3 h-3 mr-1" /> Voir moins</>
-              ) : (
-                <><ChevronDown className="w-3 h-3 mr-1" /> Voir plus</>
-              )}
-            </Button>
-          )}
-        </div>
-
-        {/* Footer avec actions secondaires */}
-        <div className="flex items-center justify-between pt-3 mt-3 border-t">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              asChild
-              className="h-8"
-            >
-              <Link to={`/app/annotations/${annotation.id}/edit`}>
-                <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                Modifier
-              </Link>
-            </Button>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Créée le {format(parseISO(annotation.created_at), "d/MM/yyyy à HH:mm", { locale: fr })}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function AnnotationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -571,9 +433,10 @@ export default function AnnotationsPage() {
           ) : (
             <div className="space-y-4">
               {todayAnnotations.map((annotation) => (
-                <AnnotationCard
+                <AnnotationPreviewCard
                   key={annotation.id}
                   annotation={annotation}
+                  showPatient={true}
                   onView={setViewAnnotation}
                   onCopy={handleCopy}
                   onDelete={setDeleteId}
@@ -605,9 +468,10 @@ export default function AnnotationsPage() {
           ) : (
             <div className="space-y-4">
               {historyAnnotations.map((annotation) => (
-                <AnnotationCard
+                <AnnotationPreviewCard
                   key={annotation.id}
                   annotation={annotation}
+                  showPatient={true}
                   onView={setViewAnnotation}
                   onCopy={handleCopy}
                   onDelete={setDeleteId}
