@@ -56,8 +56,12 @@ export function CancellationDialog({
       }
       
       const accessToken = sessionData.session.access_token;
-      console.log("[Cancel] Token present:", !!accessToken);
-      console.log("[Cancel] Sending request for userId:", userId);
+      
+      // DEBUG: Afficher les infos du token
+      console.log("[Cancel] Token first 50 chars:", accessToken?.substring(0, 50));
+      console.log("[Cancel] Token length:", accessToken?.length);
+      console.log("[Cancel] Expires at:", sessionData.session.expires_at);
+      console.log("[Cancel] URL:", `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel-subscription`);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel-subscription`,

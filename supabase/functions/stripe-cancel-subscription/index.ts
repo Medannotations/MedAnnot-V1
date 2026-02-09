@@ -1,3 +1,4 @@
+// Version ultra-simple pour tester
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
@@ -7,144 +8,124 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
-// Décoder le JWT localement (ne pas appeler Supabase Auth)
-function decodeJwt(token: string): { sub?: string; email?: string } | null {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = atob(base64);
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error("JWT decode error:", e);
-    return null;
-  }
-}
-
 serve(async (req) => {
+  console.log("=== FUNCTION CALLED ===");
+  console.log("Method:", req.method);
+  console.log("URL:", req.url);
+  
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // En mode Protected, Supabase a déjà validé le JWT
+    // On peut donc simplement traiter la requête
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
-    // Récupérer le token
+    // Extraire userId du JWT dans le header (déjà validé par Supabase)
     const authHeader = req.headers.get("Authorization");
-    console.log("Auth header present:", !!authHeader);
+    console.log("Auth header:", authHeader?.substring(0, 50) + "...");
     
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
-        JSON.stringify({ error: "Authorization header missing" }),
+        JSON.stringify({ error: "Missing or invalid Authorization header" }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    if (!token || token === authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Invalid Authorization format" }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // Décoder le JWT localement (Supabase l'a déjà validé en mode Protected)
-    const decoded = decodeJwt(token);
-    console.log("Decoded JWT payload:", decoded);
+    const token = authHeader.substring(7); // Enlever "Bearer "
     
-    if (!decoded?.sub) {
+    // Décoder le JWT pour obtenir le sub (userId)
+    let userId: string | null = null;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = atob(base64);
+      const payload = JSON.parse(jsonPayload);
+      userId = payload.sub;
+      console.log("UserId from JWT:", userId);
+    } catch (e) {
+      console.error("Failed to decode JWT:", e);
       return new Response(
-        JSON.stringify({ error: "Invalid JWT: no sub claim" }),
+        JSON.stringify({ error: "Invalid JWT format" }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    const userId = decoded.sub;
-    console.log("User ID from JWT:", userId);
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "No userId in token" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
 
-    // Client admin pour accéder aux données
+    // Client admin
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Récupérer le stripe_customer_id
-    const { data: profile, error: profileError } = await adminClient
+    // Récupérer le customer Stripe
+    const { data: profile, error: profileErr } = await adminClient
       .from("profiles")
-      .select("stripe_customer_id, subscription_status")
+      .select("stripe_customer_id")
       .eq("user_id", userId)
       .single();
 
-    console.log("Profile lookup:", { 
-      userId, 
-      found: !!profile, 
-      customerId: profile?.stripe_customer_id,
-      error: profileError?.message 
-    });
+    console.log("Profile:", profile, "Error:", profileErr);
 
-    if (profileError || !profile?.stripe_customer_id) {
+    if (!profile?.stripe_customer_id) {
       return new Response(
-        JSON.stringify({ error: "Aucun abonnement Stripe trouvé" }),
+        JSON.stringify({ error: "No Stripe customer found" }),
         { status: 404, headers: corsHeaders }
       );
     }
 
     const customerId = profile.stripe_customer_id;
 
-    // Lister les abonnements Stripe
-    const listResponse = await fetch(
-      `https://api.stripe.com/v1/subscriptions?customer=${customerId}&limit=10`,
-      {
-        headers: { "Authorization": `Bearer ${stripeSecretKey}` },
-      }
+    // Lister abonnements Stripe
+    const listRes = await fetch(
+      `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=active&limit=1`,
+      { headers: { "Authorization": `Bearer ${stripeSecretKey}` } }
     );
 
-    if (!listResponse.ok) {
-      const errorText = await listResponse.text();
-      console.error("Stripe list error:", errorText);
+    if (!listRes.ok) {
+      const err = await listRes.text();
+      console.error("Stripe error:", err);
       return new Response(
-        JSON.stringify({ error: "Erreur lors de la récupération des abonnements" }),
+        JSON.stringify({ error: "Stripe API error" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    const allSubscriptions = await listResponse.json();
-    console.log("Stripe subscriptions:", allSubscriptions.data?.length);
+    const subs = await listRes.json();
+    console.log("Active subscriptions:", subs.data?.length);
 
-    // Trouver un abonnement annulable
-    const cancellableStatuses = ["active", "trialing", "past_due", "incomplete"];
-    const subscription = allSubscriptions.data?.find(
-      (s: any) => cancellableStatuses.includes(s.status) && !s.cancel_at_period_end
-    );
-
-    const anySubscription = subscription || allSubscriptions.data?.find(
-      (s: any) => cancellableStatuses.includes(s.status)
-    );
-
-    if (!anySubscription) {
-      console.error("No cancellable subscription found");
+    if (!subs.data || subs.data.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Aucun abonnement actif trouvé" }),
+        JSON.stringify({ error: "No active subscription found" }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-    // Déjà annulé ?
-    if (anySubscription.cancel_at_period_end) {
-      const periodEnd = anySubscription.current_period_end
-        ? new Date(anySubscription.current_period_end * 1000).toISOString()
+    const subscription = subs.data[0];
+
+    // Si déjà annulé
+    if (subscription.cancel_at_period_end) {
+      const periodEnd = subscription.current_period_end 
+        ? new Date(subscription.current_period_end * 1000).toISOString()
         : null;
-      console.log("Already cancelled, period end:", periodEnd);
       return new Response(
-        JSON.stringify({ success: true, periodEnd, alreadyCancelled: true }),
+        JSON.stringify({ success: true, alreadyCancelled: true, periodEnd }),
         { headers: corsHeaders }
       );
     }
 
-    // Annuler l'abonnement
-    console.log("Cancelling subscription:", anySubscription.id);
-    const cancelResponse = await fetch(
-      `https://api.stripe.com/v1/subscriptions/${anySubscription.id}`,
+    // Annuler
+    const cancelRes = await fetch(
+      `https://api.stripe.com/v1/subscriptions/${subscription.id}`,
       {
         method: "POST",
         headers: {
@@ -155,31 +136,31 @@ serve(async (req) => {
       }
     );
 
-    if (!cancelResponse.ok) {
-      const errorText = await cancelResponse.text();
-      console.error("Stripe cancel error:", errorText);
+    if (!cancelRes.ok) {
+      const err = await cancelRes.text();
+      console.error("Cancel error:", err);
       return new Response(
-        JSON.stringify({ error: "Impossible d'annuler l'abonnement" }),
+        JSON.stringify({ error: "Failed to cancel subscription" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    const cancelledSub = await cancelResponse.json();
-    const periodEnd = cancelledSub.current_period_end
-      ? new Date(cancelledSub.current_period_end * 1000).toISOString()
+    const cancelled = await cancelRes.json();
+    const periodEnd = cancelled.current_period_end 
+      ? new Date(cancelled.current_period_end * 1000).toISOString()
       : null;
 
-    console.log("Cancelled successfully, period end:", periodEnd);
-
+    console.log("Cancelled successfully");
+    
     return new Response(
       JSON.stringify({ success: true, periodEnd }),
       { headers: corsHeaders }
     );
 
   } catch (error: any) {
-    console.error("Unexpected error:", error);
+    console.error("Fatal error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: error.message }),
       { status: 500, headers: corsHeaders }
     );
   }
