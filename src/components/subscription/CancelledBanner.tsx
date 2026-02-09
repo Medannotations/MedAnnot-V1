@@ -1,23 +1,33 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Sparkles, AlertCircle, RotateCcw } from "lucide-react";
+import { X, Sparkles, AlertCircle, RotateCcw, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSearchParams } from "react-router-dom";
-import { format, parseISO, isValid, isAfter, addHours } from "date-fns";
+import { format, parseISO, isValid, isAfter } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CancelledBanner() {
   const { profile, user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isVisible, setIsVisible] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Vérifier si on revient du portail Stripe (paramètre ?portal=return)
+  // Vérifier si on revient du portail Stripe
   const isReturningFromPortal = searchParams.get("portal") === "return";
   
-  // Récupérer le statut depuis sessionStorage (pour savoir si l'user a fermé)
+  // Nettoyer l'URL après détection
+  useEffect(() => {
+    if (isReturningFromPortal) {
+      // Enlever le paramètre de l'URL sans recharger
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("portal");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [isReturningFromPortal, searchParams, setSearchParams]);
+  
+  // Récupérer le statut depuis sessionStorage
   const storageKey = `cancelled-banner-closed-${user?.id}`;
   
   useEffect(() => {
@@ -27,27 +37,20 @@ export function CancelledBanner() {
     }
   }, [storageKey, isReturningFromPortal]);
 
-  // Vérifier si on doit afficher la bannière
+  // Vérifier si résilié
   const isCanceled = profile?.subscription_status === "canceled";
   
-  // Ou si on revient du portail, on suppose que ça pourrait être annulé
-  // (le webhook Stripe met du temps à arriver)
-  const mightBeCanceled = isCanceled || isReturningFromPortal;
-  
+  // Parser la date de fin
   const periodEnd = (() => {
-    if (!profile?.subscription_current_period_end) {
-      // Si on revient du portail mais pas de date, supposer dans 30 jours
-      if (isReturningFromPortal) {
-        return addHours(new Date(), 24 * 30);
-      }
-      return null;
-    }
+    if (!profile?.subscription_current_period_end) return null;
     const parsed = parseISO(profile.subscription_current_period_end);
     return isValid(parsed) ? parsed : null;
   })();
   
-  // Afficher si résilié (ou potentiellement) ET période encore active
-  const shouldShow = mightBeCanceled && periodEnd && isAfter(periodEnd, new Date());
+  // Afficher SI:
+  // 1. On revient du portail (pour permettre de réactiver)
+  // 2. OU si résilié avec période active
+  const shouldShow = (isReturningFromPortal) || (isCanceled && periodEnd && isAfter(periodEnd, new Date()));
   
   if (!shouldShow || !isVisible) return null;
 
@@ -56,15 +59,14 @@ export function CancelledBanner() {
     sessionStorage.setItem(storageKey, "true");
   };
 
-  const handleReactivate = async () => {
+  const handleOpenStripe = async () => {
     setIsLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
-      // Appeler la fonction pour réactiver
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-reactivate-subscription`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-portal`,
         {
           method: "POST",
           headers: {
@@ -72,44 +74,25 @@ export function CancelledBanner() {
             "Authorization": `Bearer ${accessToken}`,
             "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ 
+            returnUrl: `${window.location.origin}/app/settings?portal=return`
+          }),
         }
       );
 
       if (!response.ok) {
-        // Si la fonction n'existe pas, rediriger vers le portail Stripe
-        const { data: portalData } = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-portal`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`,
-              "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-            },
-            body: JSON.stringify({ userId: user?.id }),
-          }
-        ).then(r => r.ok ? r.json() : Promise.reject());
-
-        if (portalData?.url) {
-          window.location.href = portalData.url;
-          return;
-        }
-        
-        throw new Error("Impossible de réactiver");
+        throw new Error("Erreur lors de l'ouverture du portail");
       }
 
-      toast({
-        title: "Abonnement réactivé !",
-        description: "Votre abonnement est à nouveau actif.",
-      });
-      
-      // Recharger la page pour mettre à jour le statut
-      window.location.reload();
+      const data = await response.json();
+
+      if (data.url) {
+        window.open(data.url, "_blank");
+      }
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de réactiver. Contactez le support.",
+        description: "Impossible d'ouvrir le portail de gestion",
         variant: "destructive",
       });
     } finally {
@@ -130,17 +113,21 @@ export function CancelledBanner() {
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-amber-900 text-sm sm:text-base">
-                Votre abonnement se termine bientôt
+                {isReturningFromPortal && !isCanceled 
+                  ? "Gérez votre abonnement sur Stripe" 
+                  : "Votre abonnement se termine bientôt"}
               </p>
               <p className="text-amber-700 text-xs sm:text-sm">
-                {daysLeft > 0 ? (
+                {isCanceled && periodEnd ? (
                   <>
                     Plus que <strong>{daysLeft} jour{daysLeft > 1 ? 's' : ''}</strong> jusqu'au{" "}
                     <strong>{format(periodEnd, "d MMMM", { locale: fr })}</strong>. 
                     Réactivez maintenant pour ne pas perdre l'accès.
                   </>
+                ) : isReturningFromPortal ? (
+                  "Vous pouvez annuler ou modifier votre abonnement depuis le portail Stripe."
                 ) : (
-                  "Votre accès expire aujourd'hui. Réactivez maintenant !"
+                  "Votre accès expire bientôt. Réactivez maintenant !"
                 )}
               </p>
             </div>
@@ -149,7 +136,7 @@ export function CancelledBanner() {
           {/* Actions */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
-              onClick={handleReactivate}
+              onClick={handleOpenStripe}
               disabled={isLoading}
               size="sm"
               className="flex-1 sm:flex-none bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md"
@@ -157,10 +144,17 @@ export function CancelledBanner() {
               {isLoading ? (
                 <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <Sparkles className="w-4 h-4 mr-2" />
+                <>
+                  <ExternalLink className="w-4 h-4 mr-2 sm:hidden" />
+                  <Sparkles className="w-4 h-4 mr-2 hidden sm:inline" />
+                </>
               )}
-              <span className="hidden sm:inline">Réactiver mon abonnement</span>
-              <span className="sm:hidden">Réactiver</span>
+              <span className="hidden sm:inline">
+                {isReturningFromPortal && !isCanceled ? "Gérer sur Stripe" : "Réactiver mon abonnement"}
+              </span>
+              <span className="sm:hidden">
+                {isReturningFromPortal && !isCanceled ? "Gérer" : "Réactiver"}
+              </span>
             </Button>
             
             <Button
