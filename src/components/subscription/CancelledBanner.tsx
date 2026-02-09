@@ -2,37 +2,52 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Sparkles, AlertCircle, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, parseISO, isValid, isAfter } from "date-fns";
+import { useSearchParams } from "react-router-dom";
+import { format, parseISO, isValid, isAfter, addHours } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CancelledBanner() {
   const { profile, user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [isVisible, setIsVisible] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Récupérer le statut depuis localStorage (pour savoir si l'user a fermé)
+  // Vérifier si on revient du portail Stripe (paramètre ?portal=return)
+  const isReturningFromPortal = searchParams.get("portal") === "return";
+  
+  // Récupérer le statut depuis sessionStorage (pour savoir si l'user a fermé)
   const storageKey = `cancelled-banner-closed-${user?.id}`;
   
   useEffect(() => {
     const wasClosed = sessionStorage.getItem(storageKey);
-    if (wasClosed) {
+    if (wasClosed && !isReturningFromPortal) {
       setIsVisible(false);
     }
-  }, [storageKey]);
+  }, [storageKey, isReturningFromPortal]);
 
   // Vérifier si on doit afficher la bannière
   const isCanceled = profile?.subscription_status === "canceled";
   
+  // Ou si on revient du portail, on suppose que ça pourrait être annulé
+  // (le webhook Stripe met du temps à arriver)
+  const mightBeCanceled = isCanceled || isReturningFromPortal;
+  
   const periodEnd = (() => {
-    if (!profile?.subscription_current_period_end) return null;
+    if (!profile?.subscription_current_period_end) {
+      // Si on revient du portail mais pas de date, supposer dans 30 jours
+      if (isReturningFromPortal) {
+        return addHours(new Date(), 24 * 30);
+      }
+      return null;
+    }
     const parsed = parseISO(profile.subscription_current_period_end);
     return isValid(parsed) ? parsed : null;
   })();
   
-  // Afficher uniquement si résilié ET période encore active
-  const shouldShow = isCanceled && periodEnd && isAfter(periodEnd, new Date());
+  // Afficher si résilié (ou potentiellement) ET période encore active
+  const shouldShow = mightBeCanceled && periodEnd && isAfter(periodEnd, new Date());
   
   if (!shouldShow || !isVisible) return null;
 

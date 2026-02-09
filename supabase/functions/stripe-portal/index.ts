@@ -30,6 +30,15 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
+    // Récupérer le body pour le returnUrl (optionnel)
+    let returnUrlOverride: string | null = null;
+    try {
+      const body = await req.json();
+      returnUrlOverride = body.returnUrl || null;
+    } catch {
+      // Body vide ou invalide, ignorer
+    }
+
     // Récupérer et décoder le JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -122,8 +131,13 @@ serve(async (req) => {
     }
 
     // Créer la session de portail Stripe
-    const origin = req.headers.get("origin") || "https://medannot-v1.vercel.app";
-    const returnUrl = `${origin}/app/settings`;
+    let returnUrl: string;
+    if (returnUrlOverride) {
+      returnUrl = returnUrlOverride;
+    } else {
+      const origin = req.headers.get("origin") || "https://medannot-v1.vercel.app";
+      returnUrl = `${origin}/app/settings`;
+    }
 
     const portalResponse = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
       method: "POST",

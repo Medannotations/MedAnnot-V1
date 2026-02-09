@@ -16,7 +16,7 @@ import {
   Shield,
   Clock
 } from "lucide-react";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, isAfter } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { CancellationDialog } from "./CancellationDialogSimple";
@@ -72,7 +72,9 @@ export function SubscriptionSettings() {
             "Authorization": `Bearer ${accessToken}`,
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ userId: user?.id }),
+          body: JSON.stringify({ 
+            returnUrl: `${window.location.origin}/app/settings?portal=return`
+          }),
         }
       );
 
@@ -203,34 +205,52 @@ export function SubscriptionSettings() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          {(isActive || isTrialing || isPastDue) && (
-            <>
-              <Button
-                onClick={handleManagePayment}
-                disabled={isLoading}
-                className="w-full"
-                variant="outline"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <CreditCard className="w-4 h-4 mr-2" />
-                )}
-                Gérer mon moyen de paiement
-              </Button>
-              {!isCancelledPending && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setCancelDialogOpen(true)}
-                  className="w-full text-muted-foreground hover:text-red-600"
-                >
-                  Résilier mon abonnement
-                </Button>
+          {/* Bouton Gérer l'abonnement - toujours visible si abonnement existe */}
+          {(isActive || isTrialing || isPastDue || isCanceled) && (
+            <Button
+              onClick={handleManagePayment}
+              disabled={isLoading}
+              className="w-full"
+              variant="outline"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CreditCard className="w-4 h-4 mr-2" />
               )}
-            </>
+              Gérer mon abonnement sur Stripe
+            </Button>
+          )}
+          
+          {/* Bouton Résilier - visible si actif */}
+          {(isActive || isTrialing || isPastDue) && !isCancelledPending && (
+            <Button
+              variant="ghost"
+              onClick={() => setCancelDialogOpen(true)}
+              className="w-full text-muted-foreground hover:text-red-600"
+            >
+              Résilier mon abonnement
+            </Button>
           )}
 
-          {((!isActive && !isTrialing) || isCanceled) && !isCancelledPending && (
+          {/* Bouton Réactiver - visible si annulé mais période active */}
+          {isCanceled && periodEnd && isAfter(periodEnd, new Date()) && (
+            <Button
+              onClick={handleManagePayment}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              Réactiver mon abonnement
+            </Button>
+          )}
+
+          {/* Bouton S'abonner - visible si aucun abonnement */}
+          {!isActive && !isTrialing && !isCanceled && !isPastDue && (
             <Button
               onClick={handleUpgrade}
               className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600"
