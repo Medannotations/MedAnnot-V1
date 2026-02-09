@@ -106,7 +106,9 @@ serve(async (req) => {
 
     if (anySubscription.cancel_at_period_end) {
       // Déjà programmé pour annulation
-      const periodEnd = new Date(anySubscription.current_period_end * 1000).toISOString();
+      const periodEnd = anySubscription.current_period_end
+        ? new Date(anySubscription.current_period_end * 1000).toISOString()
+        : null;
       console.log("Subscription already set to cancel at period end:", periodEnd);
       return new Response(
         JSON.stringify({ success: true, periodEnd, alreadyCancelled: true }),
@@ -141,7 +143,9 @@ serve(async (req) => {
     }
 
     const cancelledSub = await cancelResponse.json();
-    const periodEnd = new Date(cancelledSub.current_period_end * 1000).toISOString();
+    const periodEnd = cancelledSub.current_period_end
+      ? new Date(cancelledSub.current_period_end * 1000).toISOString()
+      : null;
 
     console.log("Subscription cancelled at period end:", periodEnd);
 

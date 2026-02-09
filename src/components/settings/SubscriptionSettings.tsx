@@ -16,7 +16,7 @@ import {
   Shield,
   Clock
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { CancellationDialog } from "./CancellationDialog";
@@ -51,9 +51,11 @@ export function SubscriptionSettings() {
   const isCanceled = subscriptionStatus === "canceled";
   const isPastDue = subscriptionStatus === "past_due";
 
-  const periodEnd = profile?.subscription_current_period_end
-    ? parseISO(profile.subscription_current_period_end)
-    : null;
+  const periodEnd = (() => {
+    if (!profile?.subscription_current_period_end) return null;
+    const parsed = parseISO(profile.subscription_current_period_end);
+    return isValid(parsed) ? parsed : null;
+  })();
 
   const handleManagePayment = async () => {
     setIsLoading(true);

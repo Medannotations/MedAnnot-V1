@@ -20,7 +20,7 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface CancellationDialogProps {
@@ -72,11 +72,18 @@ export function CancellationDialog({
 
       const data = await response.json();
 
+      // Vérifier et parser la date de fin de période
+      let periodEndDate: Date | null = null;
+      if (data.periodEnd) {
+        const parsed = parseISO(data.periodEnd);
+        periodEndDate = isValid(parsed) ? parsed : null;
+      }
+
       toast({
         title: "Résiliation confirmée",
         description: `Votre abonnement reste actif jusqu'au ${
-          data.periodEnd
-            ? format(new Date(data.periodEnd), "d MMMM yyyy", { locale: fr })
+          periodEndDate
+            ? format(periodEndDate, "d MMMM yyyy", { locale: fr })
             : "la fin de la période"
         }.`,
       });
