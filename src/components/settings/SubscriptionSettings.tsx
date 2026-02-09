@@ -287,7 +287,6 @@ export function SubscriptionSettings() {
         open={cancelDialogOpen}
         onOpenChange={setCancelDialogOpen}
         periodEnd={periodEnd}
-        userId={user?.id || ""}
         onCancelled={() => {
           setIsCancelledPending(true);
           setCancelDialogOpen(false);

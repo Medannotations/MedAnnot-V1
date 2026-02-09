@@ -13,32 +13,61 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
-
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ error: "userId is required" }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
 
-    if (!supabaseUrl || !serviceRoleKey || !stripeSecretKey) {
+    if (!supabaseUrl || !serviceRoleKey || !stripeSecretKey || !supabaseAnonKey) {
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    const supabaseClient = createClient(supabaseUrl, serviceRoleKey, {
+    // Créer un client avec le JWT de l'utilisateur
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authorization header required" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    // Client avec le JWT de l'utilisateur pour vérifier son identité
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
+    // Vérifier l'utilisateur authentifié
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    const userId = user.id;
+    console.log("Authenticated user:", userId);
+
+    // Client avec service role pour accéder aux données
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     // Récupérer le stripe_customer_id
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profile, error: profileError } = await adminClient
       .from("profiles")
       .select("stripe_customer_id, subscription_status")
       .eq("user_id", userId)
@@ -61,7 +90,7 @@ serve(async (req) => {
 
     const customerId = profile.stripe_customer_id;
 
-    // Lister TOUS les abonnements du client (sans filtre de statut)
+    // Lister TOUS les abonnements du client
     const listResponse = await fetch(
       `https://api.stripe.com/v1/subscriptions?customer=${customerId}&limit=10`,
       {
@@ -79,16 +108,14 @@ serve(async (req) => {
     }
 
     const allSubscriptions = await listResponse.json();
-    console.log("All subscriptions found:", allSubscriptions.data?.length,
-      "statuses:", allSubscriptions.data?.map((s: any) => `${s.id}:${s.status}`));
+    console.log("All subscriptions found:", allSubscriptions.data?.length);
 
-    // Trouver le premier abonnement annulable (active, trialing, past_due, incomplete)
+    // Trouver le premier abonnement annulable
     const cancellableStatuses = ["active", "trialing", "past_due", "incomplete"];
     const subscription = allSubscriptions.data?.find(
       (s: any) => cancellableStatuses.includes(s.status) && !s.cancel_at_period_end
     );
 
-    // Si aucun non-annulé, chercher même ceux déjà programmés pour annulation
     const anySubscription = subscription || allSubscriptions.data?.find(
       (s: any) => cancellableStatuses.includes(s.status)
     );
@@ -105,18 +132,14 @@ serve(async (req) => {
     }
 
     if (anySubscription.cancel_at_period_end) {
-      // Déjà programmé pour annulation
       const periodEnd = anySubscription.current_period_end
         ? new Date(anySubscription.current_period_end * 1000).toISOString()
         : null;
-      console.log("Subscription already set to cancel at period end:", periodEnd);
       return new Response(
         JSON.stringify({ success: true, periodEnd, alreadyCancelled: true }),
         { headers: corsHeaders }
       );
     }
-
-    console.log("Cancelling subscription:", anySubscription.id, "status:", anySubscription.status);
 
     // Annuler à la fin de la période
     const cancelResponse = await fetch(
@@ -146,8 +169,6 @@ serve(async (req) => {
     const periodEnd = cancelledSub.current_period_end
       ? new Date(cancelledSub.current_period_end * 1000).toISOString()
       : null;
-
-    console.log("Subscription cancelled at period end:", periodEnd);
 
     return new Response(
       JSON.stringify({ success: true, periodEnd }),

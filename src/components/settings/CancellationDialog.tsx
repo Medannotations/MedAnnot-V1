@@ -27,7 +27,6 @@ interface CancellationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   periodEnd: Date | null;
-  userId: string;
   onCancelled: () => void;
 }
 
@@ -35,7 +34,6 @@ export function CancellationDialog({
   open,
   onOpenChange,
   periodEnd,
-  userId,
   onCancelled,
 }: CancellationDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -49,9 +47,16 @@ export function CancellationDialog({
   const handleConfirmCancel = async () => {
     setIsLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
+      // Vérifier la session d'abord
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error("[Cancel] No session:", sessionError);
+        throw new Error("Session expirée. Veuillez vous reconnecter.");
+      }
+      
+      const accessToken = sessionData.session.access_token;
+      console.log("[Cancel] Token present:", !!accessToken);
       console.log("[Cancel] Sending request for userId:", userId);
 
       const response = await fetch(
@@ -61,9 +66,9 @@ export function CancellationDialog({
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({ userId }),
+          body: JSON.stringify({}),
         }
       );
 
@@ -72,6 +77,11 @@ export function CancellationDialog({
       if (!response.ok) {
         const errorText = await response.text();
         console.error("[Cancel] Error response:", errorText);
+        
+        if (response.status === 401) {
+          throw new Error("Session invalide. Veuillez vous déconnecter et reconnecter.");
+        }
+        
         let errorData;
         try {
           errorData = JSON.parse(errorText);
