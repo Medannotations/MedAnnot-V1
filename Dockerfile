@@ -30,7 +30,7 @@ RUN apk add --no-cache postgresql-client
 
 # Copier package.json du serveur
 COPY server/package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copier le code du serveur
 COPY server/ ./
