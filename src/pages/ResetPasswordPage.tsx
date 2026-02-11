@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,31 +18,8 @@ export default function ResetPasswordPage() {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Supabase handles the token exchange automatically via the URL hash
-    // We just need to check if a session exists after the redirect
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsValidSession(true);
-      }
-      setIsChecking(false);
-    };
-
-    // Listen for the PASSWORD_RECOVERY event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === "PASSWORD_RECOVERY") {
-          setIsValidSession(true);
-          setIsChecking(false);
-        }
-      }
-    );
-
-    checkSession();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    setIsChecking(false);
+    setIsValidSession(false);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,14 +45,7 @@ export default function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-
-      setIsSuccess(true);
-      toast({
-        title: "Mot de passe mis à jour",
-        description: "Votre mot de passe a été réinitialisé avec succès.",
-      });
+      throw new Error("Contactez support@medannot.ch pour reinitialiser votre mot de passe");
     } catch (error: any) {
       toast({
         title: "Erreur",

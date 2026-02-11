@@ -65,18 +65,18 @@ export default function DashboardHome() {
       icon: Settings,
     },
     {
-      label: "Ajouter des exemples d'annotations",
-      description: "Donnez à l'IA des exemples de vos annotations passées pour qu'elle apprenne votre style de rédaction et produise des résultats qui vous ressemblent.",
-      completed: examples.length > 0,
-      href: "/app/configuration?tab=examples",
-      icon: Lightbulb,
-    },
-    {
       label: "Créer votre premier patient",
-      description: "Ajoutez un patient avec ses pathologies et informations clés. L'IA les utilisera pour contextualiser chaque annotation automatiquement.",
+      description: "Ajoutez un patient avec ses pathologies, tags et informations clés. L'IA les utilisera pour contextualiser chaque annotation automatiquement.",
       completed: patients.length > 0,
       href: "/app/patients",
       icon: Users,
+    },
+    {
+      label: "Ajouter des exemples par patient",
+      description: "Dans le dossier de chaque patient, ajoutez des exemples d'annotations passées. L'IA apprendra votre style de rédaction spécifique à ce patient pour des résultats encore plus personnalisés.",
+      completed: patients.some(p => (p.exampleAnnotations?.length || 0) > 0),
+      href: patients.length > 0 ? `/app/patients/${patients[0].id}` : "/app/patients",
+      icon: Lightbulb,
     },
     {
       label: "Créer votre première annotation",
@@ -335,7 +335,7 @@ export default function DashboardHome() {
                         {patient ? `${patient.last_name} ${patient.first_name}` : "Patient inconnu"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(annotation.visit_date), "d MMMM yyyy", { locale: fr })}
+                        {format(new Date(annotation.visit_date || annotation.created_at), "d MMMM yyyy", { locale: fr })}
                         {annotation.visit_time && ` à ${annotation.visit_time.slice(0, 5)}`}
                       </p>
                     </div>

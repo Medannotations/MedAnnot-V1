@@ -3,7 +3,7 @@
  * Remplace Supabase par notre API maison
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -124,6 +124,15 @@ export const annotations = {
     patientId?: string;
     content: string;
     type?: string;
+    visit_date?: string;
+    visit_time?: string;
+    visit_duration?: number;
+    transcription?: string;
+    structure_used?: string;
+    audio_duration?: number;
+    was_transcription_edited?: boolean;
+    was_content_edited?: boolean;
+    vital_signs?: any;
   }) {
     return fetchWithAuth('/annotations', {
       method: 'POST',
@@ -166,6 +175,167 @@ export const health = {
   async check() {
     const response = await fetch(`${API_URL}/health`);
     return response.json();
+  },
+};
+
+// ============ STRIPE CHECKOUT ============
+export const stripeCheckout = {
+  async createSession(params: { priceId: string; email: string; userId: string }) {
+    return fetchWithAuth('/stripe-checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...params,
+        successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/signup`,
+      }),
+    });
+  },
+
+  async cancel() {
+    return fetchWithAuth('/stripe-cancel-subscription', {
+      method: 'POST',
+    });
+  },
+};
+
+// ============ CONFIGURATIONS ============
+export const configurations = {
+  async get() {
+    return fetchWithAuth('/configurations');
+  },
+
+  async upsert(annotationStructure: string) {
+    return fetchWithAuth('/configurations', {
+      method: 'POST',
+      body: JSON.stringify({ annotationStructure }),
+    });
+  },
+};
+
+// ============ EXAMPLE ANNOTATIONS ============
+export const exampleAnnotations = {
+  async list() {
+    return fetchWithAuth('/example-annotations');
+  },
+
+  async create(data: { title: string; content: string }) {
+    return fetchWithAuth('/example-annotations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async update(id: string, data: { title?: string; content?: string }) {
+    return fetchWithAuth(`/example-annotations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string) {
+    return fetchWithAuth(`/example-annotations/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============ PHRASE TEMPLATES ============
+export const phraseTemplates = {
+  async list() {
+    return fetchWithAuth('/phrase-templates');
+  },
+
+  async create(data: { category: string; label: string; content: string; shortcut?: string }) {
+    return fetchWithAuth('/phrase-templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async update(id: string, data: { category?: string; label?: string; content?: string; shortcut?: string }) {
+    return fetchWithAuth(`/phrase-templates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string) {
+    return fetchWithAuth(`/phrase-templates/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============ PATIENT TAGS ============
+export const patientTags = {
+  async list() {
+    return fetchWithAuth('/patient-tags');
+  },
+
+  async create(data: { name: string; color: string }) {
+    return fetchWithAuth('/patient-tags', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string) {
+    return fetchWithAuth(`/patient-tags/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============ VITAL SIGNS ============
+export const vitalSigns = {
+  async getToday(patientId: string, date: string) {
+    return fetchWithAuth(`/vital-signs/${patientId}?date=${date}`);
+  },
+
+  async save(data: { patientId: string; date: string; vitalSigns: any }) {
+    return fetchWithAuth('/vital-signs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getHistory(patientId: string) {
+    return fetchWithAuth(`/vital-signs/${patientId}/history`);
+  },
+};
+
+// ============ TRANSCRIPTION ============
+export const transcription = {
+  async transcribe(audioBlob: Blob): Promise<{ transcription: string }> {
+    const token = getToken();
+    const formData = new FormData();
+    const ext = audioBlob.type?.includes('mp4') ? 'mp4' : 'webm';
+    formData.append('audio', audioBlob, `recording.${ext}`);
+
+    const response = await fetch(`${API_URL}/transcribe`, {
+      method: 'POST',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Erreur serveur' }));
+      throw new ApiError(response.status, error.error || 'Erreur de transcription');
+    }
+
+    return response.json();
+  },
+};
+
+// ============ AI GENERATION ============
+export const aiGeneration = {
+  async generate(params: any): Promise<{ annotation: string; pseudonymUsed?: string; demo?: boolean }> {
+    return fetchWithAuth('/generate-annotation', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
   },
 };
 

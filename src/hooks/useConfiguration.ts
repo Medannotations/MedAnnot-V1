@@ -1,12 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { configurations as configApi, exampleAnnotations as examplesApi, phraseTemplates as templatesApi, patientTags as tagsApi } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
-export type UserConfiguration = Tables<"user_configurations">;
-export type ExampleAnnotation = Tables<"example_annotations">;
-export type PhraseTemplate = Tables<"phrase_templates">;
+export type UserConfiguration = {
+  id: string;
+  user_id: string;
+  annotation_structure: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExampleAnnotation = {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  created_at: string;
+};
+
+export type PhraseTemplate = {
+  id: string;
+  user_id: string;
+  category: string;
+  label: string;
+  content: string;
+  shortcut: string | null;
+  created_at: string;
+};
 
 // ==================== Configuration ====================
 
@@ -16,12 +37,7 @@ export function useUserConfiguration() {
   return useQuery({
     queryKey: ["user-configuration", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_configurations")
-        .select("*")
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await configApi.get();
       return data as UserConfiguration | null;
     },
     enabled: !!user,
@@ -49,41 +65,8 @@ export function useUpdateConfiguration() {
     mutationFn: async (structure: string) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Vérifier si une configuration existe déjà
-      const { data: existing } = await supabase
-        .from("user_configurations")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      let result;
-      if (existing) {
-        // Mettre à jour
-        result = await supabase
-          .from("user_configurations")
-          .update({ 
-            annotation_structure: structure,
-            updated_at: new Date().toISOString()
-          })
-          .eq("user_id", user.id)
-          .select()
-          .single();
-      } else {
-        // Créer nouvelle configuration
-        result = await supabase
-          .from("user_configurations")
-          .insert({ 
-            user_id: user.id,
-            annotation_structure: structure,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-      }
-
-      if (result.error) throw result.error;
-      return result.data as UserConfiguration;
+      const data = await configApi.upsert(structure);
+      return data as UserConfiguration;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-configuration"] });
@@ -94,7 +77,7 @@ export function useUpdateConfiguration() {
 // Hook pour obtenir la configuration avec fallback par défaut
 export function useUserConfigurationWithDefault() {
   const { data, isLoading, error } = useUserConfiguration();
-  
+
   return {
     data: data || {
       annotation_structure: DEFAULT_STRUCTURE,
@@ -117,12 +100,7 @@ export function useExampleAnnotations() {
   return useQuery({
     queryKey: ["example-annotations", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("example_annotations")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await examplesApi.list();
       return data as ExampleAnnotation[];
     },
     enabled: !!user,
@@ -137,13 +115,7 @@ export function useCreateExample() {
     mutationFn: async (example: { title: string; content: string }) => {
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from("example_annotations")
-        .insert({ ...example, user_id: user.id })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await examplesApi.create(example);
       return data as ExampleAnnotation;
     },
     onSuccess: () => {
@@ -157,14 +129,7 @@ export function useUpdateExample() {
 
   return useMutation({
     mutationFn: async ({ id, title, content }: { id: string; title: string; content: string }) => {
-      const { data, error } = await supabase
-        .from("example_annotations")
-        .update({ title, content })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await examplesApi.update(id, { title, content });
       return data as ExampleAnnotation;
     },
     onSuccess: () => {
@@ -178,12 +143,7 @@ export function useDeleteExample() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("example_annotations")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      await examplesApi.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["example-annotations"] });
@@ -199,13 +159,7 @@ export function usePhraseTemplates() {
   return useQuery({
     queryKey: ["phrase-templates", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("phrase_templates")
-        .select("*")
-        .order("category", { ascending: true })
-        .order("label", { ascending: true });
-
-      if (error) throw error;
+      const data = await templatesApi.list();
       return data as PhraseTemplate[];
     },
     enabled: !!user,
@@ -217,21 +171,15 @@ export function useCreatePhraseTemplate() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (template: { 
-      category: string; 
-      label: string; 
+    mutationFn: async (template: {
+      category: string;
+      label: string;
       content: string;
       shortcut?: string;
     }) => {
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from("phrase_templates")
-        .insert({ ...template, user_id: user.id })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await templatesApi.create(template);
       return data as PhraseTemplate;
     },
     onSuccess: () => {
@@ -244,24 +192,17 @@ export function useUpdatePhraseTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      ...updates 
-    }: { 
-      id: string; 
-      category?: string; 
-      label?: string; 
+    mutationFn: async ({
+      id,
+      ...updates
+    }: {
+      id: string;
+      category?: string;
+      label?: string;
       content?: string;
       shortcut?: string;
     }) => {
-      const { data, error } = await supabase
-        .from("phrase_templates")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await templatesApi.update(id, updates);
       return data as PhraseTemplate;
     },
     onSuccess: () => {
@@ -275,12 +216,7 @@ export function useDeletePhraseTemplate() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("phrase_templates")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      await templatesApi.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["phrase-templates"] });
@@ -291,10 +227,10 @@ export function useDeletePhraseTemplate() {
 // Hook pour regrouper les templates par catégorie
 export function usePhraseTemplatesByCategory() {
   const { data: templates, ...rest } = usePhraseTemplates();
-  
+
   const byCategory = useMemo(() => {
     if (!templates) return {};
-    
+
     return templates.reduce((acc, template) => {
       const category = template.category || "Autre";
       if (!acc[category]) acc[category] = [];
@@ -308,7 +244,13 @@ export function usePhraseTemplatesByCategory() {
 
 // ==================== Patient Tags ====================
 
-export type PatientTag = Tables<"patient_tags">;
+export type PatientTag = {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+};
 
 export function usePatientTags() {
   const { user } = useAuth();
@@ -316,12 +258,7 @@ export function usePatientTags() {
   return useQuery({
     queryKey: ["patient-tags", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("patient_tags")
-        .select("*")
-        .order("name", { ascending: true });
-
-      if (error) throw error;
+      const data = await tagsApi.list();
       return data as PatientTag[];
     },
     enabled: !!user,
@@ -336,13 +273,7 @@ export function useCreatePatientTag() {
     mutationFn: async (tag: { name: string; color: string }) => {
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from("patient_tags")
-        .insert({ ...tag, user_id: user.id })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await tagsApi.create(tag);
       return data as PatientTag;
     },
     onSuccess: () => {
@@ -356,16 +287,10 @@ export function useDeletePatientTag() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("patient_tags")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      await tagsApi.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient-tags"] });
     },
   });
 }
-

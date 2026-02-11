@@ -31,11 +31,11 @@ export function AnnotationViewModal({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex flex-col gap-1">
             <span className="text-xl">
-              {annotation.patients.last_name} {annotation.patients.first_name}
+              {annotation.patients?.last_name || 'Patient'} {annotation.patients?.first_name || 'inconnu'}
             </span>
             <span className="text-sm font-normal text-muted-foreground flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              {format(new Date(annotation.visit_date), "EEEE d MMMM yyyy", { locale: fr })}
+              {format(new Date(annotation.visit_date || annotation.created_at), "EEEE d MMMM yyyy", { locale: fr })}
               {annotation.visit_time && (
                 <>
                   <span className="mx-1">à</span>
@@ -98,7 +98,7 @@ export function AnnotationViewModal({
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Date de visite</p>
                     <p className="font-medium">
-                      {format(new Date(annotation.visit_date), "d MMMM yyyy", { locale: fr })}
+                      {format(new Date(annotation.visit_date || annotation.created_at), "d MMMM yyyy", { locale: fr })}
                       {annotation.visit_time && ` à ${annotation.visit_time.slice(0, 5)}`}
                     </p>
                   </div>
@@ -124,7 +124,7 @@ export function AnnotationViewModal({
                   )}
                 </div>
 
-                {annotation.patients.pathologies && (
+                {annotation.patients?.pathologies && (
                   <div className="space-y-1 pt-4 border-t">
                     <p className="text-sm text-muted-foreground">Pathologies du patient</p>
                     <p className="font-medium">{annotation.patients.pathologies}</p>

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { getToken } from "@/services/api";
 import {
   Mic,
   FileText,
@@ -47,45 +47,28 @@ export function CancellationDialog({
   const handleConfirmCancel = async () => {
     setIsLoading(true);
     try {
-      // Vérifier la session d'abord
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        console.error("[Cancel] No session:", sessionError);
-        throw new Error("Session expirée. Veuillez vous reconnecter.");
-      }
-      
-      const accessToken = sessionData.session.access_token;
-      
-      // DEBUG: Afficher les infos du token
-      console.log("[Cancel] Token first 50 chars:", accessToken?.substring(0, 50));
-      console.log("[Cancel] Token length:", accessToken?.length);
-      console.log("[Cancel] Expires at:", sessionData.session.expires_at);
-      console.log("[Cancel] URL:", `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel-subscription`);
+      const token = getToken();
+      if (!token) throw new Error("Session expiree. Veuillez vous reconnecter.");
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel-subscription`,
+        `${import.meta.env.VITE_API_URL || '/api'}/stripe-cancel-subscription`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({}),
         }
       );
 
-      console.log("[Cancel] Response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("[Cancel] Error response:", errorText);
-        
+
         if (response.status === 401) {
           throw new Error("Votre session a expiré. Veuillez rafraîchir la page et réessayer.");
         }
-        
+
         let errorData;
         try {
           errorData = JSON.parse(errorText);
@@ -96,7 +79,6 @@ export function CancellationDialog({
       }
 
       const data = await response.json();
-      console.log("[Cancel] Success response:", data);
 
       // Vérifier et parser la date de fin de période
       let periodEndDate: Date | null = null;
@@ -117,7 +99,6 @@ export function CancellationDialog({
       onCancelled();
       handleClose();
     } catch (error: any) {
-      console.error("[Cancel] Exception caught:", error);
       toast({
         title: "Erreur",
         description: error.message || "Impossible de résilier l'abonnement. Vérifiez la console pour plus de détails.",

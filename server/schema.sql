@@ -130,6 +130,9 @@ CREATE TABLE IF NOT EXISTS annotations (
     tags TEXT[],
     metadata JSONB DEFAULT '{}',
     vital_signs JSONB DEFAULT '{}',
+    visit_date DATE,
+    visit_time VARCHAR(10),
+    visit_duration INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -235,3 +238,85 @@ COMMENT ON TABLE annotations IS 'Annotations médicales';
 COMMENT ON TABLE webhook_events IS 'Journal des webhooks reçus';
 
 -- Fin du schema
+
+-- =====================================================
+-- TABLES MANQUANTES - Ajoutées pour migration complète
+-- =====================================================
+
+-- Ajouter colonne is_archived aux patients
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS patients_is_archived_idx ON patients(is_archived);
+
+-- USER CONFIGURATIONS
+CREATE TABLE IF NOT EXISTS user_configurations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    annotation_structure TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS user_configurations_user_id_idx ON user_configurations(user_id);
+
+CREATE TRIGGER update_user_configurations_updated_at 
+    BEFORE UPDATE ON user_configurations 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- EXAMPLE ANNOTATIONS
+CREATE TABLE IF NOT EXISTS example_annotations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS example_annotations_user_id_idx ON example_annotations(user_id);
+
+-- PHRASE TEMPLATES
+CREATE TABLE IF NOT EXISTS phrase_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    category VARCHAR(100) NOT NULL,
+    label VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    shortcut VARCHAR(50),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS phrase_templates_user_id_idx ON phrase_templates(user_id);
+CREATE INDEX IF NOT EXISTS phrase_templates_category_idx ON phrase_templates(category);
+
+-- PATIENT TAGS
+CREATE TABLE IF NOT EXISTS patient_tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    color VARCHAR(50) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS patient_tags_user_id_idx ON patient_tags(user_id);
+
+COMMENT ON TABLE user_configurations IS 'Configurations personnalisées des utilisateurs';
+COMMENT ON TABLE example_annotations IS 'Exemples d\'annotations sauvegardés';
+COMMENT ON TABLE phrase_templates IS 'Templates de phrases réutilisables';
+COMMENT ON TABLE patient_tags IS 'Tags pour catégoriser les patients';
+
+-- PASSWORD RESET TOKENS
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS password_reset_tokens_user_id_idx ON password_reset_tokens(user_id);
+CREATE INDEX IF NOT EXISTS password_reset_tokens_token_idx ON password_reset_tokens(token);
+CREATE INDEX IF NOT EXISTS password_reset_tokens_expires_at_idx ON password_reset_tokens(expires_at);
+
+COMMENT ON TABLE password_reset_tokens IS 'Tokens de réinitialisation de mot de passe';

@@ -1,5 +1,11 @@
+/**
+ * Stripe Service - Version sans Supabase
+ * Utilise notre API backend maison
+ */
 import { loadStripe, Stripe } from '@stripe/stripe-js';
-import { supabase } from '@/integrations/supabase/client';
+import { getToken } from '@/services/api';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
@@ -20,40 +26,32 @@ export interface CheckoutSessionParams {
   userId: string;
 }
 
-/**
- * Créer une session de checkout Stripe
- */
 export async function createCheckoutSession(params: CheckoutSessionParams): Promise<void> {
   try {
     const stripe = await getStripe();
     if (!stripe) {
-      throw new Error('Stripe n\'est pas initialisé');
+      throw new Error('Stripe n\'est pas initialise');
     }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionData.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          priceId: params.priceId,
-          email: params.email,
-          userId: params.userId,
-          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/signup`,
-        }),
-      }
-    );
+    const token = getToken();
+    const response = await fetch(`${API_URL}/stripe-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify({
+        priceId: params.priceId,
+        email: params.email,
+        userId: params.userId,
+        successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/signup`,
+      }),
+    });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
-      throw new Error(error.error || 'Erreur lors de la création de la session de paiement');
+      throw new Error(error.error || 'Erreur lors de la creation de la session de paiement');
     }
 
     const data = await response.json();
@@ -66,41 +64,33 @@ export async function createCheckoutSession(params: CheckoutSessionParams): Prom
         throw new Error(error.message || 'Erreur lors de la redirection vers Stripe');
       }
     } else {
-      throw new Error('Aucune URL de paiement reçue');
+      throw new Error('Aucune URL de paiement recue');
     }
   } catch (error) {
     throw error instanceof Error ? error : new Error('Erreur lors du paiement');
   }
 }
 
-/**
- * Créer un portail client Stripe (pour gérer l'abonnement)
- */
 export async function createCustomerPortalSession(userId: string): Promise<void> {
   try {
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-portal`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionData.session?.access_token}`,
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({ userId }),
-      }
-    );
+    const token = getToken();
+    const response = await fetch(`${API_URL}/stripe-portal`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ userId }),
+    });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
-      throw new Error(error.error || 'Erreur lors de la création du portail client');
+      throw new Error(error.error || 'Erreur lors de la creation du portail client');
     }
 
     const { url } = await response.json();
     window.location.href = url;
   } catch (error) {
-    throw error instanceof Error ? error : new Error('Erreur lors de l\'accès au portail');
+    throw error instanceof Error ? error : new Error('Erreur lors de l\'acces au portail');
   }
 }

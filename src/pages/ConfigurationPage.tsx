@@ -404,14 +404,10 @@ export default function ConfigurationPage() {
       </div>
 
       <Tabs defaultValue={initialTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="structure" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">Structure</span>
-          </TabsTrigger>
-          <TabsTrigger value="examples" className="flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            <span className="hidden sm:inline">Exemples</span>
           </TabsTrigger>
           <TabsTrigger value="phrases" className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
@@ -492,67 +488,6 @@ export default function ConfigurationPage() {
         </TabsContent>
 
         {/* Examples Tab */}
-        <TabsContent value="examples" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Exemples d'annotations</CardTitle>
-                  <CardDescription>
-                    Ajoutez des exemples pour que l'IA apprenne votre style de rédaction.
-                  </CardDescription>
-                </div>
-                <Button onClick={openNewExample}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {examples.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                  <p>Aucun exemple pour le moment.</p>
-                  <p className="text-sm">Ajoutez des exemples pour améliorer la qualité des annotations.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {examples.map((example) => (
-                    <Card key={example.id} className="bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-card-foreground">{example.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
-                              {example.content}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditExample(example)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteExample(example.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Phrases Tab */}
         <TabsContent value="phrases" className="space-y-6">
           <Card>

@@ -1,14 +1,17 @@
-// Types alignés avec la base de données Supabase
-// Ces types sont des alias pour faciliter l'import, mais utilisez préférablement ceux de @/integrations/supabase/types
+/**
+ * Types principaux de l'application MedAnnot
+ * Alignés avec le schéma de la base de données PostgreSQL
+ */
 
-import type { Tables } from "@/integrations/supabase/types";
-
-// Re-export des types principaux depuis Supabase
-export type User = Tables<"profiles">;
-export type Patient = Tables<"patients">;
-export type Annotation = Tables<"annotations">;
-export type UserConfiguration = Tables<"user_configurations">;
-export type ExampleAnnotation = Tables<"example_annotations">;
+// Re-export des types depuis les hooks
+export type { Patient, PatientInsert, PatientUpdate } from '@/hooks/usePatients';
+export type {
+  Annotation,
+  AnnotationWithPatient,
+  AnnotationInsert,
+  AnnotationUpdate
+} from '@/hooks/useAnnotations';
+export type { UserConfiguration, PatientTag } from '@/hooks/useConfiguration';
 
 // Types étendus pour l'UI
 export interface PatientExampleAnnotation {
@@ -18,15 +21,6 @@ export interface PatientExampleAnnotation {
   context?: string;
   isLearningExample: boolean;
   createdAt: string;
-}
-
-// Type pour les annotations avec les infos patient (pour l'affichage)
-export interface AnnotationWithPatient extends Annotation {
-  patients: {
-    first_name: string;
-    last_name: string;
-    pathologies: string | null;
-  };
 }
 
 // Type pour le mode batch/soirée
@@ -44,11 +38,4 @@ export interface PhraseTemplate {
   label: string;
   content: string;
   shortcut?: string;
-}
-
-// Type pour les tags patients
-export interface PatientTag {
-  id: string;
-  name: string;
-  color: string;
 }

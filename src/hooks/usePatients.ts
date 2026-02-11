@@ -28,6 +28,7 @@ export interface Patient {
   emergency_contact_phone?: string | null;
   insurance_provider?: string | null;
   insurance_number?: string | null;
+  tags?: string[];
   is_archived?: boolean;
   created_at: string;
   updated_at: string;
@@ -137,9 +138,19 @@ export function useCreatePatient() {
 
       // Chiffrer les données sensibles
       const encryptedPatient = encryptPatient(patientData, user.id);
-      
-      const newPatient = await patientsApi.create(encryptedPatient as PatientInsert);
-      
+
+      // Convertir snake_case en camelCase pour l'API
+      const apiPatient = {
+        firstName: encryptedPatient.first_name!,
+        lastName: encryptedPatient.last_name!,
+        dateOfBirth: encryptedPatient.date_of_birth,
+        email: encryptedPatient.email,
+        phone: encryptedPatient.phone,
+        notes: encryptedPatient.notes,
+      };
+
+      const newPatient = await patientsApi.create(apiPatient);
+
       // Retourner déchiffré pour l'UI
       return decryptPatient(newPatient, user.id);
     },

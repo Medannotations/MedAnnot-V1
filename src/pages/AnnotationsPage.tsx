@@ -145,17 +145,17 @@ export default function AnnotationsPage() {
     
     return annotations.filter((annotation) => {
       // Filtre recherche texte
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         annotation.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        annotation.patients.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        annotation.patients.last_name.toLowerCase().includes(searchQuery.toLowerCase());
+        annotation.patients?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        annotation.patients?.last_name?.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Filtre patient
       const matchesPatient = patientFilter === "all" || annotation.patient_id === patientFilter;
       
       // Filtre date
       let matchesDate = true;
-      const annotationDate = parseISO(annotation.visit_date);
+      const annotationDate = parseISO(annotation.visit_date || annotation.created_at);
       const now = new Date();
       
       switch (dateFilter) {
@@ -177,19 +177,19 @@ export default function AnnotationsPage() {
       }
       
       return matchesSearch && matchesPatient && matchesDate;
-    }).sort((a, b) => 
-      new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime()
+    }).sort((a, b) =>
+      new Date(b.visit_date || b.created_at).getTime() - new Date(a.visit_date || a.created_at).getTime()
     );
   }, [annotations, searchQuery, patientFilter, dateFilter]);
 
-  // Annotations du jour
+  // Annotations du jour (pour faciliter le copier-coller en fin de journée)
   const todayAnnotations = useMemo(() => {
-    return filteredAnnotations.filter(a => isToday(parseISO(a.visit_date)));
+    return filteredAnnotations.filter(a => isToday(parseISO(a.visit_date || a.created_at)));
   }, [filteredAnnotations]);
 
-  // Annotations historique (pas aujourd'hui)
+  // Annotations historique (TOUTES les annotations, y compris celles d'aujourd'hui)
   const historyAnnotations = useMemo(() => {
-    return filteredAnnotations.filter(a => !isToday(parseISO(a.visit_date)));
+    return filteredAnnotations; // Afficher toutes les annotations
   }, [filteredAnnotations]);
 
   const handleCopy = async (content: string) => {

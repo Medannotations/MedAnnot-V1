@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Square, Play, Pause, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { getToken } from "@/services/api";
 
 interface VoiceRecorderProps {
   onTranscriptionComplete: (transcription: string) => void;
@@ -100,9 +100,9 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
 
     try {
       // Get authentication token
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
+      const token = getToken();
+
+      if (!token) {
         throw new Error("Session utilisateur invalide");
       }
 
@@ -110,15 +110,14 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('timestamp', new Date().toISOString());
-      
+
       // MEDICAL-GRADE: Call enhanced transcription service
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe`,
+        `${import.meta.env.VITE_API_URL || '/api'}/transcribe`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${token}`,
           },
           body: formData,
         }
@@ -130,11 +129,11 @@ export function VoiceRecorder({ onTranscriptionComplete, isGenerating }: VoiceRe
       }
 
       const result = await response.json();
-      
-      if (result.transcription) {
+
+      if (result.text || result.transcription) {
         setIsTranscribing(false);
-        onTranscriptionComplete(result.transcription);
-        
+        onTranscriptionComplete(result.text || result.transcription);
+
         toast({
           title: "✓ Transcription réussie",
           description: "Votre audio a été transcrit avec succès.",

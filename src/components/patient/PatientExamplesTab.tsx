@@ -191,7 +191,7 @@ export function PatientExamplesTab({ patient, onUpdatePatient }: PatientExamples
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <CardTitle className="text-base flex items-center gap-2">
-                      📄 Exemple - Visite du {new Date(example.visitDate).toLocaleDateString('fr-CH')}
+                      📄 Exemple - Visite du {new Date(example.visitDate || example.createdAt).toLocaleDateString('fr-CH')}
                       {example.isLearningExample && (
                         <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-normal">
                           Actif
@@ -235,7 +235,7 @@ export function PatientExamplesTab({ patient, onUpdatePatient }: PatientExamples
                   <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>
-                        Annotation du {new Date(example.visitDate).toLocaleDateString('fr-CH')}
+                        Annotation du {new Date(example.visitDate || example.createdAt).toLocaleDateString('fr-CH')}
                       </DialogTitle>
                     </DialogHeader>
                     <div className="mt-4">

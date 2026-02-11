@@ -10,6 +10,7 @@ import LandingPage from "./pages/LandingPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { SignupCheckoutPage } from "./pages/SignupCheckoutPage";
 import { SuccessPage } from "./pages/SuccessPage";
+import { PendingPaymentPage } from "./pages/PendingPaymentPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
@@ -26,6 +27,9 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import TermsOfSalePage from "./pages/TermsOfSalePage";
 import LegalNoticePage from "./pages/LegalNoticePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordConfirmPage from "./pages/ResetPasswordConfirmPage";
+import AdminFixAnnotations from "./pages/AdminFixAnnotations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -56,14 +60,26 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/signup" element={<SignupCheckoutPage />} />
             <Route path="/success" element={<SuccessPage />} />
+            <Route path="/pending-payment" element={<PendingPaymentPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordConfirmPage />} />
 
             {/* Legal Pages */}
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
             <Route path="/terms-of-sale" element={<TermsOfSalePage />} />
             <Route path="/legal-notice" element={<LegalNoticePage />} />
+
+            {/* Admin Route */}
+            <Route
+              path="/admin/fix-annotations"
+              element={
+                <SubscriptionGuard>
+                  <AdminFixAnnotations />
+                </SubscriptionGuard>
+              }
+            />
 
             <Route
               path="/app"

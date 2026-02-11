@@ -21,7 +21,7 @@ import {
   FileText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { auth, getToken } from "@/services/api";
 import { Logo } from "@/components/ui/Logo";
 
 export function SignupCheckoutPage() {
@@ -72,42 +72,28 @@ export function SignupCheckoutPage() {
 
     try {
       // 1. Créer le compte utilisateur
-      const { data: authData, error: signupError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+      const result = await auth.register(email, password, name);
 
-      if (signupError) {
-        throw signupError;
-      }
-
-      if (!authData.user) {
-        throw new Error("Erreur lors de la création du compte");
+      if (!result?.user) {
+        throw new Error("Erreur lors de la creation du compte");
       }
 
       // Wait a moment for the trigger to create the profile
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // 2. Redirect to Stripe checkout
-      const { data: sessionData } = await supabase.auth.getSession();
+      const token = getToken();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
+        `${import.meta.env.VITE_API_URL || '/api'}/stripe-checkout`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionData.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
             priceId: import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY,
-            userId: authData.user.id,
+            userId: result.user.id,
             email: email,
           }),
         }
@@ -120,24 +106,18 @@ export function SignupCheckoutPage() {
 
       const data = await response.json();
 
-      if (data.url) {
-        toast({
-          title: "Compte créé !",
-          description: "Redirection vers le paiement sécurisé...",
-        });
-
-        setTimeout(() => {
-          window.location.href = data.url;
-        }, 500);
-      } else {
-        // If no Stripe URL, redirect to app anyway (user is logged in)
-        console.log("No Stripe checkout URL, redirecting to app");
-        toast({
-          title: "Compte créé !",
-          description: "Bienvenue sur MedAnnot. Vous pouvez commencer votre essai gratuit.",
-        });
-        navigate("/app");
+      if (!data.url) {
+        throw new Error("Impossible de créer la session de paiement. Veuillez réessayer.");
       }
+
+      toast({
+        title: "Compte créé !",
+        description: "Redirection vers le paiement sécurisé...",
+      });
+
+      setTimeout(() => {
+        window.location.href = data.url;
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Erreur",

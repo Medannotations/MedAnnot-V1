@@ -287,7 +287,6 @@ export default function LegalNoticePage() {
                 <li>TypeScript (Microsoft Corporation) - Apache License 2.0</li>
                 <li>Vite (Evan You) - MIT License</li>
                 <li>TailwindCSS (Tailwind Labs Inc.) - MIT License</li>
-                <li>Supabase (Supabase Inc.) - Apache License 2.0</li>
               </ul>
               <p className="text-sm text-muted-foreground mb-4">
                 Nous remercions les communautés open source pour leur contribution inestimable.

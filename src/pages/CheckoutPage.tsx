@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getToken } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Check } from "lucide-react";
 
@@ -24,15 +24,14 @@ export function CheckoutPage() {
     try {
       const priceId = import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY;
 
-      const { data: sessionData } = await supabase.auth.getSession();
+      const token = getToken();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
+        `${import.meta.env.VITE_API_URL || '/api'}/stripe-checkout`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionData.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
             priceId,

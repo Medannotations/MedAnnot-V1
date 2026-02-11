@@ -9,29 +9,45 @@ interface ProtectedRouteProps {
 }
 
 export function SubscriptionGuard({ children }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Attendre que l'auth soit initialisée
+    const hasToken = localStorage.getItem('medannot_token');
+
+    // Si pas de token du tout, rediriger immédiatement
+    if (!hasToken && !isLoading) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    // Si on est encore en train de charger, attendre
     if (isLoading) return;
 
-    // Pas connecté → redirection
+    // Si token existe mais pas encore d'user, ne PAS rediriger
+    // Laisser le temps à l'AuthContext de finir de charger
+    if (!user && hasToken) {
+      // L'user devrait se charger bientôt, ou le timeout forcera l'accès
+      return;
+    }
+
+    // Si vraiment pas de user et pas de token, rediriger
     if (!user) {
       navigate("/", { replace: true });
       return;
     }
 
-    // Simuler une vérification rapide (2 secondes max)
-    const timer = setTimeout(() => {
-      console.log("Access granted to user:", user.id);
-      setChecking(false);
-    }, 1500);
+    // Vérifier le statut d'abonnement
+    if (profile?.subscription_status === 'pending_payment') {
+      navigate("/pending-payment", { replace: true });
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [user, isLoading, navigate]);
+    // User chargé avec succès et abonnement valide
+    setChecking(false);
+  }, [user, profile, isLoading, navigate]);
 
   // Timeout de sécurité maximum 5 secondes
   useEffect(() => {

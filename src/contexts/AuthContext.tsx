@@ -62,10 +62,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: profileData.email,
           fullName: profileData.full_name || undefined,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Auth init error:", error);
-        // Token invalide
-        removeToken();
+        // Ne supprimer le token que si c'est vraiment une erreur d'auth (401)
+        if (error?.status === 401) {
+          removeToken();
+        } else {
+          // Pour les autres erreurs (réseau, serveur), créer un user minimal depuis le token
+          // pour permettre l'accès en attendant que l'API fonctionne
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            setUser({
+              id: payload.sub,
+              email: payload.email,
+              fullName: undefined,
+            });
+          } catch {
+            // Si on ne peut pas décoder le token, le supprimer
+            removeToken();
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -103,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     auth.logout();
     setUser(null);
     setProfile(null);
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   const resetPassword = async (email: string) => {

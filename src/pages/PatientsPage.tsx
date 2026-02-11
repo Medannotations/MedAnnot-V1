@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -28,6 +29,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Users, FileText, Archive, ArchiveRestore, Loader2, Trash2, AlertTriangle, FolderOpen } from "lucide-react";
 import { usePatients, useCreatePatient, useArchivePatient, useDeletePatient, type Patient } from "@/hooks/usePatients";
+import { TagInput } from "@/components/ui/tag-input";
 import { GPSNavigationButton } from "@/components/patients/GPSNavigation";
 
 // Composant PatientCard memoïsé pour éviter les re-renders
@@ -66,8 +68,17 @@ const PatientCard = memo(({
                 Pathologies: {patient.pathologies}
               </p>
             )}
+            {patient.tags && patient.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {patient.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
-          
+
           {/* Actions principales - boutons larges */}
           <div className="flex items-center gap-3">
             <Button asChild variant="default" size="default" className="flex-1 h-12 text-base">
@@ -138,6 +149,7 @@ export default function PatientsPage() {
     postalCode: "",
     city: "",
     pathologies: "",
+    tags: [] as string[],
   });
 
   // Dialog de suppression définitive
@@ -173,6 +185,7 @@ export default function PatientsPage() {
         postal_code: newPatient.postalCode.trim() || null,
         city: newPatient.city.trim() || null,
         pathologies: newPatient.pathologies.trim() || null,
+        tags: newPatient.tags.length > 0 ? newPatient.tags : undefined,
       });
 
       toast({
@@ -180,7 +193,7 @@ export default function PatientsPage() {
         description: `${newPatient.firstName} ${newPatient.lastName} a été ajouté.`,
       });
 
-      setNewPatient({ firstName: "", lastName: "", street: "", postalCode: "", city: "", pathologies: "" });
+      setNewPatient({ firstName: "", lastName: "", street: "", postalCode: "", city: "", pathologies: "", tags: [] });
       setIsDialogOpen(false);
     } catch (error: any) {
       console.error("Error creating patient:", error);
@@ -267,7 +280,8 @@ export default function PatientsPage() {
       (p) =>
         !p.is_archived &&
         (p.first_name.toLowerCase().includes(query) ||
-          p.last_name.toLowerCase().includes(query))
+          p.last_name.toLowerCase().includes(query) ||
+          p.tags?.some(tag => tag.toLowerCase().includes(query)))
     );
   }, [patients, searchQuery]);
 
@@ -277,7 +291,8 @@ export default function PatientsPage() {
       (p) =>
         p.is_archived &&
         (p.first_name.toLowerCase().includes(query) ||
-          p.last_name.toLowerCase().includes(query))
+          p.last_name.toLowerCase().includes(query) ||
+          p.tags?.some(tag => tag.toLowerCase().includes(query)))
     );
   }, [patients, searchQuery]);
 
@@ -394,6 +409,19 @@ export default function PatientsPage() {
                   }
                   placeholder="Diabète type 2, Hypertension..."
                   className="min-h-[100px] resize-none"
+                />
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Tags
+                  <span className="text-xs text-muted-foreground font-normal ml-2">(catégories, statuts...)</span>
+                </Label>
+                <TagInput
+                  value={newPatient.tags}
+                  onChange={(tags) => setNewPatient({ ...newPatient, tags })}
+                  placeholder="Ex: prioritaire, suivi-hebdo..."
                 />
               </div>
               <div className="flex flex-col sm:flex-row justify-end gap-2">
