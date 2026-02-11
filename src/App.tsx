@@ -31,7 +31,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordConfirmPage from "./pages/ResetPasswordConfirmPage";
 import AdminFixAnnotations from "./pages/AdminFixAnnotations";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
-import { CrispChat } from "./components/CrispChat";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -56,7 +56,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <CrispChat />
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<LandingPage />} />
