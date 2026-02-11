@@ -1514,7 +1514,7 @@ app.post('/api/admin/verify-access', authenticateToken, requireAdmin, async (req
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
     });
 
-    res.json({ verified: true, adminToken: sessionToken });
+    res.json({ token: sessionToken });
   } catch (error) {
     console.error('Admin verify access error:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification' });
@@ -1524,16 +1524,16 @@ app.post('/api/admin/verify-access', authenticateToken, requireAdmin, async (req
 // Admin 2FA - Vérifier la session active
 app.post('/api/admin/check-session', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { adminToken } = req.body;
+    const { token } = req.body;
 
-    if (!adminToken) {
+    if (!token) {
       return res.json({ valid: false });
     }
 
-    const session = adminSessions.get(adminToken);
+    const session = adminSessions.get(token);
 
     if (!session || Date.now() > session.expiresAt || session.userId !== req.user.id) {
-      if (session) adminSessions.delete(adminToken);
+      if (session) adminSessions.delete(token);
       return res.json({ valid: false });
     }
 
@@ -1820,9 +1820,9 @@ async function runMigrations() {
       ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE
     `);
 
-    // Définir l'admin par défaut
+    // Définir les admins par défaut
     await pool.query(`
-      UPDATE profiles SET is_admin = TRUE WHERE email = 'contact.medannot@gmail.com'
+      UPDATE profiles SET is_admin = TRUE WHERE email IN ('contact.medannot@gmail.com', 'ahmedbmk.contact@gmail.com')
     `);
 
     console.log('✅ Migrations OK');
