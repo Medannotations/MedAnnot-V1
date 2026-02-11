@@ -156,8 +156,8 @@ export function AnnotationPreviewCard({
       <CardContent className="p-0">
         {/* Header épuré - responsive */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 bg-gradient-to-r from-muted/20 to-transparent">
-          {/* Info principale - toujours sur une ligne sur mobile si possible */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-wrap min-w-0">
+          {/* Info principale - Date | Heure | Patient sur une ligne */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
             {/* Date principale */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <div className="p-1 sm:p-1.5 rounded-md bg-primary/10">
@@ -170,7 +170,7 @@ export function AnnotationPreviewCard({
 
             {/* Heure du RDV */}
             {annotation.visit_time && (
-              <div className="flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-50 border border-blue-200 rounded-lg shrink-0">
+              <div className="flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-50/80 border border-blue-200 rounded-lg shrink-0">
                 <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-700" />
                 <span className="text-xs sm:text-sm font-semibold text-blue-700">
                   {annotation.visit_time.slice(0, 5)}
@@ -178,17 +178,24 @@ export function AnnotationPreviewCard({
               </div>
             )}
 
-            {/* Patient si liste globale - cliquable */}
+            {/* Patient - PRIORITAIRE et bien visible */}
             {showPatient && annotation.patients && (
               <Link 
                 to={`/app/patients/${annotation.patient_id || annotation.patientId}`}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 border border-primary/20 rounded-lg min-w-0 hover:bg-primary/20 transition-colors group"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg min-w-0 hover:bg-emerald-100 transition-all group shadow-sm"
               >
-                <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                  {annotation.patients.last_name} {annotation.patients.first_name}
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                  <span className="text-[10px] sm:text-xs font-bold text-white">
+                    {annotation.patients.first_name?.charAt(0).toUpperCase() || annotation.patients.last_name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-emerald-900 truncate max-w-[100px] sm:max-w-[150px]">
+                  {annotation.patients.last_name}
                 </span>
-                <ExternalLink className="w-3 h-3 text-primary/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-emerald-700 truncate max-w-[80px] sm:max-w-[120px] hidden sm:inline">
+                  {annotation.patients.first_name}
+                </span>
+                <ExternalLink className="w-3 h-3 text-emerald-500/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-0.5" />
               </Link>
             )}
 

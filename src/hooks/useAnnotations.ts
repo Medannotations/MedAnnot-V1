@@ -92,7 +92,17 @@ const decryptAnnotation = (annotation: Annotation, userId: string): Annotation =
     result.patientId = result.patient_id;
   }
 
-  // Déchiffrer les noms de patients joints (depuis le LEFT JOIN)
+  // Construire l'objet patients à partir des champs de jointure (API retourne patient_first_name/patient_last_name)
+  // ou utiliser l'objet patients s'il existe déjà
+  if (!result.patients && (result.patient_first_name || result.patient_last_name)) {
+    result.patients = {
+      first_name: safeDecrypt(result.patient_first_name, userId) || result.patient_first_name || '',
+      last_name: safeDecrypt(result.patient_last_name, userId) || result.patient_last_name || '',
+      pathologies: null,
+    };
+  }
+
+  // Déchiffrer les noms de patients joints si l'objet patients existe
   if (result.patients) {
     result.patients = {
       ...result.patients,
