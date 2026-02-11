@@ -4,13 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Users, FileText, Trash2, Shield,
-  Search, ArrowLeft, Loader2, UserCheck, Clock, AlertCircle,
+  Search, Loader2, UserCheck, Clock, AlertCircle,
   XCircle, CreditCard, ChevronDown, RefreshCw, Stethoscope,
-  Mail, KeyRound, ShieldCheck,
+  Mail, KeyRound, ShieldCheck, LogOut, Eye, EyeOff,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { admin } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 
@@ -48,14 +47,21 @@ const STATUS_LABELS: Record<string, { label: string; color: string; icon: typeof
 
 const DEFAULT_STATUS = { label: "Inconnu", color: "text-gray-400 bg-gray-500/20 border-gray-500/30", icon: XCircle };
 
-type AuthStep = "checking" | "request_code" | "enter_code" | "authenticated";
+type Step = "checking" | "login" | "code" | "dashboard";
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
 
-  // 2FA state
-  const [authStep, setAuthStep] = useState<AuthStep>("checking");
+  // Auth flow state
+  const [step, setStep] = useState<Step>("checking");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+
+  // 2FA code state
   const [codeDigits, setCodeDigits] = useState(["", "", "", "", "", ""]);
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeError, setCodeError] = useState("");
@@ -70,115 +76,90 @@ export default function AdminDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
-  // Check admin access + existing 2FA session on mount
+  // On mount: check for existing admin session
   useEffect(() => {
     document.title = "Admin | MedAnnot";
 
-    const checkAccess = async () => {
-      try {
-        // Step 1: Check if user is admin
-        const { isAdmin } = await admin.checkAccess();
-        if (!isAdmin) {
-          navigate("/app");
-          toast({ title: "Acces refuse", variant: "destructive" });
-          return;
-        }
-
-        // Step 2: Check existing 2FA session
-        const savedToken = localStorage.getItem(ADMIN_SESSION_KEY);
-        if (savedToken) {
-          try {
-            const { valid } = await admin.checkSession(savedToken);
-            if (valid) {
-              setAuthStep("authenticated");
-              return;
-            }
-          } catch {
-            // Invalid session, clear it
-            localStorage.removeItem(ADMIN_SESSION_KEY);
+    const checkSession = async () => {
+      const savedToken = localStorage.getItem(ADMIN_SESSION_KEY);
+      if (savedToken) {
+        try {
+          const { valid } = await admin.checkSession(savedToken);
+          if (valid) {
+            setStep("dashboard");
+            return;
           }
+        } catch {
+          // ignore
         }
-
-        // No valid session, show request code screen
-        setAuthStep("request_code");
-      } catch (error: any) {
-        if (error.status === 403) {
-          navigate("/app");
-          toast({ title: "Acces refuse", variant: "destructive" });
-        } else {
-          toast({ title: "Erreur de verification", variant: "destructive" });
-          navigate("/app");
-        }
+        localStorage.removeItem(ADMIN_SESSION_KEY);
       }
+      setStep("login");
     };
 
-    checkAccess();
-  }, [navigate]);
+    checkSession();
+  }, []);
 
-  // Request verification code
-  const handleRequestCode = async () => {
-    setCodeLoading(true);
-    setCodeError("");
+  // ====== Step 1: Login (email + password) ======
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password) return;
+
+    setLoginLoading(true);
+    setLoginError("");
     try {
-      await admin.requestAccess();
-      setAuthStep("enter_code");
+      const result = await admin.login(email.trim(), password);
+      setMaskedEmail(result.email);
+      setStep("code");
       toast({ title: "Code envoye par email" });
-      // Focus first input
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } catch (error: any) {
-      setCodeError(error.message || "Erreur lors de l'envoi du code");
+      setLoginError(error.message || "Erreur de connexion");
     } finally {
-      setCodeLoading(false);
+      setLoginLoading(false);
     }
   };
 
-  // Handle code input
+  // ====== Step 2: 2FA code verification ======
   const handleCodeInput = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
-
     const newDigits = [...codeDigits];
     newDigits[index] = value.slice(-1);
     setCodeDigits(newDigits);
     setCodeError("");
 
-    // Auto-advance to next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit when all 6 digits are filled
     const fullCode = newDigits.join("");
     if (fullCode.length === 6) {
       handleVerifyCode(fullCode);
     }
   };
 
-  // Handle backspace
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !codeDigits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  // Handle paste
   const handleCodePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (pasted.length === 6) {
-      const newDigits = pasted.split("");
-      setCodeDigits(newDigits);
+      setCodeDigits(pasted.split(""));
       handleVerifyCode(pasted);
     }
   };
 
-  // Verify code
   const handleVerifyCode = async (code: string) => {
     setCodeLoading(true);
     setCodeError("");
     try {
-      const { token } = await admin.verifyAccess(code);
+      const { token } = await admin.verifyCode(code);
       localStorage.setItem(ADMIN_SESSION_KEY, token);
-      setAuthStep("authenticated");
+      setStep("dashboard");
       toast({ title: "Acces autorise" });
     } catch (error: any) {
       setCodeError(error.message || "Code invalide");
@@ -189,7 +170,22 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Load dashboard data
+  const handleResendCode = async () => {
+    setCodeLoading(true);
+    setCodeError("");
+    try {
+      await admin.login(email.trim(), password);
+      toast({ title: "Nouveau code envoye" });
+      setCodeDigits(["", "", "", "", "", ""]);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    } catch (error: any) {
+      setCodeError(error.message || "Erreur lors du renvoi");
+    } finally {
+      setCodeLoading(false);
+    }
+  };
+
+  // ====== Dashboard data ======
   const loadData = useCallback(async () => {
     try {
       const [statsData, usersData] = await Promise.all([
@@ -199,20 +195,21 @@ export default function AdminDashboardPage() {
       setStats(statsData);
       setUsers(usersData);
     } catch (error: any) {
-      if (error.status === 403) {
-        navigate("/app");
-        toast({ title: "Acces refuse", variant: "destructive" });
+      if (error.status === 403 || error.status === 401) {
+        localStorage.removeItem(ADMIN_SESSION_KEY);
+        setStep("login");
+        toast({ title: "Session expiree", variant: "destructive" });
       }
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
-    if (authStep === "authenticated") {
+    if (step === "dashboard") {
       loadData();
     }
-  }, [authStep, loadData]);
+  }, [step, loadData]);
 
   const handleUpdateStatus = async (userId: string, newStatus: string) => {
     setActionLoading(userId);
@@ -241,6 +238,14 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleAdminLogout = () => {
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    setStep("login");
+    setEmail("");
+    setPassword("");
+    setCodeDigits(["", "", "", "", "", ""]);
+  };
+
   const filteredUsers = users.filter(u => {
     const matchesSearch = !searchQuery ||
       u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -249,20 +254,20 @@ export default function AdminDashboardPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // ============ LOADING STATE ============
-  if (authStep === "checking") {
+  // ============ CHECKING SESSION ============
+  if (step === "checking") {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin text-cyan-400 mx-auto mb-4" />
-          <p className="text-white/50 text-sm">Verification des droits...</p>
+          <p className="text-white/50 text-sm">Verification...</p>
         </div>
       </div>
     );
   }
 
-  // ============ 2FA VERIFICATION SCREEN ============
-  if (authStep === "request_code" || authStep === "enter_code") {
+  // ============ LOGIN + CODE SCREENS ============
+  if (step === "login" || step === "code") {
     return (
       <div className="min-h-screen bg-slate-900">
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -271,7 +276,6 @@ export default function AdminDashboardPage() {
 
         <div className="relative min-h-screen flex flex-col items-center justify-center px-4">
           <div className="w-full max-w-md">
-            {/* Logo */}
             <div className="flex justify-center mb-8">
               <Logo size="lg" />
             </div>
@@ -286,54 +290,89 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <h1 className="text-xl font-bold text-white text-center mb-2">
-                  Acces Administration
+                  Administration
                 </h1>
-                <p className="text-white/50 text-sm text-center mb-8">
-                  Verification de securite requise pour acceder au panneau d'administration.
-                </p>
 
-                {authStep === "request_code" ? (
+                {step === "login" ? (
                   <>
-                    <div className="bg-slate-700/50 rounded-xl p-4 mb-6 border border-white/5">
-                      <div className="flex items-start gap-3">
-                        <Mail className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" />
-                        <div>
-                          <p className="text-white/80 text-sm font-medium">Verification par email</p>
-                          <p className="text-white/40 text-xs mt-1">
-                            Un code a 6 chiffres sera envoye a l'adresse email d'administration pour confirmer votre identite.
-                          </p>
+                    <p className="text-white/50 text-sm text-center mb-6">
+                      Connectez-vous avec un compte administrateur.
+                    </p>
+
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      {/* Email */}
+                      <div>
+                        <label className="block text-white/60 text-xs font-medium mb-1.5">Email</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                          <Input
+                            type="email"
+                            value={email}
+                            onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+                            placeholder="admin@example.com"
+                            className="pl-10 bg-slate-700/50 border-white/10 text-white placeholder:text-white/30 h-11"
+                            autoFocus
+                            required
+                          />
                         </div>
                       </div>
-                    </div>
 
-                    {codeError && (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-                        <p className="text-red-400 text-sm text-center">{codeError}</p>
+                      {/* Password */}
+                      <div>
+                        <label className="block text-white/60 text-xs font-medium mb-1.5">Mot de passe</label>
+                        <div className="relative">
+                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+                            placeholder="••••••••"
+                            className="pl-10 pr-10 bg-slate-700/50 border-white/10 text-white placeholder:text-white/30 h-11"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
-                    )}
 
-                    <Button
-                      onClick={handleRequestCode}
-                      disabled={codeLoading}
-                      className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-medium py-5 gap-2"
-                    >
-                      {codeLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <KeyRound className="w-4 h-4" />
+                      {loginError && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                          <p className="text-red-400 text-sm text-center">{loginError}</p>
+                        </div>
                       )}
-                      Demander un code d'acces
-                    </Button>
+
+                      <Button
+                        type="submit"
+                        disabled={loginLoading || !email.trim() || !password}
+                        className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-medium py-5 gap-2"
+                      >
+                        {loginLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Shield className="w-4 h-4" />
+                        )}
+                        Se connecter
+                      </Button>
+                    </form>
                   </>
                 ) : (
                   <>
+                    <p className="text-white/50 text-sm text-center mb-6">
+                      Verification en deux etapes
+                    </p>
+
                     <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 mb-6">
                       <div className="flex items-start gap-3">
                         <Mail className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" />
                         <div>
                           <p className="text-cyan-300 text-sm font-medium">Code envoye !</p>
                           <p className="text-cyan-300/60 text-xs mt-1">
-                            Verifiez votre boite mail d'administration. Le code expire dans 10 minutes.
+                            Un code a 6 chiffres a ete envoye a <span className="font-mono text-cyan-300">{maskedEmail}</span>. Il expire dans 10 minutes.
                           </p>
                         </div>
                       </div>
@@ -372,26 +411,32 @@ export default function AdminDashboardPage() {
                       </div>
                     )}
 
-                    <button
-                      onClick={handleRequestCode}
-                      disabled={codeLoading}
-                      className="w-full text-center text-white/40 hover:text-white/70 text-xs transition-colors"
-                    >
-                      Renvoyer le code
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => { setStep("login"); setCodeDigits(["", "", "", "", "", ""]); setCodeError(""); }}
+                        className="text-white/40 hover:text-white/70 text-xs transition-colors"
+                      >
+                        Changer d'email
+                      </button>
+                      <button
+                        onClick={handleResendCode}
+                        disabled={codeLoading}
+                        className="text-white/40 hover:text-white/70 text-xs transition-colors"
+                      >
+                        Renvoyer le code
+                      </button>
+                    </div>
                   </>
                 )}
 
-                {/* Back button */}
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/app")}
-                    className="w-full text-white/50 hover:text-white hover:bg-white/10 gap-2"
+                {/* Back to site */}
+                <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                  <button
+                    onClick={() => navigate("/")}
+                    className="text-white/30 hover:text-white/60 text-xs transition-colors"
                   >
-                    <ArrowLeft className="w-4 h-4" />
-                    Retour a l'application
-                  </Button>
+                    Retour au site
+                  </button>
                 </div>
               </CardContent>
             </Card>
@@ -401,7 +446,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // ============ DASHBOARD (authenticated) ============
+  // ============ DASHBOARD ============
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -412,7 +457,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900/70 to-teal-900/60" />
       </div>
@@ -427,26 +471,14 @@ export default function AdminDashboardPage() {
               Admin
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/app")}
-              className="text-white/70 hover:text-white hover:bg-white/10 gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Retour app</span>
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                localStorage.removeItem(ADMIN_SESSION_KEY);
-                logout();
-              }}
-              className="text-white/70 hover:text-white hover:bg-white/10"
-            >
-              Deconnexion
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            onClick={handleAdminLogout}
+            className="text-white/70 hover:text-white hover:bg-white/10 gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Deconnexion</span>
+          </Button>
         </div>
       </header>
 
@@ -470,34 +502,10 @@ export default function AdminDashboardPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard
-              icon={Users}
-              label="Utilisateurs"
-              value={stats.totalUsers}
-              sub={`+${stats.signupsLast30Days} ce mois`}
-              color="cyan"
-            />
-            <StatCard
-              icon={UserCheck}
-              label="Abonnes actifs"
-              value={(stats.byStatus.active || 0) + (stats.byStatus.trialing || 0)}
-              sub={`${stats.byStatus.trialing || 0} en essai`}
-              color="green"
-            />
-            <StatCard
-              icon={Stethoscope}
-              label="Patients"
-              value={stats.totalPatients}
-              sub="Total enregistres"
-              color="blue"
-            />
-            <StatCard
-              icon={FileText}
-              label="Annotations"
-              value={stats.totalAnnotations}
-              sub="Total creees"
-              color="teal"
-            />
+            <StatCard icon={Users} label="Utilisateurs" value={stats.totalUsers} sub={`+${stats.signupsLast30Days} ce mois`} color="cyan" />
+            <StatCard icon={UserCheck} label="Abonnes actifs" value={(stats.byStatus.active || 0) + (stats.byStatus.trialing || 0)} sub={`${stats.byStatus.trialing || 0} en essai`} color="green" />
+            <StatCard icon={Stethoscope} label="Patients" value={stats.totalPatients} sub="Total enregistres" color="blue" />
+            <StatCard icon={FileText} label="Annotations" value={stats.totalAnnotations} sub="Total creees" color="teal" />
           </div>
         )}
 
@@ -531,7 +539,6 @@ export default function AdminDashboardPage() {
         {/* Users Table */}
         <Card className="bg-slate-800/50 backdrop-blur-sm border border-white/10">
           <CardContent className="p-0">
-            {/* Search & Filter */}
             <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -547,7 +554,6 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -564,21 +570,15 @@ export default function AdminDashboardPage() {
                   {filteredUsers.map((u) => {
                     const statusConfig = STATUS_LABELS[u.subscription_status] || DEFAULT_STATUS;
                     const StatusIcon = statusConfig.icon;
-                    const isCurrentUser = u.user_id === user?.id;
 
                     return (
                       <tr key={u.user_id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <td className="px-4 py-3">
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-white font-medium text-sm">{u.full_name || "Sans nom"}</span>
-                              {isCurrentUser && (
-                                <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">Vous</span>
-                              )}
-                            </div>
+                            <span className="text-white font-medium text-sm">{u.full_name || "Sans nom"}</span>
+                            <br />
                             <span className="text-white/40 text-xs">{u.email}</span>
                           </div>
-                          {/* Mobile status badge */}
                           <div className="md:hidden mt-1">
                             <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${statusConfig.color}`}>
                               <StatusIcon className="w-3 h-3" />
@@ -605,74 +605,32 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
-                            {/* Status change dropdown */}
                             <div className="relative group">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={actionLoading === u.user_id}
-                                className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs gap-1"
-                              >
-                                {actionLoading === u.user_id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <>
-                                    Statut
-                                    <ChevronDown className="w-3 h-3" />
-                                  </>
-                                )}
+                              <Button variant="ghost" size="sm" disabled={actionLoading === u.user_id} className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs gap-1">
+                                {actionLoading === u.user_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><span>Statut</span><ChevronDown className="w-3 h-3" /></>}
                               </Button>
                               <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-white/15 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[140px]">
                                 {["active", "trialing", "pending_payment", "canceled"].map((s) => (
-                                  <button
-                                    key={s}
-                                    onClick={() => handleUpdateStatus(u.user_id, s)}
-                                    className={`w-full text-left px-3 py-2 text-xs hover:bg-white/10 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                                      u.subscription_status === s ? "text-cyan-400" : "text-white/70"
-                                    }`}
-                                  >
+                                  <button key={s} onClick={() => handleUpdateStatus(u.user_id, s)} className={`w-full text-left px-3 py-2 text-xs hover:bg-white/10 transition-colors first:rounded-t-lg last:rounded-b-lg ${u.subscription_status === s ? "text-cyan-400" : "text-white/70"}`}>
                                     {STATUS_LABELS[s]?.label || s}
                                   </button>
                                 ))}
                               </div>
                             </div>
 
-                            {/* Delete */}
-                            {!isCurrentUser && (
-                              showDeleteConfirm === u.user_id ? (
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteUser(u.user_id)}
-                                    disabled={actionLoading === u.user_id}
-                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 px-2 text-xs"
-                                  >
-                                    {actionLoading === u.user_id ? (
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                      "Confirmer"
-                                    )}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowDeleteConfirm(null)}
-                                    className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs"
-                                  >
-                                    Annuler
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setShowDeleteConfirm(u.user_id)}
-                                  className="text-white/30 hover:text-red-400 hover:bg-red-500/10 h-8 w-8 p-0"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                            {showDeleteConfirm === u.user_id ? (
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(u.user_id)} disabled={actionLoading === u.user_id} className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 px-2 text-xs">
+                                  {actionLoading === u.user_id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirmer"}
                                 </Button>
-                              )
+                                <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(null)} className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs">
+                                  Annuler
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(u.user_id)} className="text-white/30 hover:text-red-400 hover:bg-red-500/10 h-8 w-8 p-0">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
                             )}
                           </div>
                         </td>
@@ -696,7 +654,6 @@ export default function AdminDashboardPage() {
   );
 }
 
-// Composant stat card
 function StatCard({ icon: Icon, label, value, sub, color }: {
   icon: typeof Users;
   label: string;

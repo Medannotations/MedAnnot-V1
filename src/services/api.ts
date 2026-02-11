@@ -348,29 +348,41 @@ export const aiGeneration = {
 
 // ============ ADMIN ============
 export const admin = {
-  // 2FA: Request access code (sent to admin email)
-  async requestAccess(): Promise<{ message: string }> {
-    return fetchWithAuth('/admin/request-access', { method: 'POST' });
+  // Login autonome admin (email + password → vérifie admin → envoie code 2FA)
+  async login(email: string, password: string): Promise<{ token: string; codeSent: boolean; email: string }> {
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    const response = await fetch(`${API_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Erreur serveur' }));
+      throw new ApiError(response.status, error.error || 'Erreur inconnue');
+    }
+    const data = await response.json();
+    // Sauvegarder le JWT temporaire pour les requêtes admin suivantes
+    setToken(data.token);
+    return data;
   },
 
-  // 2FA: Verify access code
-  async verifyAccess(code: string): Promise<{ token: string; expiresAt: string }> {
-    return fetchWithAuth('/admin/verify-access', {
+  // Vérifier le code 2FA
+  async verifyCode(code: string): Promise<{ token: string }> {
+    return fetchWithAuth('/admin/verify-code', {
       method: 'POST',
       body: JSON.stringify({ code }),
     });
   },
 
-  // 2FA: Check existing session
-  async checkSession(token: string): Promise<{ valid: boolean }> {
-    return fetchWithAuth('/admin/check-session', {
+  // Vérifier session admin existante
+  async checkSession(sessionToken: string): Promise<{ valid: boolean }> {
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    const response = await fetch(`${API_URL}/admin/check-session`, {
       method: 'POST',
-      body: JSON.stringify({ token }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: sessionToken }),
     });
-  },
-
-  async checkAccess(): Promise<{ isAdmin: boolean }> {
-    return fetchWithAuth('/admin/check');
+    return response.json();
   },
 
   async getStats() {

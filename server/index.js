@@ -1463,30 +1463,70 @@ app.get('/api/admin/check', authenticateToken, async (req, res) => {
   }
 });
 
-// Admin 2FA - Demander un code d'accès (envoyé par email)
-app.post('/api/admin/request-access', authenticateToken, requireAdmin, async (req, res) => {
+// Admin login autonome (email + password → vérifie admin → envoie code 2FA)
+app.post('/api/admin/login', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { email, password } = req.body;
 
-    // Générer un code à 6 chiffres
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email et mot de passe requis' });
+    }
+
+    // Trouver l'utilisateur
+    const { rows: users } = await pool.query(
+      'SELECT * FROM auth.users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Identifiants incorrects' });
+    }
+
+    const user = users[0];
+
+    // Vérifier le mot de passe
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Identifiants incorrects' });
+    }
+
+    // Vérifier que c'est un admin
+    const { rows: profiles } = await pool.query(
+      'SELECT is_admin, email FROM profiles WHERE user_id = $1',
+      [user.id]
+    );
+
+    if (!profiles[0]?.is_admin) {
+      return res.status(403).json({ error: 'Cet email n\'a pas les droits d\'administration' });
+    }
+
+    // Générer un JWT temporaire (pour les requêtes admin suivantes)
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Générer et envoyer le code 2FA
     const code = crypto.randomInt(100000, 999999).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    adminCodes.set(user.id, { code, expiresAt: Date.now() + 10 * 60 * 1000 });
 
-    adminCodes.set(userId, { code, expiresAt });
+    await emailService.sendAdminAccessCode(email, code);
 
-    // Envoyer le code par email à l'adresse admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'contact@medannot.ch';
-    await emailService.sendAdminAccessCode(adminEmail, code);
-
-    res.json({ sent: true, email: adminEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3') });
+    res.json({
+      token,
+      codeSent: true,
+      email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+    });
   } catch (error) {
-    console.error('Admin request access error:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'envoi du code' });
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Erreur de connexion' });
   }
 });
 
 // Admin 2FA - Vérifier le code
-app.post('/api/admin/verify-access', authenticateToken, requireAdmin, async (req, res) => {
+app.post('/api/admin/verify-code', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const userId = req.user.id;
     const { code } = req.body;
@@ -1494,50 +1534,46 @@ app.post('/api/admin/verify-access', authenticateToken, requireAdmin, async (req
     const stored = adminCodes.get(userId);
 
     if (!stored) {
-      return res.status(400).json({ error: 'Aucun code demandé. Veuillez en demander un nouveau.' });
+      return res.status(400).json({ error: 'Aucun code demandé. Reconnectez-vous.' });
     }
 
     if (Date.now() > stored.expiresAt) {
       adminCodes.delete(userId);
-      return res.status(400).json({ error: 'Code expiré. Veuillez en demander un nouveau.' });
+      return res.status(400).json({ error: 'Code expiré. Reconnectez-vous.' });
     }
 
     if (stored.code !== code) {
       return res.status(400).json({ error: 'Code incorrect' });
     }
 
-    // Code valide - créer une session admin (24h)
+    // Code valide → session admin 24h
     adminCodes.delete(userId);
     const sessionToken = crypto.randomBytes(32).toString('hex');
     adminSessions.set(sessionToken, {
       userId,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
     });
 
     res.json({ token: sessionToken });
   } catch (error) {
-    console.error('Admin verify access error:', error);
-    res.status(500).json({ error: 'Erreur lors de la vérification' });
+    console.error('Admin verify code error:', error);
+    res.status(500).json({ error: 'Erreur de vérification' });
   }
 });
 
-// Admin 2FA - Vérifier la session active
-app.post('/api/admin/check-session', authenticateToken, requireAdmin, async (req, res) => {
+// Admin - Vérifier session active
+app.post('/api/admin/check-session', async (req, res) => {
   try {
     const { token } = req.body;
-
-    if (!token) {
-      return res.json({ valid: false });
-    }
+    if (!token) return res.json({ valid: false });
 
     const session = adminSessions.get(token);
-
-    if (!session || Date.now() > session.expiresAt || session.userId !== req.user.id) {
+    if (!session || Date.now() > session.expiresAt) {
       if (session) adminSessions.delete(token);
       return res.json({ valid: false });
     }
 
-    res.json({ valid: true });
+    res.json({ valid: true, userId: session.userId });
   } catch (error) {
     res.json({ valid: false });
   }
