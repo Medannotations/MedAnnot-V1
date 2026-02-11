@@ -178,7 +178,7 @@ const sendWelcomeEmail = async (email, fullName) => {
       <p>Vous pouvez vous connecter immédiatement et commencer à créer vos premières annotations.</p>
     </div>
 
-    <a href="https://medannot.ch/signup" class="button">Accéder à mon compte</a>
+    <a href="https://medannot.ch/?login=true" class="button">Accéder à mon compte</a>
 
     <div class="divider"></div>
 
