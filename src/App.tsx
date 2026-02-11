@@ -60,6 +60,7 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/signup" element={<SignupCheckoutPage />} />
             <Route path="/success" element={<SuccessPage />} />
+            <Route path="/subscription-required" element={<PendingPaymentPage />} />
             <Route path="/pending-payment" element={<PendingPaymentPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

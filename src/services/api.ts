@@ -191,6 +191,13 @@ export const stripeCheckout = {
     });
   },
 
+  async verifySession(sessionId: string) {
+    return fetchWithAuth('/stripe/verify-session', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId }),
+    });
+  },
+
   async cancel() {
     return fetchWithAuth('/stripe-cancel-subscription', {
       method: 'POST',

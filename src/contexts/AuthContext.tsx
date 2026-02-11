@@ -3,8 +3,8 @@
  * Auth maison avec JWT
  */
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { auth, profile, setToken, removeToken, getToken } from "@/services/api";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { auth, profile as profileApi, removeToken, getToken } from "@/services/api";
 
 interface User {
   id: string;
@@ -17,7 +17,7 @@ interface Profile {
   user_id: string;
   email: string;
   full_name: string | null;
-  subscription_status: "none" | "active" | "past_due" | "canceled" | "trialing" | "pending_payment";
+  subscription_status: "none" | "active" | "past_due" | "canceled" | "trialing" | "pending_payment" | "incomplete" | "unpaid";
   subscription_current_period_end: string | null;
   stripe_customer_id: string | null;
   created_at: string;
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         // Récupérer le profil avec le token existant
-        const profileData = await profile.get();
+        const profileData = await profileApi.get();
         setProfile(profileData);
         setUser({
           id: profileData.user_id,
@@ -90,14 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     try {
-      const data = await profile.get();
+      const data = await profileApi.get();
       setProfile(data);
     } catch (error) {
       console.error("Profile refresh error:", error);
     }
-  };
+  }, []);
 
   const signup = async (email: string, password: string, name?: string) => {
     const data = await auth.register(email, password, name || "");

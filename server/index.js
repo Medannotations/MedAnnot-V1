@@ -619,6 +619,52 @@ app.post('/api/get-subscription', authenticateToken, async (req, res) => {
   }
 });
 
+// Verify Stripe Checkout Session (appelé par le frontend après paiement)
+app.post('/api/stripe/verify-session', authenticateToken, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const userId = req.user.id;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID manquant' });
+    }
+
+    // Récupérer la session depuis Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // Vérifier que la session appartient bien à cet utilisateur
+    if (session.client_reference_id !== userId) {
+      return res.status(403).json({ error: 'Session non autorisée' });
+    }
+
+    // Si le paiement est complété, mettre à jour le profil
+    if (session.status === 'complete') {
+      await pool.query(
+        `UPDATE profiles SET
+          subscription_status = 'trialing',
+          stripe_customer_id = COALESCE(stripe_customer_id, $1),
+          subscription_id = COALESCE(subscription_id, $2),
+          updated_at = NOW()
+        WHERE user_id = $3 AND subscription_status = 'pending_payment'`,
+        [session.customer, session.subscription, userId]
+      );
+
+      // Récupérer le profil mis à jour
+      const { rows } = await pool.query(
+        'SELECT * FROM profiles WHERE user_id = $1',
+        [userId]
+      );
+
+      return res.json({ verified: true, profile: rows[0] });
+    }
+
+    res.json({ verified: false, status: session.status });
+  } catch (error) {
+    console.error('Verify session error:', error);
+    res.status(500).json({ error: 'Erreur lors de la vérification' });
+  }
+});
+
 // Stripe Webhook
 app.post('/api/webhooks/stripe', async (req, res) => {
   const sig = req.headers['stripe-signature'];
