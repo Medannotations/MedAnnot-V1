@@ -163,7 +163,6 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     if (existing.length > 0) {
-      client.release();
       return res.status(400).json({ error: 'Cet email est déjà utilisé' });
     }
 
