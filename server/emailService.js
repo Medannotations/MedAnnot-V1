@@ -346,9 +346,60 @@ const sendPasswordChangedEmail = async (email, fullName) => {
   }
 };
 
+// Email de code d'accès admin (2FA)
+const sendAdminAccessCode = async (email, code) => {
+  const content = `
+    <div style="text-align: center; padding: 20px 0;">
+      <div style="background: linear-gradient(135deg, #ef4444, #dc2626); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-bottom: 20px;">
+        <span style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Acces Admin</span>
+      </div>
+    </div>
+
+    <h2 style="color: #1e293b; font-size: 22px; text-align: center; margin-bottom: 10px;">
+      Code de verification admin
+    </h2>
+
+    <p style="color: #64748b; text-align: center; margin-bottom: 30px;">
+      Une demande d'acces au panneau d'administration MedAnnot a ete effectuee.
+    </p>
+
+    <div style="background: #f1f5f9; border-radius: 12px; padding: 30px; text-align: center; margin: 0 auto 30px; max-width: 300px;">
+      <p style="color: #64748b; font-size: 12px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Votre code</p>
+      <div style="font-size: 36px; font-weight: 700; color: #0f172a; letter-spacing: 8px; font-family: monospace;">
+        ${code}
+      </div>
+      <p style="color: #94a3b8; font-size: 12px; margin: 10px 0 0;">Expire dans 10 minutes</p>
+    </div>
+
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
+      <p style="color: #991b1b; font-size: 13px; margin: 0;">
+        <strong>Si vous n'avez pas demande ce code</strong>, quelqu'un tente d'acceder a votre panneau admin.
+        Changez immediatement votre mot de passe.
+      </p>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: `"MedAnnot Admin" <${process.env.SMTP_FROM || 'noreply@medannot.ch'}>`,
+    to: email,
+    subject: `🔐 Code admin MedAnnot : ${code}`,
+    html: getEmailTemplate(content, 'Acces Admin'),
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email code admin envoyé:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Erreur envoi email code admin:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
+  sendAdminAccessCode,
   transporter,
 };

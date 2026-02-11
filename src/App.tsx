@@ -30,6 +30,8 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordConfirmPage from "./pages/ResetPasswordConfirmPage";
 import AdminFixAnnotations from "./pages/AdminFixAnnotations";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import { CrispChat } from "./components/CrispChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -53,6 +55,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <CrispChat />
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
@@ -72,7 +75,8 @@ const App = () => (
             <Route path="/terms-of-sale" element={<TermsOfSalePage />} />
             <Route path="/legal-notice" element={<LegalNoticePage />} />
 
-            {/* Admin Route */}
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboardPage />} />
             <Route
               path="/admin/fix-annotations"
               element={

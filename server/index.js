@@ -16,11 +16,16 @@ const path = require('path');
 const multer = require('multer');
 const OpenAI = require('openai');
 const fs = require('fs');
+const crypto = require('crypto');
 require('dotenv').config();
 const emailService = require('./emailService');
 // Initialisation
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Store pour les codes 2FA admin (en mémoire, reset au redémarrage)
+const adminCodes = new Map(); // userId -> { code, expiresAt }
+const adminSessions = new Map(); // token -> { userId, expiresAt }
 
 // Database - Configuration compatible Exoscale/Aiven DBaaS (certificat auto-signé)
 const pool = new Pool({
@@ -1297,6 +1302,247 @@ app.delete('/api/patient-tags/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ============ ADMIN ============
+
+// Admin middleware - vérifie que l'utilisateur est admin
+const requireAdmin = async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT is_admin FROM profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    if (!rows[0]?.is_admin) {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur vérification admin' });
+  }
+};
+
+// Stats globales admin
+app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const [
+      { rows: totalUsers },
+      { rows: statusCounts },
+      { rows: recentSignups },
+      { rows: totalPatients },
+      { rows: totalAnnotations },
+    ] = await Promise.all([
+      pool.query('SELECT COUNT(*) as count FROM profiles'),
+      pool.query(`SELECT subscription_status, COUNT(*) as count FROM profiles GROUP BY subscription_status`),
+      pool.query(`SELECT COUNT(*) as count FROM profiles WHERE created_at > NOW() - INTERVAL '30 days'`),
+      pool.query('SELECT COUNT(*) as count FROM patients'),
+      pool.query('SELECT COUNT(*) as count FROM annotations'),
+    ]);
+
+    const statusMap = {};
+    statusCounts.forEach(row => { statusMap[row.subscription_status] = parseInt(row.count); });
+
+    res.json({
+      totalUsers: parseInt(totalUsers[0].count),
+      signupsLast30Days: parseInt(recentSignups[0].count),
+      totalPatients: parseInt(totalPatients[0].count),
+      totalAnnotations: parseInt(totalAnnotations[0].count),
+      byStatus: statusMap,
+    });
+  } catch (error) {
+    console.error('Admin stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Liste tous les utilisateurs
+app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        p.id, p.user_id, p.full_name, p.email, p.subscription_status,
+        p.stripe_customer_id, p.subscription_id, p.created_at, p.updated_at,
+        p.subscription_current_period_end,
+        (SELECT COUNT(*) FROM patients WHERE user_id = p.user_id) as patient_count,
+        (SELECT COUNT(*) FROM annotations WHERE user_id = p.user_id) as annotation_count
+      FROM profiles p
+      ORDER BY p.created_at DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error('Admin users error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Modifier le statut d'un utilisateur
+app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { subscription_status, is_admin } = req.body;
+
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (subscription_status !== undefined) {
+      updates.push(`subscription_status = $${paramCount++}`);
+      values.push(subscription_status);
+    }
+    if (is_admin !== undefined) {
+      updates.push(`is_admin = $${paramCount++}`);
+      values.push(is_admin);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'Aucune modification' });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(userId);
+
+    const { rows } = await pool.query(
+      `UPDATE profiles SET ${updates.join(', ')} WHERE user_id = $${paramCount} RETURNING *`,
+      values
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Admin update user error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Supprimer un utilisateur et toutes ses données
+app.delete('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId } = req.params;
+
+    // Empêcher de se supprimer soi-même
+    if (userId === req.user.id) {
+      return res.status(400).json({ error: 'Impossible de supprimer votre propre compte' });
+    }
+
+    await client.query('BEGIN');
+
+    // Supprimer dans l'ordre (contraintes FK)
+    await client.query('DELETE FROM annotations WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM patients WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM phrase_templates WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM patient_tags WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM example_annotations WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM user_configurations WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM profiles WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM auth.users WHERE id = $1', [userId]);
+
+    await client.query('COMMIT');
+
+    res.json({ success: true });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Admin delete user error:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+// Vérifier si l'utilisateur est admin
+app.get('/api/admin/check', authenticateToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT is_admin FROM profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json({ isAdmin: !!rows[0]?.is_admin });
+  } catch (error) {
+    res.json({ isAdmin: false });
+  }
+});
+
+// Admin 2FA - Demander un code d'accès (envoyé par email)
+app.post('/api/admin/request-access', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Générer un code à 6 chiffres
+    const code = crypto.randomInt(100000, 999999).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    adminCodes.set(userId, { code, expiresAt });
+
+    // Envoyer le code par email à l'adresse admin
+    const adminEmail = process.env.ADMIN_EMAIL || 'contact@medannot.ch';
+    await emailService.sendAdminAccessCode(adminEmail, code);
+
+    res.json({ sent: true, email: adminEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3') });
+  } catch (error) {
+    console.error('Admin request access error:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'envoi du code' });
+  }
+});
+
+// Admin 2FA - Vérifier le code
+app.post('/api/admin/verify-access', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { code } = req.body;
+
+    const stored = adminCodes.get(userId);
+
+    if (!stored) {
+      return res.status(400).json({ error: 'Aucun code demandé. Veuillez en demander un nouveau.' });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      adminCodes.delete(userId);
+      return res.status(400).json({ error: 'Code expiré. Veuillez en demander un nouveau.' });
+    }
+
+    if (stored.code !== code) {
+      return res.status(400).json({ error: 'Code incorrect' });
+    }
+
+    // Code valide - créer une session admin (24h)
+    adminCodes.delete(userId);
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    adminSessions.set(sessionToken, {
+      userId,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+    });
+
+    res.json({ verified: true, adminToken: sessionToken });
+  } catch (error) {
+    console.error('Admin verify access error:', error);
+    res.status(500).json({ error: 'Erreur lors de la vérification' });
+  }
+});
+
+// Admin 2FA - Vérifier la session active
+app.post('/api/admin/check-session', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { adminToken } = req.body;
+
+    if (!adminToken) {
+      return res.json({ valid: false });
+    }
+
+    const session = adminSessions.get(adminToken);
+
+    if (!session || Date.now() > session.expiresAt || session.userId !== req.user.id) {
+      if (session) adminSessions.delete(adminToken);
+      return res.json({ valid: false });
+    }
+
+    res.json({ valid: true });
+  } catch (error) {
+    res.json({ valid: false });
+  }
+});
+
 // Servir le frontend (React build)
 // Supporte à la fois Docker (./dist) et dev local (../dist)
 const distPath = fs.existsSync(path.join(__dirname, './dist'))
@@ -1566,10 +1812,30 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur serveur interne' });
 });
 
+// Auto-migration au démarrage
+async function runMigrations() {
+  try {
+    // Ajouter colonne is_admin si elle n'existe pas
+    await pool.query(`
+      ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE
+    `);
+
+    // Définir l'admin par défaut
+    await pool.query(`
+      UPDATE profiles SET is_admin = TRUE WHERE email = 'contact.medannot@gmail.com'
+    `);
+
+    console.log('✅ Migrations OK');
+  } catch (error) {
+    console.error('Migration error:', error.message);
+  }
+}
+
 // Démarrage
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`🚀 MedAnnot API server running on port ${port}`);
   console.log(`📊 Health check: http://localhost:${port}/api/health`);
+  await runMigrations();
 });
 
 module.exports = app;

@@ -346,4 +346,53 @@ export const aiGeneration = {
   },
 };
 
+// ============ ADMIN ============
+export const admin = {
+  // 2FA: Request access code (sent to admin email)
+  async requestAccess(): Promise<{ message: string }> {
+    return fetchWithAuth('/admin/request-access', { method: 'POST' });
+  },
+
+  // 2FA: Verify access code
+  async verifyAccess(code: string): Promise<{ token: string; expiresAt: string }> {
+    return fetchWithAuth('/admin/verify-access', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  },
+
+  // 2FA: Check existing session
+  async checkSession(token: string): Promise<{ valid: boolean }> {
+    return fetchWithAuth('/admin/check-session', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  async checkAccess(): Promise<{ isAdmin: boolean }> {
+    return fetchWithAuth('/admin/check');
+  },
+
+  async getStats() {
+    return fetchWithAuth('/admin/stats');
+  },
+
+  async getUsers() {
+    return fetchWithAuth('/admin/users');
+  },
+
+  async updateUser(userId: string, updates: { subscription_status?: string; is_admin?: boolean }) {
+    return fetchWithAuth(`/admin/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteUser(userId: string) {
+    return fetchWithAuth(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 export { ApiError, getToken, setToken, removeToken };

@@ -20,6 +20,7 @@ interface Profile {
   subscription_status: "none" | "active" | "past_due" | "canceled" | "trialing" | "pending_payment" | "incomplete" | "unpaid";
   subscription_current_period_end: string | null;
   stripe_customer_id: string | null;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
