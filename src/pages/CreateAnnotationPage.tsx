@@ -28,6 +28,7 @@ import {
 import { usePatients, type Patient } from "@/hooks/usePatients";
 import { useUserConfigurationWithDefault, useExampleAnnotations } from "@/hooks/useConfiguration";
 import { useCreateAnnotation, useAnnotationsByPatient } from "@/hooks/useAnnotations";
+import { useTodayVitalSigns } from "@/hooks/usePatientVitalSigns";
 import { transcribeAudio, generateAnnotation } from "@/services/aiService";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,7 @@ export default function CreateAnnotationPage() {
   const { data: config, isDefault: isDefaultConfig } = useUserConfigurationWithDefault();
   const { data: examples } = useExampleAnnotations();
   const { data: patientAnnotations } = useAnnotationsByPatient(selectedPatient?.id);
+  const { data: todayVitalSigns } = useTodayVitalSigns(selectedPatient?.id, visitDate);
   const createAnnotation = useCreateAnnotation();
   const { saveState, loadState, clearState, markHandled, hasDraft, isReady } = usePersistedAnnotationState();
 
@@ -253,6 +255,9 @@ export default function CreateAnnotationPage() {
             date: a.visit_date,
             content: a.content,
           })) || [],
+
+        // Pass vital signs for the visit date
+        vitalSigns: todayVitalSigns || undefined,
       });
       setAnnotation(result);
       setStep("result");
@@ -292,17 +297,18 @@ export default function CreateAnnotationPage() {
     
 
     console.log("[handleSave] Saving annotation:", {
-      patient_id: selectedPatient.id,
+      patientId: selectedPatient.id,
       annotation_length: annotation.length,
       visit_date: visitDate,
       visit_time: visitTime,
       visit_duration: visitDuration,
     });
-    
+
     setIsSaving(true);
     try {
       await createAnnotation.mutateAsync({
-        patient_id: selectedPatient.id,
+        patient_id: selectedPatient.id,  // snake_case pour le hook
+        patientId: selectedPatient.id,   // camelCase pour l'API
         visit_date: visitDate,
         visit_time: visitTime,
         visit_duration: visitDuration || 30,
@@ -317,7 +323,7 @@ export default function CreateAnnotationPage() {
       clearState(); // Clear persisted state on successful save
       toast({
         title: "✓ Annotation enregistrée",
-        description: "L'annotation a été sauvegardée avec succès."
+        description: "L'annotation a été sauvegardée et liée au patient."
       });
       navigate("/app/annotations");
     } catch (error: any) {

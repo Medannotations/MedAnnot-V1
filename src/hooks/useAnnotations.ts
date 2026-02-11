@@ -12,6 +12,7 @@ export interface Annotation {
   id: string;
   user_id: string;
   patient_id?: string | null;
+  patientId?: string | null; // Alias pour compatibilité API
   content: string;
   type?: string;
   audio_url?: string | null;
@@ -19,12 +20,21 @@ export interface Annotation {
   tags?: string[];
   metadata?: Record<string, unknown>;
   vital_signs?: Record<string, unknown>;
+  visit_date?: string | null;
+  visit_time?: string | null;
+  visit_duration?: number | null;
   is_archived?: boolean;
   created_at: string;
   updated_at: string;
   // Joined data
   patient_first_name?: string;
   patient_last_name?: string;
+  // Patient join data
+  patients?: {
+    first_name: string;
+    last_name: string;
+    pathologies?: string | null;
+  } | null;
 }
 
 export interface AnnotationWithPatient extends Annotation {
@@ -37,6 +47,22 @@ export interface AnnotationWithPatient extends Annotation {
 
 export type AnnotationInsert = Omit<Annotation, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
 export type AnnotationUpdate = Partial<AnnotationInsert>;
+
+// Vérifie si une chaîne est chiffrée
+const isEncrypted = (data: string): boolean => {
+  return data?.startsWith('U2FsdGVkX1') || data?.startsWith('U2F');
+};
+
+// Helper pour déchiffrer en toute sécurité
+const safeDecrypt = (data: string | null | undefined, userId: string): string | null | undefined => {
+  if (!data) return data;
+  if (!isEncrypted(data)) return data;
+  try {
+    return decryptData(data, userId);
+  } catch {
+    return data;
+  }
+};
 
 // Helper pour déchiffrer une annotation
 const decryptAnnotation = (annotation: Annotation, userId: string): Annotation => {
@@ -55,7 +81,27 @@ const decryptAnnotation = (annotation: Annotation, userId: string): Annotation =
     // Données non chiffrées - garder le texte brut
   }
 
-  return { ...annotation, content, transcription };
+  // Normaliser patient_id/patientId
+  const result: any = { ...annotation, content, transcription };
+  
+  // S'assurer que patient_id est défini (compatibilité API qui utilise patientId)
+  if (!result.patient_id && result.patientId) {
+    result.patient_id = result.patientId;
+  }
+  if (!result.patientId && result.patient_id) {
+    result.patientId = result.patient_id;
+  }
+
+  // Déchiffrer les noms de patients joints (depuis le LEFT JOIN)
+  if (result.patients) {
+    result.patients = {
+      ...result.patients,
+      first_name: safeDecrypt(result.patients.first_name, userId) || result.patients.first_name,
+      last_name: safeDecrypt(result.patients.last_name, userId) || result.patients.last_name,
+    };
+  }
+
+  return result;
 };
 
 // Helper pour chiffrer une annotation
@@ -90,19 +136,29 @@ export function useAnnotations(filters?: {
       // Déchiffrer et filtrer
       let result = data
         .filter((a: Annotation) => !a.is_archived)
+        .filter((a: Annotation) => a.content && a.content.trim() !== '') // Exclure les annotations vides (signes vitaux uniquement)
         .map((a: Annotation) => decryptAnnotation(a, user.id));
       
-      // Filtre par patient
+      // Filtre par patient (vérifier patient_id ou patientId)
       if (filters?.patientId) {
-        result = result.filter((a: Annotation) => a.patient_id === filters.patientId);
+        result = result.filter((a: Annotation) => {
+          const annotationPatientId = a.patient_id || a.patientId;
+          return annotationPatientId === filters.patientId;
+        });
       }
       
-      // Filtre par date
+      // Filtre par date (utiliser visit_date si disponible, sinon created_at)
       if (filters?.startDate) {
-        result = result.filter((a: Annotation) => a.created_at >= filters.startDate!);
+        result = result.filter((a: Annotation) => {
+          const dateToCheck = a.visit_date || a.created_at;
+          return dateToCheck >= filters.startDate!;
+        });
       }
       if (filters?.endDate) {
-        result = result.filter((a: Annotation) => a.created_at <= filters.endDate!);
+        result = result.filter((a: Annotation) => {
+          const dateToCheck = a.visit_date || a.created_at;
+          return dateToCheck <= filters.endDate!;
+        });
       }
       
       // Recherche texte
@@ -112,14 +168,17 @@ export function useAnnotations(filters?: {
           (a: Annotation) =>
             a.content?.toLowerCase().includes(search) ||
             a.transcription?.toLowerCase().includes(search) ||
-            `${a.patient_last_name} ${a.patient_first_name}`.toLowerCase().includes(search)
+            `${a.patient_last_name} ${a.patient_first_name}`.toLowerCase().includes(search) ||
+            `${a.patients?.last_name} ${a.patients?.first_name}`.toLowerCase().includes(search)
         );
       }
       
-      // Trier par date
-      result.sort((a: Annotation, b: Annotation) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // Trier par date de visite (ou création)
+      result.sort((a: Annotation, b: Annotation) => {
+        const dateA = new Date(a.visit_date || a.created_at).getTime();
+        const dateB = new Date(b.visit_date || b.created_at).getTime();
+        return dateB - dateA;
+      });
 
       return result;
     },
@@ -157,9 +216,14 @@ export function useAnnotationsByPatient(patientId: string | undefined) {
       const data = await annotationsApi.list();
       
       return data
-        .filter((a: Annotation) => a.patient_id === patientId && !a.is_archived)
+        .filter((a: Annotation) => {
+          // Vérifier patient_id ou patientId (compatibilité)
+          const annotationPatientId = a.patient_id || a.patientId;
+          return annotationPatientId === patientId && !a.is_archived;
+        })
+        .filter((a: Annotation) => a.content && a.content.trim() !== '') // Exclure les annotations vides (signes vitaux uniquement)
         .map((a: Annotation) => decryptAnnotation(a, user.id))
-        .sort((a: Annotation, b: Annotation) => 
+        .sort((a: Annotation, b: Annotation) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
     },
@@ -175,16 +239,30 @@ export function useCreateAnnotation() {
     mutationFn: async (annotation: AnnotationInsert) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Normaliser les champs avant chiffrement (patient_id -> patientId pour l'API)
+      const normalizedAnnotation = { ...annotation };
+      if (normalizedAnnotation.patient_id && !normalizedAnnotation.patientId) {
+        normalizedAnnotation.patientId = normalizedAnnotation.patient_id;
+      }
+
       // Chiffrer les données sensibles
-      const encryptedAnnotation = encryptAnnotation(annotation, user.id);
+      const encryptedAnnotation = encryptAnnotation(normalizedAnnotation, user.id);
       
       const newAnnotation = await annotationsApi.create(encryptedAnnotation as AnnotationInsert);
       
       // Retourner déchiffré pour l'UI
       return decryptAnnotation(newAnnotation, user.id);
     },
-    onSuccess: () => {
+    onSuccess: (newAnnotation) => {
+      // Invalider toutes les queries d'annotations (globales et par patient)
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
+      // Invalider spécifiquement les annotations du patient
+      if (newAnnotation.patient_id || newAnnotation.patientId) {
+        const patientId = newAnnotation.patient_id || newAnnotation.patientId;
+        queryClient.invalidateQueries({ queryKey: ["annotations", "patient", patientId] });
+      }
+      // Invalider aussi les stats
+      queryClient.invalidateQueries({ queryKey: ["annotation-stats"] });
     },
   });
 }
@@ -208,6 +286,7 @@ export function useUpdateAnnotation() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
       queryClient.invalidateQueries({ queryKey: ["annotation", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["annotation-stats"] });
     },
   });
 }

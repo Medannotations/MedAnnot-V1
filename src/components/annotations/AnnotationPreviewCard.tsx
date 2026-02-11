@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  User,
+  ExternalLink,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -97,27 +100,27 @@ function detectEvolution(content: string): "up" | "down" | "stable" | null {
   return null;
 }
 
-// Composant compact pour un signe vital
-function VitalSignCompact({ 
-  icon: Icon, 
-  value, 
-  unit, 
+// Composant compact pour un signe vital - responsive
+function VitalSignCompact({
+  icon: Icon,
+  value,
+  unit,
   label,
-  color 
-}: { 
-  icon: React.ElementType; 
-  value?: number; 
+  color
+}: {
+  icon: React.ElementType;
+  value?: number;
   unit: string;
   label: string;
   color: string;
 }) {
   if (value === undefined || value === null) return null;
-  
+
   return (
-    <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md text-xs", color)}>
-      <Icon className="w-3 h-3" />
+    <div className={cn("flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium", color)}>
+      <Icon className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
       <span className="font-semibold">{value}</span>
-      <span className="opacity-70">{unit}</span>
+      <span className="opacity-60">{unit}</span>
     </div>
   );
 }
@@ -138,215 +141,212 @@ export function AnnotationPreviewCard({
   onDelete,
 }: AnnotationPreviewCardProps) {
   const [expanded, setExpanded] = useState(false);
-  
+
   const vitalSigns = annotation.vital_signs as VitalSigns;
   const hasVitals = vitalSigns && Object.keys(vitalSigns).length > 0;
   const themes = extractThemes(annotation.content);
-  const context = extractContext(annotation.content);
   const evolution = detectEvolution(annotation.content);
-  
+
   // Formater la date de façon plus lisible
-  const visitDate = parseISO(annotation.visit_date);
+  const visitDate = parseISO(annotation.visit_date || annotation.created_at);
   const isToday = new Date().toDateString() === visitDate.toDateString();
-  
+
   return (
-    <Card className="hover:shadow-md transition-shadow overflow-hidden">
+    <Card className="hover:shadow-lg transition-all duration-200 overflow-hidden border-l-4 border-l-primary/20 hover:border-l-primary/60">
       <CardContent className="p-0">
-        {/* Header avec date et statut */}
-        <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Date */}
-            <div className="flex items-center gap-1.5 text-sm font-medium">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              {isToday ? (
-                <span className="text-primary font-semibold">Aujourd'hui</span>
-              ) : (
-                <span>{format(visitDate, "d MMM yyyy", { locale: fr })}</span>
-              )}
+        {/* Header épuré - responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 bg-gradient-to-r from-muted/20 to-transparent">
+          {/* Info principale - toujours sur une ligne sur mobile si possible */}
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap min-w-0">
+            {/* Date principale */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <div className="p-1 sm:p-1.5 rounded-md bg-primary/10">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-foreground">
+                {isToday ? "Aujourd'hui" : format(visitDate, "d MMM yyyy", { locale: fr })}
+              </span>
             </div>
-            
-            {/* Heure */}
+
+            {/* Heure du RDV */}
             {annotation.visit_time && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Clock className="w-3.5 h-3.5" />
-                {annotation.visit_time.slice(0, 5)}
+              <div className="flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-50 border border-blue-200 rounded-lg shrink-0">
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-700" />
+                <span className="text-xs sm:text-sm font-semibold text-blue-700">
+                  {annotation.visit_time.slice(0, 5)}
+                </span>
               </div>
             )}
-            
-            {/* Durée */}
-            {annotation.visit_duration && (
-              <Badge variant="secondary" className="text-xs h-5">
-                {annotation.visit_duration} min
-              </Badge>
+
+            {/* Patient si liste globale - cliquable */}
+            {showPatient && annotation.patients && (
+              <Link 
+                to={`/app/patients/${annotation.patient_id || annotation.patientId}`}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 border border-primary/20 rounded-lg min-w-0 hover:bg-primary/20 transition-colors group"
+              >
+                <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                  {annotation.patients.last_name} {annotation.patients.first_name}
+                </span>
+                <ExternalLink className="w-3 h-3 text-primary/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </Link>
             )}
-            
-            {/* Evolution */}
+
+            {/* Indicateur d'évolution - masqué sur très petit écran */}
             {evolution && (
-              <Badge 
-                variant="outline" 
+              <div
                 className={cn(
-                  "text-xs h-5 gap-1",
-                  evolution === "up" && "border-green-300 text-green-700 bg-green-50",
-                  evolution === "down" && "border-red-300 text-red-700 bg-red-50",
-                  evolution === "stable" && "border-blue-300 text-blue-700 bg-blue-50"
+                  "hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium shrink-0",
+                  evolution === "up" && "bg-emerald-100 text-emerald-700",
+                  evolution === "down" && "bg-rose-100 text-rose-700",
+                  evolution === "stable" && "bg-sky-100 text-sky-700"
                 )}
               >
-                {evolution === "up" && <TrendingUp className="w-3 h-3" />}
-                {evolution === "down" && <TrendingDown className="w-3 h-3" />}
-                {evolution === "stable" && <Minus className="w-3 h-3" />}
-                {evolution === "up" ? "Amélioration" : evolution === "down" ? "À surveiller" : "Stable"}
-              </Badge>
+                {evolution === "up" && <TrendingUp className="w-3.5 h-3.5" />}
+                {evolution === "down" && <TrendingDown className="w-3.5 h-3.5" />}
+                {evolution === "stable" && <Minus className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{evolution === "up" ? "En amélioration" : evolution === "down" ? "Attention requise" : "État stable"}</span>
+              </div>
             )}
           </div>
-          
-          {/* Actions */}
-          <div className="flex items-center gap-1">
+
+          {/* Actions - mieux espacées sur mobile */}
+          <div className="flex items-center gap-1 sm:gap-0.5 shrink-0 self-end sm:self-auto">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onCopy(annotation.content)}
-              className="h-8 w-8"
-              title="Copier"
+              className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-primary/10 hover:text-primary"
+              title="Copier l'annotation"
             >
-              <Copy className="w-4 h-4" />
+              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onView(annotation)}
-              className="h-8 w-8"
-              title="Voir détails"
+              className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-primary/10 hover:text-primary"
+              title="Ouvrir en détail"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onDelete(annotation.id)}
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              title="Supprimer"
+              className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-destructive/10 hover:text-destructive"
+              title="Supprimer l'annotation"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           </div>
         </div>
-        
-        {/* Contenu principal */}
-        <div className="p-4 space-y-3">
-          {/* Patient (si affichage liste globale) */}
-          {showPatient && (
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-              {annotation.patients.last_name} {annotation.patients.first_name}
-            </div>
-          )}
-          
-          {/* Résumé clinique */}
-          {context && (
-            <div className="flex items-start gap-2">
-              <Stethoscope className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <p className="text-sm text-foreground font-medium leading-relaxed">
-                {context}
-              </p>
-            </div>
-          )}
-          
-          {/* Tags thématiques */}
-          {themes.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {themes.map((theme, i) => (
-                <Badge 
-                  key={i} 
-                  variant="outline" 
-                  className={cn(
-                    "text-xs h-6",
-                    theme === "Médication" && "border-amber-200 text-amber-700 bg-amber-50",
-                    theme === "Soins" && "border-cyan-200 text-cyan-700 bg-cyan-50",
-                    theme === "Contrôle" && "border-purple-200 text-purple-700 bg-purple-50",
-                    theme === "Symptômes" && "border-orange-200 text-orange-700 bg-orange-50",
-                    theme === "Stable" && "border-green-200 text-green-700 bg-green-50",
-                    theme === "À surveiller" && "border-red-200 text-red-700 bg-red-50"
-                  )}
-                >
-                  {theme === "Médication" && <Pill className="w-3 h-3 mr-1" />}
-                  {theme === "Soins" && <Activity className="w-3 h-3 mr-1" />}
-                  {theme === "Contrôle" && <CheckCircle className="w-3 h-3 mr-1" />}
-                  {theme === "Symptômes" && <AlertCircle className="w-3 h-3 mr-1" />}
-                  {theme === "Stable" && <CheckCircle className="w-3 h-3 mr-1" />}
-                  {theme === "À surveiller" && <AlertCircle className="w-3 h-3 mr-1" />}
-                  {theme}
-                </Badge>
-              ))}
-            </div>
-          )}
-          
-          {/* Signes vitaux compacts */}
-          {hasVitals && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              <VitalSignCompact
-                icon={Thermometer}
-                value={vitalSigns.temperature}
-                unit="°C"
-                label="Temp"
-                color="bg-orange-100 text-orange-700"
-              />
-              <VitalSignCompact
-                icon={Heart}
-                value={vitalSigns.heartRate}
-                unit="bpm"
-                label="Pouls"
-                color="bg-red-100 text-red-700"
-              />
-              {(vitalSigns.systolicBP || vitalSigns.diastolicBP) && (
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs bg-blue-100 text-blue-700">
-                  <Activity className="w-3 h-3" />
-                  <span className="font-semibold">
-                    {vitalSigns.systolicBP || "-"}/{vitalSigns.diastolicBP || "-"}
-                  </span>
-                  <span className="opacity-70">mmHg</span>
-                </div>
-              )}
-              <VitalSignCompact
-                icon={Wind}
-                value={vitalSigns.oxygenSaturation}
-                unit="%"
-                label="SaO2"
-                color="bg-cyan-100 text-cyan-700"
-              />
-              <VitalSignCompact
-                icon={Wind}
-                value={vitalSigns.respiratoryRate}
-                unit="/min"
-                label="FR"
-                color="bg-green-100 text-green-700"
-              />
-            </div>
-          )}
-          
-          {/* Aperçu du contenu */}
-          <div className="pt-2 border-t">
+
+        {/* Contenu principal - padding responsive */}
+        <div className="px-4 sm:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4">
+          {/* Contenu de l'annotation */}
+          <div className="space-y-2 sm:space-y-3">
             <p className={cn(
-              "text-muted-foreground whitespace-pre-line text-sm",
-              !expanded && "line-clamp-2"
+              "text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line",
+              !expanded && "line-clamp-3"
             )}>
               {annotation.content}
             </p>
-            
-            {annotation.content.length > 150 && (
+
+            {annotation.content.length > 200 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setExpanded(!expanded)}
-                className="mt-2 h-7 text-xs text-muted-foreground hover:text-foreground"
+                className="h-7 sm:h-8 text-xs font-medium text-primary hover:text-primary hover:bg-primary/5 -ml-2"
               >
                 {expanded ? (
-                  <><ChevronUp className="w-3 h-3 mr-1" /> Voir moins</>
+                  <>
+                    <ChevronUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
+                    Réduire
+                  </>
                 ) : (
-                  <><ChevronDown className="w-3 h-3 mr-1" /> Voir plus</>
+                  <>
+                    <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
+                    Lire la suite
+                  </>
                 )}
               </Button>
             )}
           </div>
+
+          {/* Métadonnées complémentaires */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 sm:pt-2">
+            {/* Durée de visite */}
+            {annotation.visit_duration && (
+              <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>Durée : {annotation.visit_duration} min</span>
+              </div>
+            )}
+
+            {/* Tags thématiques (max 2 pour éviter surcharge) */}
+            {themes.slice(0, 2).map((theme, i) => (
+              <Badge
+                key={i}
+                variant="secondary"
+                className="text-[10px] sm:text-xs font-normal h-5 sm:h-6 px-1.5 sm:px-2"
+              >
+                {theme}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Signes vitaux si présents - responsive */}
+          {hasVitals && (
+            <div className="pt-2 sm:pt-3 border-t border-dashed">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+                <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
+                <span className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Signes vitaux
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <VitalSignCompact
+                  icon={Thermometer}
+                  value={vitalSigns.temperature}
+                  unit="°C"
+                  label="Temp"
+                  color="bg-orange-50 text-orange-700 border border-orange-200"
+                />
+                <VitalSignCompact
+                  icon={Heart}
+                  value={vitalSigns.heartRate}
+                  unit="bpm"
+                  label="Pouls"
+                  color="bg-rose-50 text-rose-700 border border-rose-200"
+                />
+                {(vitalSigns.systolicBP || vitalSigns.diastolicBP) && (
+                  <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    <Activity className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                    <span className="font-semibold">
+                      {vitalSigns.systolicBP || "-"}/{vitalSigns.diastolicBP || "-"}
+                    </span>
+                    <span className="opacity-70">mmHg</span>
+                  </div>
+                )}
+                <VitalSignCompact
+                  icon={Wind}
+                  value={vitalSigns.oxygenSaturation}
+                  unit="%"
+                  label="SaO2"
+                  color="bg-cyan-50 text-cyan-700 border border-cyan-200"
+                />
+                <VitalSignCompact
+                  icon={Wind}
+                  value={vitalSigns.respiratoryRate}
+                  unit="/min"
+                  label="FR"
+                  color="bg-emerald-50 text-emerald-700 border border-emerald-200"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

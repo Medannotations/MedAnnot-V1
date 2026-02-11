@@ -241,9 +241,10 @@ export default function PatientDetailPage() {
         structure_used: config?.annotation_structure,
       });
 
-      // Invalider explicitement les queries du patient
-      await queryClient.invalidateQueries({ queryKey: ["annotations", "patient", patient.id] });
+      // Invalider explicitement TOUTES les queries d'annotations
       await queryClient.invalidateQueries({ queryKey: ["annotations"] });
+      // Forcer le rafraîchissement des annotations de ce patient spécifiquement
+      await queryClient.refetchQueries({ queryKey: ["annotations", "patient", patient.id] });
       await queryClient.invalidateQueries({ queryKey: ["vital-signs", patient.id] });
 
       toast({
