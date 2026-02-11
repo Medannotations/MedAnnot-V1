@@ -17,7 +17,7 @@ interface Profile {
   user_id: string;
   email: string;
   full_name: string | null;
-  subscription_status: "none" | "active" | "past_due" | "canceled" | "trialing";
+  subscription_status: "none" | "active" | "past_due" | "canceled" | "trialing" | "pending_payment";
   subscription_current_period_end: string | null;
   stripe_customer_id: string | null;
   created_at: string;

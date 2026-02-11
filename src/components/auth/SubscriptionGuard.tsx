@@ -1,8 +1,7 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Loader2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,95 +10,37 @@ interface ProtectedRouteProps {
 export function SubscriptionGuard({ children }: ProtectedRouteProps) {
   const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const hasToken = localStorage.getItem('medannot_token');
-
-    // Si pas de token du tout, rediriger immédiatement
-    if (!hasToken && !isLoading) {
-      navigate("/", { replace: true });
-      return;
-    }
-
-    // Si on est encore en train de charger, attendre
     if (isLoading) return;
 
-    // Si token existe mais pas encore d'user, ne PAS rediriger
-    // Laisser le temps à l'AuthContext de finir de charger
-    if (!user && hasToken) {
-      // L'user devrait se charger bientôt, ou le timeout forcera l'accès
-      return;
-    }
+    const hasToken = localStorage.getItem('medannot_token');
 
-    // Si vraiment pas de user et pas de token, rediriger
-    if (!user) {
+    // Pas de token → accueil
+    if (!hasToken || !user) {
       navigate("/", { replace: true });
       return;
     }
 
-    // Vérifier le statut d'abonnement
-    if (profile?.subscription_status === 'pending_payment') {
+    // Paiement en attente → page de paiement
+    if (!profile || profile.subscription_status === 'pending_payment') {
       navigate("/pending-payment", { replace: true });
       return;
     }
-
-    // User chargé avec succès et abonnement valide
-    setChecking(false);
   }, [user, profile, isLoading, navigate]);
 
-  // Timeout de sécurité maximum 5 secondes
-  useEffect(() => {
-    const maxTimeout = setTimeout(() => {
-      if (checking) {
-        console.log("Max timeout reached - forcing access");
-        setChecking(false);
-      }
-    }, 5000);
-
-    return () => clearTimeout(maxTimeout);
-  }, [checking]);
-
-  if (isLoading || checking) {
+  // Chargement en cours
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Chargement de votre espace...</p>
-          <p className="text-xs text-muted-foreground">Si ça prend plus de 5s, </p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setChecking(false)}
-            className="mt-2"
-          >
-            Forcer l'accès
-          </Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="bg-destructive/10 rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Problème de connexion</h2>
-          <p className="text-muted-foreground mb-6">{error}</p>
-          <div className="flex flex-col gap-3">
-            <Button onClick={() => window.location.reload()} className="w-full">
-              Réessayer
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/")} className="w-full">
-              Retour à l'accueil
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Bloquer si pas d'user ou pas de profil valide
+  if (!user || !profile) return null;
+  if (profile.subscription_status === 'pending_payment') return null;
 
   return <>{children}</>;
 }
