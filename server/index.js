@@ -152,34 +152,40 @@ app.get('/api/health', (req, res) => {
 
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
+  const client = await pool.connect();
   try {
     const { email, password, fullName } = req.body;
-    
+
     // Vérifier si l'email existe déjà
-    const { rows: existing } = await pool.query(
-      'SELECT * FROM auth.users WHERE email = $1',
+    const { rows: existing } = await client.query(
+      'SELECT id FROM auth.users WHERE email = $1',
       [email]
     );
-    
+
     if (existing.length > 0) {
+      client.release();
       return res.status(400).json({ error: 'Cet email est déjà utilisé' });
     }
-    
+
+    // Transaction pour garantir la cohérence
+    await client.query('BEGIN');
+
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Créer l'utilisateur
     const userId = require('crypto').randomUUID();
-    await pool.query(
+    await client.query(
       `INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
        VALUES ($1, $2, $3, NOW(), $4, NOW(), NOW())`,
       [userId, email, hashedPassword, JSON.stringify({ full_name: fullName })]
     );
 
     // Créer le profil (avec statut pending_payment)
-    await pool.query(
+    await client.query(
       `INSERT INTO profiles (id, user_id, full_name, email, subscription_status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'pending_payment', NOW(), NOW())`,
+       VALUES ($1, $2, $3, $4, 'pending_payment', NOW(), NOW())
+       ON CONFLICT (user_id) DO NOTHING`,
       [require('crypto').randomUUID(), userId, fullName, email]
     );
 
@@ -197,11 +203,14 @@ Conseils et éducation:
 Prochaine visite:
 Signature:`;
 
-    await pool.query(
+    await client.query(
       `INSERT INTO user_configurations (id, user_id, annotation_structure, created_at, updated_at)
-       VALUES ($1, $2, $3, NOW(), NOW())`,
+       VALUES ($1, $2, $3, NOW(), NOW())
+       ON CONFLICT (user_id) DO NOTHING`,
       [require('crypto').randomUUID(), userId, defaultStructure]
     );
+
+    await client.query('COMMIT');
 
     // Générer token
     const token = jwt.sign(
@@ -210,13 +219,13 @@ Signature:`;
       { expiresIn: '7d' }
     );
 
-    // NE PAS envoyer l'email de bienvenue ici - sera envoyé après confirmation Stripe
-    // via le webhook stripe
-
     res.json({ token, user: { id: userId, email, fullName } });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Register error:', error);
     res.status(500).json({ error: 'Erreur lors de l\'inscription' });
+  } finally {
+    client.release();
   }
 });
 
