@@ -55,8 +55,8 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <CrispChat />
         <BrowserRouter>
+          <CrispChat />
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<LandingPage />} />
