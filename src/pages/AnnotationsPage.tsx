@@ -205,13 +205,14 @@ export default function AnnotationsPage() {
     try {
       await deleteAnnotation.mutateAsync(deleteId);
       toast({
-        title: "Annotation supprimée",
+        title: "✓ Annotation supprimée",
         description: "L'annotation a été supprimée avec succès.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[DeleteAnnotation] Error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer l'annotation.",
+        description: error.message || "Impossible de supprimer l'annotation. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {

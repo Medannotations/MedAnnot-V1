@@ -306,11 +306,12 @@ export function useDeleteAnnotation() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Soft delete (archive)
-      return annotationsApi.update(id, { is_archived: true });
+      // Suppression définitive
+      return annotationsApi.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
+      queryClient.invalidateQueries({ queryKey: ["annotation-stats"] });
     },
   });
 }

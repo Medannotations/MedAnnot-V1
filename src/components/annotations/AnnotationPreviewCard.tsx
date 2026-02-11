@@ -26,6 +26,7 @@ import {
   Minus,
   User,
   ExternalLink,
+  Pencil,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -236,6 +237,18 @@ export function AnnotationPreviewCard({
               title="Ouvrir en détail"
             >
               <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </Button>
+            {/* Bouton Modifier - redirige vers page d'édition */}
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-amber-100 hover:text-amber-600"
+              title="Modifier l'annotation"
+            >
+              <Link to={`/app/annotations/${annotation.id}/edit`}>
+                <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Link>
             </Button>
             <Button
               variant="ghost"
