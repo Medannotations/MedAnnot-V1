@@ -60,7 +60,7 @@ export default function DashboardHome() {
     {
       label: "Définir votre structure d'annotation",
       description: "Choisissez comment l'IA doit organiser vos annotations : par sections (motif, observations, soins...) ou chronologiquement. Plusieurs modèles sont proposés.",
-      completed: !!config?.annotation_structure && config.annotation_structure.length > 50,
+      completed: !!config?.annotation_structure && config.annotation_structure.length > 50 && !config.annotation_structure.startsWith('Date et heure de la visite:'),
       href: "/app/configuration?tab=structure",
       icon: Settings,
     },

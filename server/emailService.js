@@ -178,7 +178,7 @@ const sendWelcomeEmail = async (email, fullName) => {
       <p>Vous pouvez vous connecter immédiatement et commencer à créer vos premières annotations.</p>
     </div>
 
-    <a href="https://medannot.ch/login" class="button">Accéder à mon compte</a>
+    <a href="https://medannot.ch/signup" class="button">Accéder à mon compte</a>
 
     <div class="divider"></div>
 
@@ -227,7 +227,7 @@ const sendWelcomeEmail = async (email, fullName) => {
 
     <div class="divider"></div>
 
-    <p>Besoin d'aide pour démarrer ? N'hésitez pas à consulter notre <a href="https://medannot.ch/guide" style="color: #667eea; text-decoration: none;">guide de démarrage</a> ou à nous contacter.</p>
+    <p>Besoin d'aide pour démarrer ? Connectez-vous et suivez le <a href="https://medannot.ch/app" style="color: #667eea; text-decoration: none;">guide de démarrage</a> sur votre tableau de bord, ou contactez-nous.</p>
 
     <p style="margin-top: 32px;">À bientôt sur MedAnnot !</p>
     <p><strong>L'équipe MedAnnot</strong></p>
