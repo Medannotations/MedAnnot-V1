@@ -1858,7 +1858,7 @@ async function runMigrations() {
 
     // Définir les admins par défaut
     await pool.query(`
-      UPDATE profiles SET is_admin = TRUE WHERE email IN ('contact.medannot@gmail.com', 'ahmedbmk.contact@gmail.com')
+      UPDATE profiles SET is_admin = TRUE WHERE email = 'contact.medannot@gmail.com'
     `);
 
     console.log('✅ Migrations OK');

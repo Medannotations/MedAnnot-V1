@@ -6,11 +6,11 @@ const CRISP_WEBSITE_ID = import.meta.env.VITE_CRISP_WEBSITE_ID;
 const STYLE_ID = "crisp-custom-style";
 
 /**
- * Crisp Chat Widget - Configuration discrete
- * - Bubble petite et semi-transparente, pleinement visible au hover
- * - Positionnee a gauche pour ne pas gener les CTAs
- * - Sur mobile dans le dashboard: remontee au-dessus de la bottom nav (h-16)
- * - Sur landing page: encore plus discrete pour ne pas gener la conversion
+ * Crisp Chat Widget - Configuration discrete MedAnnot
+ * - Desktop: a droite (position par defaut)
+ * - Mobile landing: a gauche, au-dessus du sticky CTA (~80px)
+ * - Mobile dashboard: a gauche, au-dessus de la bottom nav (h-16)
+ * - Couleur personnalisee #25B2BD
  */
 export function CrispChat() {
   const location = useLocation();
@@ -25,16 +25,14 @@ export function CrispChat() {
 
     initialized.current = true;
 
-    // Queue de commandes Crisp (executees au chargement du script)
     (window as any).$crisp = [];
     (window as any).CRISP_WEBSITE_ID = CRISP_WEBSITE_ID;
 
     const $crisp = (window as any).$crisp;
 
-    // Config via SDK (queue avant le chargement du script)
-    $crisp.push(["config", "position:reverse", [true]]);    // A gauche
-    $crisp.push(["config", "color:theme", ["teal"]]);        // Couleur teal
-    $crisp.push(["config", "hide:on:away", [true]]);         // Pas de message auto
+    // Desktop: position par defaut (droite)
+    // Pas de position:reverse → reste a droite
+    $crisp.push(["config", "hide:on:away", [true]]);
 
     const script = document.createElement("script");
     script.src = "https://client.crisp.chat/l.js";
@@ -42,7 +40,7 @@ export function CrispChat() {
     document.head.appendChild(script);
   }, []);
 
-  // Style dynamique selon la page (dashboard vs landing vs autre)
+  // Style dynamique selon la page
   useEffect(() => {
     if (!CRISP_WEBSITE_ID) return;
 
@@ -53,13 +51,27 @@ export function CrispChat() {
       document.head.appendChild(style);
     }
 
-    // Dashboard mobile: remonter au-dessus de la MobileBottomNav (h-16 = 64px + 20px marge)
-    const mobileBottom = isDashboard ? "84px" : "20px";
-    // Landing: tres discrete (35%), Dashboard: un peu plus visible (55%)
-    const idleOpacity = isLanding ? "0.35" : "0.55";
+    // Mobile: landing a le sticky CTA (~80px + marge), dashboard a la bottom nav (64px + marge)
+    const mobileBottom = isLanding ? "96px" : isDashboard ? "84px" : "20px";
+    const idleOpacity = isLanding ? "0.4" : "0.6";
 
     style.textContent = `
-      /* ===== Crisp - Style discret MedAnnot ===== */
+      /* ===== Crisp - Style MedAnnot #25B2BD ===== */
+
+      /* Couleur personnalisee sur la bubble et la chatbox */
+      .crisp-client .cc-1brb6 .cc-unoo,
+      .crisp-client .cc-tlyz .cc-kxkl,
+      .crisp-client a[data-maximized="false"] {
+        background-color: #25B2BD !important;
+      }
+      .crisp-client .cc-1brb6 .cc-1yry3 .cc-ge7p,
+      .crisp-client .cc-tlyz .cc-7doi .cc-1sat,
+      .crisp-client [data-full-view="true"] .cc-1sat,
+      .crisp-client [data-pane="compose"] .cc-2wq2,
+      .crisp-client .cc-1brb6 .cc-1yry3 .cc-1m1c,
+      .crisp-client .cc-tlyz .cc-7doi .cc-1m1c {
+        background-color: #25B2BD !important;
+      }
 
       /* Container principal du widget */
       .crisp-client .crisp-1sClKy,
@@ -68,7 +80,7 @@ export function CrispChat() {
         z-index: 40 !important;
       }
 
-      /* ---- Bubble launcher: plus petite + semi-transparente ---- */
+      /* ---- Bubble: taille reduite + semi-transparente ---- */
       .crisp-client a[data-maximized="false"],
       .crisp-client .cc-1brb6 .cc-unoo,
       .crisp-client .cc-tlyz .cc-kxkl {
@@ -84,13 +96,13 @@ export function CrispChat() {
         transform: scale(1.08) !important;
       }
 
-      /* Quand le chat est ouvert, la bubble doit etre 100% visible */
+      /* Chat ouvert: 100% visible */
       .crisp-client a[data-maximized="true"],
       .crisp-client [data-visible="true"] a {
         opacity: 1 !important;
       }
 
-      /* ---- Icone dans la bubble ---- */
+      /* Icone dans la bubble */
       .crisp-client a[data-maximized] span[class],
       .crisp-client .cc-1brb6 .cc-unoo .cc-1m2mf,
       .crisp-client .cc-tlyz .cc-kxkl .cc-nsge {
@@ -98,20 +110,25 @@ export function CrispChat() {
         height: 22px !important;
       }
 
-      /* ---- Mobile: repositionner au-dessus de la bottom nav ---- */
+      /* ---- Mobile: a gauche + au-dessus du sticky CTA / bottom nav ---- */
       @media (max-width: 1023px) {
+        /* Passer a gauche sur mobile */
         .crisp-client .crisp-1sClKy,
         .crisp-client .cc-1brb6,
         .crisp-client .cc-tlyz,
         .crisp-client > div:first-child {
           bottom: ${mobileBottom} !important;
+          left: 12px !important;
+          right: auto !important;
         }
 
-        /* Chatbox ouverte: respecter l'offset aussi */
+        /* Chatbox ouverte: respecter l'offset */
         .crisp-client .cc-1brb6 .cc-1yry3,
         .crisp-client .cc-tlyz .cc-7doi,
         .crisp-client [data-visible="true"] {
           bottom: ${mobileBottom} !important;
+          left: 0 !important;
+          right: 0 !important;
           max-height: calc(100dvh - ${parseInt(mobileBottom) + 20}px) !important;
         }
       }
