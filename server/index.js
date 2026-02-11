@@ -327,6 +327,9 @@ app.post('/api/stripe-checkout', authenticateToken, async (req, res) => {
         },
       ],
       mode: 'subscription',
+      subscription_data: {
+        trial_period_days: 7,
+      },
       success_url: successUrl || `${process.env.VITE_APP_URL}/app/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${process.env.VITE_APP_URL}/app/pricing`,
       allow_promotion_codes: true,
