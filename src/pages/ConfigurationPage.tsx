@@ -36,96 +36,142 @@ import {
   type PatientTag,
 } from "@/hooks/useConfiguration";
 
-const DEFAULT_STRUCTURE = `1. Motif de la visite
-2. Observations cliniques
-   - État général
-   - Signes vitaux
-   - Observations spécifiques
-3. Soins prodigués
-4. Évaluation
-5. Plan de soins`;
+const DEFAULT_STRUCTURE = `Motif et contexte de la visite
+Prescripteur:
+
+Evaluation clinique
+Etat général et autonomie (AVQ):
+Constantes vitales:
+Observations spécifiques:
+
+Soins réalisés
+Soins infirmiers (OPAS cat. C):
+Soins techniques (OPAS cat. A):
+Education thérapeutique (OPAS cat. B):
+
+Evaluation et évolution
+Réaction du patient:
+Evolution par rapport à la dernière visite:
+
+Coordination et suite
+Communication médecin/équipe:
+Objectifs pour la prochaine visite:
+Prochaine visite prévue:`;
 
 const EXAMPLE_STRUCTURES = [
   {
-    title: "Structure complète (détaillée)",
-    description: "Pour des annotations très complètes avec tous les détails",
-    content: `1. Identification
-   - Patient: [Nom, Prénom]
-   - Date et heure de visite
-   - Durée de la prestation
+    title: "Evaluation complète (admission / patient complexe)",
+    description: "Pour évaluations initiales, patients polymorbides et bilans périodiques",
+    content: `Motif et contexte
+Prescripteur et type de prescription (OMP):
+Diagnostic principal et comorbidités:
+Antécédents pertinents:
 
-2. Motif de la visite et contexte
-   - Raison de l'intervention
-   - Antécédents pertinents
+Evaluation fonctionnelle
+Autonomie AVQ (hygiène, habillage, alimentation, mobilité, continence):
+Autonomie AIVQ (courses, ménage, gestion médicaments, finances):
+Echelle de dépendance (Katz ou RAI):
+Risque de chute (Tinetti / get up and go):
 
-3. Observations cliniques
-   - État général du patient
-   - Paramètres vitaux (TA, pouls, température, etc.)
-   - État cutané, mobilité, douleur
-   - État psychologique et cognitif
+Evaluation clinique
+Etat général et conscience:
+Constantes vitales (TA, FC, T°, SpO2, glycémie, poids):
+Etat cutané et tégumentaire:
+Douleur (localisation, EVA, type):
+Etat psychique et cognitif:
+Nutrition et hydratation:
 
-4. Soins prodigués
-   - Soins d'hygiène
-   - Soins techniques (pansements, injections, etc.)
-   - Administration de médicaments
-   - Autres interventions
+Soins réalisés
+Soins techniques (OPAS cat. A):
+Soins infirmiers de base (OPAS cat. C):
+Education thérapeutique (OPAS cat. B):
+Médicaments administrés:
 
-5. Évaluation
-   - Réaction du patient aux soins
-   - Évolution de l'état de santé
-   - Difficultés rencontrées
+Diagnostic infirmier et objectifs
+Problématiques identifiées:
+Objectifs de soins à court terme:
+Objectifs de soins à moyen terme:
 
-6. Plan de soins et suivi
-   - Recommandations
-   - Prochaine visite
-   - Points de vigilance`
+Coordination et suite
+Communication au médecin prescripteur:
+Transmission à l'équipe:
+Intervenants impliqués (physio, ergo, diététicienne):
+Fréquence des visites prévue:
+Prochaine visite prévue:`
   },
   {
-    title: "Structure concise (essentielle)",
-    description: "Pour des annotations rapides avec l'essentiel",
-    content: `1. Motif de visite
-2. État du patient
-3. Soins effectués
-4. Observations et suivi`
+    title: "Visite standard (quotidien)",
+    description: "Le modèle de tous les jours - concis mais couvre les essentiels OPAS",
+    content: `Motif et contexte de la visite
+Prescripteur:
+
+Evaluation clinique
+Etat général et autonomie (AVQ):
+Constantes vitales:
+Observations spécifiques:
+
+Soins réalisés
+Soins infirmiers (OPAS cat. C):
+Soins techniques (OPAS cat. A):
+Education thérapeutique (OPAS cat. B):
+
+Evaluation et évolution
+Réaction du patient:
+Evolution par rapport à la dernière visite:
+
+Coordination et suite
+Communication médecin/équipe:
+Objectifs pour la prochaine visite:
+Prochaine visite prévue:`
   },
   {
-    title: "Structure chronologique",
-    description: "Organisation par ordre chronologique de la visite",
-    content: `Arrivée (HH:MM)
-- État du patient à l'arrivée
-- Plaintes ou demandes
+    title: "Suivi rapide (intervention ciblée)",
+    description: "Pour visites courtes : prise de sang, injection, contrôle de constantes",
+    content: `Motif de l'intervention
+Type de soin (OPAS cat.):
 
-Soins prodigués
-- [Liste des soins dans l'ordre chronologique]
+Réalisation
+Acte effectué:
+Constantes relevées:
+Réaction / tolérance:
 
-Fin de visite (HH:MM)
-- État du patient au départ
-- Instructions données
-- Prochaine intervention`
+Suite
+Observations particulières:
+Transmission:
+Prochaine intervention:`
   },
   {
-    title: "Structure par systèmes",
-    description: "Pour patients complexes avec problèmes multiples",
-    content: `Respiratoire
-- Observations et soins
+    title: "Suivi de plaie et cicatrisation",
+    description: "Spécialisé pour plaies chroniques et post-opératoires",
+    content: `Motif et contexte
+Type de plaie et localisation:
+Prescripteur:
+Etiologie (vasculaire, diabétique, pression, post-op):
 
-Cardiovasculaire
-- Observations et soins
+Evaluation de la plaie
+Dimensions (L x l x profondeur en cm):
+Lit de la plaie (granulation, fibrine, nécrose, %):
+Exsudat (quantité, couleur, odeur):
+Berges (adhérentes, décollées, macérées, hyperkératose):
+Peau péri-lésionnelle:
+Signes d'infection (rougeur, chaleur, douleur, écoulement):
+Douleur (EVA, au repos / au soin):
 
-Digestif
-- Observations et soins
+Soin réalisé (OPAS cat. A)
+Nettoyage:
+Détersion / débridement:
+Pansement primaire appliqué:
+Pansement secondaire:
+Contention / décharge:
 
-Neurologique/Psychologique
-- Observations et soins
+Evaluation et évolution
+Evolution par rapport au dernier soin:
+Photo prise (oui/non):
 
-Tégumentaire (peau)
-- Observations et soins
-
-Mobilité
-- Observations et soins
-
-Plan de soins
-- Suivi et recommandations`
+Coordination et suite
+Communication au médecin:
+Fréquence de réfection:
+Prochaine visite prévue:`
   }
 ];
 

@@ -44,18 +44,27 @@ export function useUserConfiguration() {
   });
 }
 
-export const DEFAULT_STRUCTURE = `Date et heure de la visite:
-Motif et contexte:
-Observations cliniques:
-- Constantes:
-- Etat général:
-- Examen physique:
-Soins réalisés:
-- Traitements administrés:
-- Soins infirmiers:
-Conseils et éducation:
-Prochaine visite:
-Signature:`;
+export const DEFAULT_STRUCTURE = `Motif et contexte de la visite
+Prescripteur:
+
+Evaluation clinique
+Etat général et autonomie (AVQ):
+Constantes vitales:
+Observations spécifiques:
+
+Soins réalisés
+Soins infirmiers (OPAS cat. C):
+Soins techniques (OPAS cat. A):
+Education thérapeutique (OPAS cat. B):
+
+Evaluation et évolution
+Réaction du patient:
+Evolution par rapport à la dernière visite:
+
+Coordination et suite
+Communication médecin/équipe:
+Objectifs pour la prochaine visite:
+Prochaine visite prévue:`;
 
 export function useUpdateConfiguration() {
   const queryClient = useQueryClient();

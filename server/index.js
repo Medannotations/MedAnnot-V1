@@ -194,18 +194,27 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     // Créer la configuration par défaut
-    const defaultStructure = `Date et heure de la visite:
-Motif et contexte:
-Observations cliniques:
-- Constantes:
-- Etat général:
-- Examen physique:
-Soins réalisés:
-- Traitements administrés:
-- Soins infirmiers:
-Conseils et éducation:
-Prochaine visite:
-Signature:`;
+    const defaultStructure = `Motif et contexte de la visite
+Prescripteur:
+
+Evaluation clinique
+Etat général et autonomie (AVQ):
+Constantes vitales:
+Observations spécifiques:
+
+Soins réalisés
+Soins infirmiers (OPAS cat. C):
+Soins techniques (OPAS cat. A):
+Education thérapeutique (OPAS cat. B):
+
+Evaluation et évolution
+Réaction du patient:
+Evolution par rapport à la dernière visite:
+
+Coordination et suite
+Communication médecin/équipe:
+Objectifs pour la prochaine visite:
+Prochaine visite prévue:`;
 
     await client.query(
       `INSERT INTO user_configurations (id, user_id, annotation_structure, created_at, updated_at)
@@ -473,7 +482,7 @@ app.post('/api/transcribe', authenticateToken, upload.single('audio'), async (re
 // Generate Annotation with AI (Anthropic Claude)
 app.post('/api/generate-annotation', authenticateToken, async (req, res) => {
   try {
-    const { transcription, patientName, vitalSigns, configuration } = req.body;
+    const { transcription, patientName, vitalSigns, userStructure: configuration } = req.body;
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return res.status(503).json({
