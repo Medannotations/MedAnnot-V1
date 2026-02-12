@@ -234,7 +234,7 @@ Propriétaire - MedAnnot © 2026
 
 ## 📞 Support
 
-- **Email** : support@medannot.ch
+- **Email** : contact.medannot@gmail.com
 - **Documentation** : https://docs.medannot.ch (si disponible)
 
 ## 🔄 Changelog

@@ -62,6 +62,13 @@ export const auth = {
     removeToken();
   },
 
+  async requestPasswordReset(email: string) {
+    return fetchWithAuth('/auth/request-password-reset', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
   getToken,
   isAuthenticated: () => !!getToken(),
 };

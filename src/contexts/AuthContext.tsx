@@ -124,9 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    // TODO: Implémenter côté serveur
-    // Pour l'instant, on redirige vers le support
-    throw new Error("Contactez support@medannot.ch pour réinitialiser votre mot de passe");
+    await auth.requestPasswordReset(email);
   };
 
   return (

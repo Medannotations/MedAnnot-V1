@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      throw new Error("Contactez support@medannot.ch pour reinitialiser votre mot de passe");
+      throw new Error("Contactez contact.medannot@gmail.com pour réinitialiser votre mot de passe");
     } catch (error: any) {
       toast({
         title: "Erreur",
