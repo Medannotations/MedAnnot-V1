@@ -1436,12 +1436,16 @@ app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) =>
       { rows: recentSignups },
       { rows: totalPatients },
       { rows: totalAnnotations },
+      { rows: avgPatientsPerUser },
+      { rows: avgAnnotationsPerUser },
     ] = await Promise.all([
       pool.query('SELECT COUNT(*) as count FROM profiles'),
       pool.query(`SELECT subscription_status, COUNT(*) as count FROM profiles GROUP BY subscription_status`),
       pool.query(`SELECT COUNT(*) as count FROM profiles WHERE created_at > NOW() - INTERVAL '30 days'`),
       pool.query('SELECT COUNT(*) as count FROM patients'),
       pool.query('SELECT COUNT(*) as count FROM annotations'),
+      pool.query('SELECT ROUND(AVG(cnt), 1) as avg FROM (SELECT COUNT(*) as cnt FROM patients GROUP BY user_id) sub'),
+      pool.query('SELECT ROUND(AVG(cnt), 1) as avg FROM (SELECT COUNT(*) as cnt FROM annotations GROUP BY user_id) sub'),
     ]);
 
     const statusMap = {};
@@ -1453,6 +1457,8 @@ app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) =>
       totalPatients: parseInt(totalPatients[0].count),
       totalAnnotations: parseInt(totalAnnotations[0].count),
       byStatus: statusMap,
+      avgPatientsPerUser: parseFloat(avgPatientsPerUser[0]?.avg || 0),
+      avgAnnotationsPerUser: parseFloat(avgAnnotationsPerUser[0]?.avg || 0),
     });
   } catch (error) {
     console.error('Admin stats error:', error);
@@ -1467,7 +1473,7 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
       SELECT
         p.id, p.user_id, p.full_name, p.email, p.subscription_status,
         p.stripe_customer_id, p.subscription_id, p.created_at, p.updated_at,
-        p.subscription_current_period_end,
+        p.subscription_current_period_end, p.is_admin,
         (SELECT COUNT(*) FROM patients WHERE user_id = p.user_id) as patient_count,
         (SELECT COUNT(*) FROM annotations WHERE user_id = p.user_id) as annotation_count
       FROM profiles p
@@ -1480,11 +1486,101 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
   }
 });
 
+// Admin: Créer un nouvel utilisateur
+app.post('/api/admin/create-user', authenticateToken, requireAdmin, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { email, password, fullName, subscription_status } = req.body;
+
+    // Validation
+    if (!email || !password || !fullName) {
+      return res.status(400).json({ error: 'Email, mot de passe et nom complet requis' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Mot de passe minimum 6 caracteres' });
+    }
+
+    // Vérifier email unique
+    const { rows: existing } = await client.query(
+      'SELECT id FROM auth.users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Cet email est deja utilise' });
+    }
+
+    await client.query('BEGIN');
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer auth user
+    const userId = crypto.randomUUID();
+    await client.query(
+      `INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), $4, NOW(), NOW())`,
+      [userId, email.toLowerCase().trim(), hashedPassword, JSON.stringify({ full_name: fullName })]
+    );
+
+    // Créer profile avec statut spécifié
+    const validStatuses = ['active', 'trialing', 'pending_payment', 'canceled', 'none'];
+    const status = validStatuses.includes(subscription_status) ? subscription_status : 'pending_payment';
+
+    await client.query(
+      `INSERT INTO profiles (id, user_id, full_name, email, subscription_status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+      [crypto.randomUUID(), userId, fullName, email.toLowerCase().trim(), status]
+    );
+
+    // Configuration par défaut
+    const defaultStructure = `Motif et contexte de la visite
+Prescripteur:
+
+Evaluation clinique
+Etat general et autonomie (AVQ):
+Constantes vitales:
+Observations specifiques:
+
+Soins realises
+Soins infirmiers (OPAS cat. C):
+Soins techniques (OPAS cat. A):
+Education therapeutique (OPAS cat. B):
+
+Evaluation et evolution
+Reaction du patient:
+Evolution par rapport a la derniere visite:
+
+Coordination et suite
+Communication medecin/equipe:
+Objectifs pour la prochaine visite:
+Prochaine visite prevue:`;
+
+    await client.query(
+      `INSERT INTO user_configurations (id, user_id, annotation_structure, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), NOW())`,
+      [crypto.randomUUID(), userId, defaultStructure]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      user: { id: userId, email: email.toLowerCase().trim(), fullName, subscription_status: status }
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Admin create user error:', error);
+    res.status(500).json({ error: 'Erreur creation utilisateur' });
+  } finally {
+    client.release();
+  }
+});
+
 // Modifier le statut d'un utilisateur
 app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { subscription_status, is_admin } = req.body;
+    const { subscription_status } = req.body;
 
     const updates = [];
     const values = [];
@@ -1494,13 +1590,19 @@ app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (re
       updates.push(`subscription_status = $${paramCount++}`);
       values.push(subscription_status);
     }
-    if (is_admin !== undefined) {
-      updates.push(`is_admin = $${paramCount++}`);
-      values.push(is_admin);
-    }
 
     if (updates.length === 0) {
       return res.status(400).json({ error: 'Aucune modification' });
+    }
+
+    // Empêcher modification des comptes admin
+    const { rows: targetProfile } = await pool.query(
+      'SELECT is_admin FROM profiles WHERE user_id = $1',
+      [userId]
+    );
+
+    if (targetProfile[0]?.is_admin) {
+      return res.status(403).json({ error: 'Les comptes admin ne peuvent pas etre modifies depuis cette interface' });
     }
 
     updates.push(`updated_at = NOW()`);

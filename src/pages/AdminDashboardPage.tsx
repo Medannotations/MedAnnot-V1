@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Users, FileText, Trash2, Shield,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Users, FileText, Shield,
   Search, Loader2, UserCheck, Clock, AlertCircle,
   XCircle, CreditCard, ChevronDown, RefreshCw, Stethoscope,
   Mail, KeyRound, ShieldCheck, LogOut, Eye, EyeOff,
+  UserPlus, ShieldAlert,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +26,8 @@ interface AdminStats {
   totalPatients: number;
   totalAnnotations: number;
   byStatus: Record<string, number>;
+  avgPatientsPerUser: number;
+  avgAnnotationsPerUser: number;
 }
 
 interface AdminUser {
@@ -33,6 +40,7 @@ interface AdminUser {
   created_at: string;
   patient_count: number;
   annotation_count: number;
+  is_admin: boolean;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: typeof UserCheck }> = {
@@ -74,7 +82,16 @@ export default function AdminDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+  // Create user modal
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    subscription_status: 'active',
+  });
+  const [createLoading, setCreateLoading] = useState(false);
 
   // On mount: check for existing admin session
   useEffect(() => {
@@ -212,6 +229,11 @@ export default function AdminDashboardPage() {
   }, [step, loadData]);
 
   const handleUpdateStatus = async (userId: string, newStatus: string) => {
+    const user = users.find(u => u.user_id === userId);
+    if (user?.is_admin) {
+      toast({ title: "Les comptes admin ne peuvent pas etre modifies", variant: "destructive" });
+      return;
+    }
     setActionLoading(userId);
     try {
       await admin.updateUser(userId, { subscription_status: newStatus });
@@ -224,19 +246,24 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    setActionLoading(userId);
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.email || !newUser.password || !newUser.fullName) return;
+
+    setCreateLoading(true);
     try {
-      await admin.deleteUser(userId);
-      setShowDeleteConfirm(null);
+      await admin.createUser(newUser);
+      setShowCreateUser(false);
+      setNewUser({ email: '', password: '', fullName: '', subscription_status: 'active' });
       await loadData();
-      toast({ title: "Utilisateur supprime" });
-    } catch {
-      toast({ title: "Erreur", variant: "destructive" });
+      toast({ title: "Utilisateur cree avec succes" });
+    } catch (error: any) {
+      toast({ title: error.message || "Erreur creation", variant: "destructive" });
     } finally {
-      setActionLoading(null);
+      setCreateLoading(false);
     }
   };
+
 
   const handleAdminLogout = () => {
     localStorage.removeItem(ADMIN_SESSION_KEY);
@@ -489,23 +516,34 @@ export default function AdminDashboardPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-white">Dashboard Admin</h1>
             <p className="text-white/50 text-sm mt-1">Vue d'ensemble de MedAnnot</p>
           </div>
-          <Button
-            variant="outline"
-            onClick={loadData}
-            className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Actualiser
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowCreateUser(true)}
+              className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Creer un utilisateur</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={loadData}
+              className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Actualiser</span>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <StatCard icon={Users} label="Utilisateurs" value={stats.totalUsers} sub={`+${stats.signupsLast30Days} ce mois`} color="cyan" />
             <StatCard icon={UserCheck} label="Abonnes actifs" value={(stats.byStatus.active || 0) + (stats.byStatus.trialing || 0)} sub={`${stats.byStatus.trialing || 0} en essai`} color="green" />
             <StatCard icon={Stethoscope} label="Patients" value={stats.totalPatients} sub="Total enregistres" color="blue" />
             <StatCard icon={FileText} label="Annotations" value={stats.totalAnnotations} sub="Total creees" color="teal" />
+            <StatCard icon={Stethoscope} label="Moy. Patients/User" value={stats.avgPatientsPerUser} sub="Moyenne par utilisateur" color="blue" />
+            <StatCard icon={FileText} label="Moy. Annotations/User" value={stats.avgAnnotationsPerUser} sub="Moyenne par utilisateur" color="teal" />
           </div>
         )}
 
@@ -574,10 +612,18 @@ export default function AdminDashboardPage() {
                     return (
                       <tr key={u.user_id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <td className="px-4 py-3">
-                          <div>
-                            <span className="text-white font-medium text-sm">{u.full_name || "Sans nom"}</span>
-                            <br />
-                            <span className="text-white/40 text-xs">{u.email}</span>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <span className="text-white font-medium text-sm">{u.full_name || "Sans nom"}</span>
+                              <br />
+                              <span className="text-white/40 text-xs">{u.email}</span>
+                            </div>
+                            {u.is_admin && (
+                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-red-500/30 bg-red-500/20 text-red-400">
+                                <ShieldAlert className="w-3 h-3" />
+                                Admin
+                              </span>
+                            )}
                           </div>
                           <div className="md:hidden mt-1">
                             <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${statusConfig.color}`}>
@@ -605,32 +651,21 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
-                            <div className="relative group">
-                              <Button variant="ghost" size="sm" disabled={actionLoading === u.user_id} className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs gap-1">
-                                {actionLoading === u.user_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><span>Statut</span><ChevronDown className="w-3 h-3" /></>}
-                              </Button>
-                              <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-white/15 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[140px]">
-                                {["active", "trialing", "pending_payment", "canceled"].map((s) => (
-                                  <button key={s} onClick={() => handleUpdateStatus(u.user_id, s)} className={`w-full text-left px-3 py-2 text-xs hover:bg-white/10 transition-colors first:rounded-t-lg last:rounded-b-lg ${u.subscription_status === s ? "text-cyan-400" : "text-white/70"}`}>
-                                    {STATUS_LABELS[s]?.label || s}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            {showDeleteConfirm === u.user_id ? (
-                              <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(u.user_id)} disabled={actionLoading === u.user_id} className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 px-2 text-xs">
-                                  {actionLoading === u.user_id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirmer"}
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(null)} className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs">
-                                  Annuler
-                                </Button>
-                              </div>
+                            {u.is_admin ? (
+                              <span className="text-red-400/50 text-xs italic px-2">Protege</span>
                             ) : (
-                              <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(u.user_id)} className="text-white/30 hover:text-red-400 hover:bg-red-500/10 h-8 w-8 p-0">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                              <div className="relative group">
+                                <Button variant="ghost" size="sm" disabled={actionLoading === u.user_id} className="text-white/50 hover:text-white hover:bg-white/10 h-8 px-2 text-xs gap-1">
+                                  {actionLoading === u.user_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><span>Statut</span><ChevronDown className="w-3 h-3" /></>}
+                                </Button>
+                                <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-white/15 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[140px]">
+                                  {["active", "trialing", "pending_payment", "canceled"].map((s) => (
+                                    <button key={s} onClick={() => handleUpdateStatus(u.user_id, s)} className={`w-full text-left px-3 py-2 text-xs hover:bg-white/10 transition-colors first:rounded-t-lg last:rounded-b-lg ${u.subscription_status === s ? "text-cyan-400" : "text-white/70"}`}>
+                                      {STATUS_LABELS[s]?.label || s}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                           </div>
                         </td>
@@ -650,6 +685,90 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Create User Dialog */}
+      <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+        <DialogContent className="bg-slate-800 border-white/10 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Creer un utilisateur</DialogTitle>
+            <DialogDescription className="text-white/50">
+              Creez un nouveau compte utilisateur MedAnnot.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div>
+              <Label className="text-white/70 text-xs">Nom complet</Label>
+              <Input
+                value={newUser.fullName}
+                onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                placeholder="Jean Dupont"
+                className="bg-slate-700/50 border-white/10 text-white"
+                required
+              />
+            </div>
+
+            <div>
+              <Label className="text-white/70 text-xs">Email</Label>
+              <Input
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                placeholder="jean@example.com"
+                className="bg-slate-700/50 border-white/10 text-white"
+                required
+              />
+            </div>
+
+            <div>
+              <Label className="text-white/70 text-xs">Mot de passe</Label>
+              <Input
+                type="text"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                placeholder="Minimum 6 caracteres"
+                className="bg-slate-700/50 border-white/10 text-white"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div>
+              <Label className="text-white/70 text-xs">Statut abonnement</Label>
+              <select
+                value={newUser.subscription_status}
+                onChange={(e) => setNewUser({ ...newUser, subscription_status: e.target.value })}
+                className="w-full h-10 rounded-md border border-white/10 bg-slate-700/50 text-white px-3 text-sm"
+              >
+                <option value="active">Actif</option>
+                <option value="trialing">Essai</option>
+                <option value="pending_payment">En attente de paiement</option>
+                <option value="canceled">Resilie</option>
+                <option value="none">Aucun</option>
+              </select>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowCreateUser(false)}
+                className="text-white/50 hover:text-white"
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={createLoading || !newUser.email || !newUser.password || !newUser.fullName}
+                className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white gap-2"
+              >
+                {createLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                Creer
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

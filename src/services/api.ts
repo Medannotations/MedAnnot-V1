@@ -399,16 +399,22 @@ export const admin = {
     return fetchWithAuth('/admin/users');
   },
 
-  async updateUser(userId: string, updates: { subscription_status?: string; is_admin?: boolean }) {
-    return fetchWithAuth(`/admin/users/${userId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates),
+  async createUser(data: {
+    email: string;
+    password: string;
+    fullName: string;
+    subscription_status: string;
+  }): Promise<{ success: boolean; user: any }> {
+    return fetchWithAuth('/admin/create-user', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 
-  async deleteUser(userId: string) {
+  async updateUser(userId: string, updates: { subscription_status?: string }) {
     return fetchWithAuth(`/admin/users/${userId}`, {
-      method: 'DELETE',
+      method: 'PATCH',
+      body: JSON.stringify(updates),
     });
   },
 };
