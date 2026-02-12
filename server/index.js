@@ -1582,6 +1582,8 @@ app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (re
     const { userId } = req.params;
     const { subscription_status } = req.body;
 
+    console.log('[PATCH /api/admin/users/:userId] Request:', { userId, subscription_status });
+
     const updates = [];
     const values = [];
     let paramCount = 1;
@@ -1592,6 +1594,7 @@ app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (re
     }
 
     if (updates.length === 0) {
+      console.log('[PATCH] No updates provided');
       return res.status(400).json({ error: 'Aucune modification' });
     }
 
@@ -1601,12 +1604,22 @@ app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (re
       [userId]
     );
 
+    console.log('[PATCH] Target profile check:', { found: targetProfile.length, isAdmin: targetProfile[0]?.is_admin });
+
+    if (targetProfile.length === 0) {
+      console.log('[PATCH] User not found:', userId);
+      return res.status(404).json({ error: 'Utilisateur non trouve' });
+    }
+
     if (targetProfile[0]?.is_admin) {
+      console.log('[PATCH] Cannot modify admin account');
       return res.status(403).json({ error: 'Les comptes admin ne peuvent pas etre modifies depuis cette interface' });
     }
 
     updates.push(`updated_at = NOW()`);
     values.push(userId);
+
+    console.log('[PATCH] Executing update:', { query: `UPDATE profiles SET ${updates.join(', ')} WHERE user_id = $${paramCount}`, values });
 
     const { rows } = await pool.query(
       `UPDATE profiles SET ${updates.join(', ')} WHERE user_id = $${paramCount} RETURNING *`,
@@ -1614,12 +1627,14 @@ app.patch('/api/admin/users/:userId', authenticateToken, requireAdmin, async (re
     );
 
     if (rows.length === 0) {
+      console.log('[PATCH] User not found after update');
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
+    console.log('[PATCH] Update successful:', rows[0].email);
     res.json(rows[0]);
   } catch (error) {
-    console.error('Admin update user error:', error);
+    console.error('[PATCH] Admin update user error:', error);
     res.status(500).json({ error: error.message });
   }
 });
