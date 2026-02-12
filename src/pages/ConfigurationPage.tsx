@@ -16,7 +16,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Save, FileText, Loader2, Lightbulb, MessageSquare, Tag, Palette } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, FileText, Loader2, Lightbulb, MessageSquare, Tag, Palette, Sparkles } from "lucide-react";
+import { aiGeneration } from "@/services/api";
 import {
   useUserConfiguration,
   useUpdateConfiguration,
@@ -220,6 +221,11 @@ export default function ConfigurationPage() {
   
   const [tagForm, setTagForm] = useState({ name: "", color: "#3b82f6" });
 
+  // Analyze structure states
+  const [annotationToAnalyze, setAnnotationToAnalyze] = useState("");
+  const [analyzedStructure, setAnalyzedStructure] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   // Data fetching
   const { data: config, isLoading: configLoading } = useUserConfiguration();
   const { data: examples = [], isLoading: examplesLoading } = useExampleAnnotations();
@@ -258,6 +264,39 @@ export default function ConfigurationPage() {
         description: "Impossible de sauvegarder la structure.",
         variant: "destructive",
       });
+    }
+  };
+
+  // ==================== Analyze Structure ====================
+
+  const handleAnalyzeStructure = async () => {
+    if (!annotationToAnalyze.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez coller une annotation à analyser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalyzedStructure(null);
+
+    try {
+      const result = await aiGeneration.analyzeStructure(annotationToAnalyze);
+      setAnalyzedStructure(result.structure);
+      toast({
+        title: "Analyse terminée",
+        description: "La structure a été extraite avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'analyser l'annotation. Réessayez.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -491,6 +530,59 @@ export default function ConfigurationPage() {
                 <Save className="w-4 h-4 mr-2" />
                 Enregistrer la structure
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Analyser une annotation existante
+              </CardTitle>
+              <CardDescription>
+                Collez une annotation complète que vous aimez, et l'IA en extraira la structure réutilisable.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                value={annotationToAnalyze}
+                onChange={(e) => setAnnotationToAnalyze(e.target.value)}
+                className="min-h-[150px] font-mono text-sm"
+                placeholder="Collez ici une annotation complète (avec les données patient)..."
+              />
+              <Button
+                onClick={handleAnalyzeStructure}
+                disabled={isAnalyzing || !annotationToAnalyze.trim()}
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                {isAnalyzing ? "Analyse en cours..." : "Analyser"}
+              </Button>
+
+              {analyzedStructure && (
+                <div className="space-y-3 pt-2">
+                  <Label className="text-sm font-medium">Structure extraite :</Label>
+                  <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre-wrap font-mono max-h-64 overflow-y-auto">
+                    {analyzedStructure}
+                  </pre>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setStructure(analyzedStructure);
+                      toast({
+                        title: "Structure copiée",
+                        description: "N'oubliez pas de l'enregistrer avec le bouton ci-dessus.",
+                      });
+                    }}
+                  >
+                    Utiliser cette structure
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

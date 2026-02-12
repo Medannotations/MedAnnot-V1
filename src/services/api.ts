@@ -344,6 +344,12 @@ export const aiGeneration = {
       body: JSON.stringify(params),
     });
   },
+  async analyzeStructure(annotation: string): Promise<{ structure: string; success: boolean }> {
+    return fetchWithAuth('/analyze-structure', {
+      method: 'POST',
+      body: JSON.stringify({ annotation }),
+    });
+  },
 };
 
 // ============ ADMIN ============

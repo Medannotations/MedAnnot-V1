@@ -580,6 +580,102 @@ Génère l'annotation maintenant, prête à être utilisée directement dans un 
   }
 });
 
+// Analyze annotation to extract reusable structure
+app.post('/api/analyze-structure', authenticateToken, async (req, res) => {
+  try {
+    const { annotation } = req.body;
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({
+        error: 'Service IA non disponible (ANTHROPIC_API_KEY manquante)'
+      });
+    }
+
+    if (!annotation || !annotation.trim()) {
+      return res.status(400).json({ error: 'Annotation manquante' });
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 2000,
+        temperature: 0.3,
+        messages: [{
+          role: 'user',
+          content: `Tu es un expert en documentation médicale infirmière suisse. Analyse l'annotation médicale suivante et extrais sa STRUCTURE organisationnelle réutilisable.
+
+RÈGLES IMPÉRATIVES:
+- Extrais UNIQUEMENT les titres de sections, sous-sections et noms de champs
+- SUPPRIME toutes les données réelles du patient (noms, dates, valeurs, observations, descriptions, etc.)
+- Chaque champ doit se terminer par ":" suivi d'un retour à la ligne (le champ reste vide)
+- Les titres de sections sont des lignes SANS ":" à la fin (comme "Motif et contexte de la visite")
+- Les champs/sous-sections ont ":" à la fin (comme "Prescripteur:")
+- Sépare les sections principales par une ligne vide
+- N'utilise AUCUN formatage markdown (pas de *, #, -, ou listes numérotées)
+- N'ajoute AUCUNE explication, commentaire ou texte supplémentaire
+- Si un champ contient des sous-éléments récurrents, généralise-les en un seul champ
+- La structure doit être directement utilisable comme template pour de futures annotations
+- Retourne UNIQUEMENT la structure, rien d'autre
+
+EXEMPLE D'ENTRÉE:
+"Visite de contrôle chez Mme Dupont suite à prescription du Dr Martin.
+État général satisfaisant, patiente autonome pour les AVQ.
+TA: 130/80, FC: 72, T°: 36.8, SpO2: 98%
+Réfection pansement jambe droite, plaie en bonne évolution.
+Prochaine visite jeudi 15 janvier."
+
+EXEMPLE DE SORTIE:
+Motif et contexte de la visite
+Prescripteur:
+
+Evaluation clinique
+Etat général et autonomie (AVQ):
+Constantes vitales:
+
+Soins réalisés
+Soin effectué:
+Observations:
+
+Suite
+Prochaine visite prévue:
+
+ANNOTATION À ANALYSER:
+${annotation}`
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      console.error('Anthropic API error (analyze-structure):', error);
+      return res.status(500).json({
+        error: 'Erreur lors de l\'analyse',
+        details: error.error?.message || 'Erreur API'
+      });
+    }
+
+    const data = await response.json();
+    const structure = data.content[0].text;
+
+    res.json({
+      structure: structure,
+      success: true
+    });
+  } catch (error) {
+    console.error('Analyze structure error:', error);
+    res.status(500).json({
+      error: 'Erreur lors de l\'analyse de la structure',
+      details: error.message
+    });
+  }
+});
+
 // Get Subscription (fresh data from Stripe)
 app.post('/api/get-subscription', authenticateToken, async (req, res) => {
   try {
