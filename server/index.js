@@ -91,10 +91,17 @@ app.use(cors({
   credentials: true
 }));
 
+// Health check (avant rate limiting)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limite chaque IP à 100 requêtes
+  max: 500, // limite chaque IP à 500 requêtes
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
@@ -146,14 +153,6 @@ const authenticateToken = async (req, res, next) => {
 
 // ============ ROUTES API ============
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
-});
 
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
