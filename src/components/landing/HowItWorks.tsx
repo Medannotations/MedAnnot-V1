@@ -14,7 +14,7 @@ export function HowItWorks() {
       number: "2",
       title: "Dictez",
       description:
-        "À la sortie de la visite, parlez naturellement — dans votre voiture, entre deux patients, où vous voulez. Décrivez ce que vous avez observé, comme vous le feriez à un collègue.",
+        "À la sortie de la visite, parlez naturellement dans votre voiture, entre deux patients, où vous voulez. Décrivez ce que vous avez observé, comme vous le feriez à un collègue.",
       icon: Mic,
       color: "cyan",
     },
