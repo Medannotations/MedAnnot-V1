@@ -43,6 +43,9 @@ services:
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
+      # Anthropic (Claude AI)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
       # Email
       SMTP_HOST: ${SMTP_HOST:-mail.infomaniak.com}
       SMTP_PORT: ${SMTP_PORT:-587}
