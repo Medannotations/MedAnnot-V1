@@ -91,15 +91,18 @@ app.use(cors({
   credentials: true
 }));
 
+// Trust nginx reverse proxy (utilise X-Forwarded-For pour identifier les vrais clients)
+app.set('trust proxy', 1);
+
 // Health check (avant rate limiting)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Rate limiting
+// Rate limiting (par IP réelle du client grâce à trust proxy)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // limite chaque IP à 500 requêtes
+  max: 300, // 300 requêtes par IP réelle par 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
 });
