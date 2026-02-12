@@ -68,7 +68,8 @@ const PatientCard = memo(({
                 Pathologies: {patient.pathologies}
               </p>
             )}
-            {patient.tags && patient.tags.length > 0 && (
+            {/* Tags - DÉSACTIVÉ - Bientôt disponible */}
+            {/* {patient.tags && patient.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {patient.tags.map((tag) => (
                   <Badge key={tag} variant="secondary" className="text-xs">
@@ -76,7 +77,7 @@ const PatientCard = memo(({
                   </Badge>
                 ))}
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Actions principales - boutons larges */}
@@ -412,8 +413,8 @@ export default function PatientsPage() {
                 />
               </div>
 
-              {/* Tags */}
-              <div className="space-y-2">
+              {/* Tags - DÉSACTIVÉ - Bientôt disponible */}
+              {/* <div className="space-y-2">
                 <Label className="text-sm font-medium">
                   Tags
                   <span className="text-xs text-muted-foreground font-normal ml-2">(catégories, statuts...)</span>
@@ -423,7 +424,7 @@ export default function PatientsPage() {
                   onChange={(tags) => setNewPatient({ ...newPatient, tags })}
                   placeholder="Ex: prioritaire, suivi-hebdo..."
                 />
-              </div>
+              </div> */}
               <div className="flex flex-col sm:flex-row justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">
                   Annuler

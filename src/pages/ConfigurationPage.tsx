@@ -494,14 +494,15 @@ export default function ConfigurationPage() {
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">Structure</span>
           </TabsTrigger>
-          <TabsTrigger value="phrases" className="flex items-center gap-2">
+          {/* Phrases et Tags - DÉSACTIVÉS - Bientôt disponible */}
+          {/* <TabsTrigger value="phrases" className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Phrases</span>
           </TabsTrigger>
           <TabsTrigger value="tags" className="flex items-center gap-2">
             <Tag className="w-4 h-4" />
             <span className="hidden sm:inline">Tags</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         {/* Structure Tab */}
@@ -626,8 +627,8 @@ export default function ConfigurationPage() {
         </TabsContent>
 
         {/* Examples Tab */}
-        {/* Phrases Tab */}
-        <TabsContent value="phrases" className="space-y-6">
+        {/* Phrases Tab - DÉSACTIVÉ - Bientôt disponible */}
+        {/* <TabsContent value="phrases" className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -702,10 +703,10 @@ export default function ConfigurationPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
-        {/* Tags Tab */}
-        <TabsContent value="tags" className="space-y-6">
+        {/* Tags Tab - DÉSACTIVÉ - Bientôt disponible */}
+        {/* <TabsContent value="tags" className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -749,7 +750,7 @@ export default function ConfigurationPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
 
       {/* Example Dialog */}

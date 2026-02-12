@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { FileText, Users, Mic, TrendingUp, Clock, Calendar, Plus, ArrowRight, CheckCircle, Activity, Lightbulb, Settings } from "lucide-react";
+import { FileText, Users, Mic, TrendingUp, Clock, Calendar, Plus, ArrowRight, CheckCircle, Activity, Lightbulb, Settings, Sparkles, MessageSquare, Tag } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -351,6 +351,64 @@ export default function DashboardHome() {
           </CardContent>
         </Card>
       )}
+
+      {/* Coming Soon Features */}
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-primary/10">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <CardTitle>Bientôt disponible</CardTitle>
+          </div>
+          <CardDescription>
+            Nouvelles fonctionnalités en cours de développement pour la V2
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Phrases Feature */}
+            <div className="flex gap-4 p-4 rounded-lg border border-border/50 bg-card/50 hover:border-primary/30 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-cyan-500" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground mb-1">Templates de phrases</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Créez des phrases récurrentes et insérez-les rapidement dans vos annotations avec des raccourcis clavier personnalisés.
+                </p>
+                <div className="mt-2">
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                    <Clock className="w-3 h-3" />
+                    Prochainement
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tags Feature */}
+            <div className="flex gap-4 p-4 rounded-lg border border-border/50 bg-card/50 hover:border-primary/30 transition-colors">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center">
+                  <Tag className="w-6 h-6 text-teal-500" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground mb-1">Tags patients</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Organisez et catégorisez vos patients avec des tags colorés (prioritaire, suivi-hebdo, etc.) pour une meilleure gestion.
+                </p>
+                <div className="mt-2">
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                    <Clock className="w-3 h-3" />
+                    Prochainement
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
