@@ -66,10 +66,10 @@ export default function ForgotPasswordPage() {
                 Pensez à vérifier vos spams si vous ne le trouvez pas.
               </p>
             </div>
-            <Link to="/login">
+            <Link to="/">
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour à la connexion
+                Retour à l'accueil
               </Button>
             </Link>
           </CardContent>
@@ -116,11 +116,11 @@ export default function ForgotPasswordPage() {
 
             <div className="text-center space-y-2">
               <Link
-                to="/login"
+                to="/"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
               >
                 <ArrowLeft className="w-3 h-3" />
-                Retour à la connexion
+                Retour à l'accueil
               </Link>
             </div>
           </form>

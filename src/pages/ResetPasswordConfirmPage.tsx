@@ -101,7 +101,7 @@ export default function ResetPasswordConfirmPage() {
           title: "Mot de passe modifié",
           description: "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe",
         });
-        setTimeout(() => navigate("/login"), 3000);
+        setTimeout(() => navigate("/"), 3000);
       } else {
         toast({
           title: "Erreur",
@@ -152,9 +152,9 @@ export default function ResetPasswordConfirmPage() {
                 Demander un nouveau lien
               </Button>
             </Link>
-            <Link to="/login">
+            <Link to="/">
               <Button variant="outline" className="w-full">
-                Retour à la connexion
+                Retour à l'accueil
               </Button>
             </Link>
           </CardContent>
@@ -253,10 +253,10 @@ export default function ResetPasswordConfirmPage() {
 
             <div className="text-center">
               <Link
-                to="/login"
+                to="/"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                Retour à la connexion
+                Retour à l'accueil
               </Link>
             </div>
           </form>
