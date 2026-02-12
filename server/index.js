@@ -1485,7 +1485,7 @@ app.post('/api/admin/login', async (req, res) => {
     const user = users[0];
 
     // Vérifier le mot de passe
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    const validPassword = await bcrypt.compare(password, user.encrypted_password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Identifiants incorrects' });
     }
