@@ -241,7 +241,7 @@ export default function EditAnnotationPage() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base font-medium">
             <span className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+              <FileText className="w-5 h-5 text-primary" />
               Contenu de l'annotation
             </span>
             <PhraseTemplatePicker onSelect={insertTemplate} />

@@ -422,7 +422,7 @@ export default function PatientDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date" className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4" />
+                      <Calendar className="w-4 h-4 text-primary" />
                       Date de visite
                     </Label>
                     <Input
@@ -434,7 +434,7 @@ export default function PatientDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="time" className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4" />
+                      <Clock className="w-4 h-4 text-primary" />
                       Heure
                     </Label>
                     <Input
@@ -446,7 +446,7 @@ export default function PatientDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="duration" className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4" />
+                      <Clock className="w-4 h-4 text-primary" />
                       Durée (min)
                     </Label>
                     <Input

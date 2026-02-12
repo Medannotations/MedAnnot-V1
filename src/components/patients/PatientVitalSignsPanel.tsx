@@ -195,7 +195,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className="w-5 h-5" />
+              <Activity className="w-5 h-5 text-primary" />
               Signes vitaux
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
@@ -207,7 +207,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
           {/* Sélecteur de date */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 pb-3 border-b">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Calendar className="w-4 h-4 text-primary" />
               <Label className="text-sm font-medium">Date des constantes :</Label>
             </div>
             <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
             {/* Température */}
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <Thermometer className="w-3 h-3" />
+                <Thermometer className="w-3 h-3 text-primary" />
                 T°C
               </Label>
               <Input
@@ -249,7 +249,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
             {/* Pouls */}
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <Heart className="w-3 h-3" />
+                <Heart className="w-3 h-3 text-primary" />
                 Pouls
               </Label>
               <Input
@@ -264,7 +264,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
             {/* Tension */}
             <div className="space-y-1.5 col-span-2 sm:col-span-1">
               <Label className="text-xs flex items-center gap-1">
-                <Activity className="w-3 h-3" />
+                <Activity className="w-3 h-3 text-primary" />
                 TA (sys/dia)
               </Label>
               <div className="flex gap-2">
@@ -289,7 +289,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
             {/* FR */}
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <Wind className="w-3 h-3" />
+                <Wind className="w-3 h-3 text-primary" />
                 FR
               </Label>
               <Input
@@ -304,7 +304,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
             {/* SaO2 */}
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <Wind className="w-3 h-3" />
+                <Wind className="w-3 h-3 text-primary" />
                 SaO₂%
               </Label>
               <Input
@@ -319,7 +319,7 @@ export function PatientVitalSignsPanel({ patientId }: PatientVitalSignsPanelProp
             {/* Glycémie */}
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <Activity className="w-3 h-3" />
+                <Activity className="w-3 h-3 text-primary" />
                 Gly (g/L)
               </Label>
               <Input

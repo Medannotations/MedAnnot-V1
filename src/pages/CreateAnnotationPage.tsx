@@ -399,7 +399,7 @@ export default function CreateAnnotationPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
+              <User className="w-5 h-5 text-primary" />
               Pour quel patient ?
             </CardTitle>
           </CardHeader>
@@ -479,7 +479,7 @@ export default function CreateAnnotationPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+              <Calendar className="w-5 h-5 text-primary" />
               Informations de la visite
             </CardTitle>
           </CardHeader>
@@ -487,18 +487,18 @@ export default function CreateAnnotationPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="w-4 h-4 text-primary" />
                   Date de la visite
                 </Label>
-                <Input 
-                  type="date" 
-                  value={visitDate} 
-                  onChange={(e) => setVisitDate(e.target.value)} 
+                <Input
+                  type="date"
+                  value={visitDate}
+                  onChange={(e) => setVisitDate(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4 text-primary" />
                   Heure de la visite
                 </Label>
                 <Input 

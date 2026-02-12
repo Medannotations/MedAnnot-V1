@@ -327,7 +327,7 @@ export default function AnnotationsPage() {
                 {/* Filtre date */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-4 h-4 text-primary" />
                     Période
                   </label>
                   <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -380,7 +380,7 @@ export default function AnnotationsPage() {
             )}
             {dateFilter !== "all" && (
               <Badge variant="secondary" className="gap-1">
-                <Calendar className="w-3 h-3" />
+                <Calendar className="w-3 h-3 text-primary" />
                 {dateFilter === "today" ? "Aujourd'hui" :
                  dateFilter === "yesterday" ? "Hier" :
                  dateFilter === "week" ? "Cette semaine" :
@@ -405,7 +405,7 @@ export default function AnnotationsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
-            <FileText className="w-4 h-4" />
+            <FileText className="w-4 h-4 text-primary" />
             Historique
             {historyAnnotations.length > 0 && (
               <Badge variant="secondary" className="ml-1">
