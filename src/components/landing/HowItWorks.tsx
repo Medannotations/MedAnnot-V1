@@ -4,27 +4,27 @@ export function HowItWorks() {
   const steps = [
     {
       number: "1",
+      title: "Ajoutez les signes vitaux",
+      description:
+        "Arrivé chez le patient, renseignez température, tension, pouls et autres constantes directement dans l'application. Les données sont sécurisées et prêtes à être intégrées.",
+      icon: Activity,
+      color: "emerald",
+    },
+    {
+      number: "2",
       title: "Dictez",
       description:
-        "Parlez naturellement après votre visite — dans votre voiture, entre deux patients, où vous voulez. Décrivez ce que vous avez observé, comme vous le feriez à un collègue.",
+        "À la sortie de la visite, parlez naturellement — dans votre voiture, entre deux patients, où vous voulez. Décrivez ce que vous avez observé, comme vous le feriez à un collègue.",
       icon: Mic,
       color: "cyan",
     },
     {
-      number: "2",
+      number: "3",
       title: "L'IA rédige",
       description:
-        "MedAnnot transforme votre dictée en annotation médicale complète. Vocabulaire médical précis, signes vitaux intégrés, format structuré.",
+        "MedAnnot transforme votre dictée en annotation médicale complète. Vocabulaire médical précis, signes vitaux automatiquement intégrés, format structuré selon vos préférences.",
       icon: FileText,
       color: "teal",
-    },
-    {
-      number: "3",
-      title: "Ajoutez les signes vitaux",
-      description:
-        "Renseignez température, tension, pouls et autres constantes directement dans l'application. Ils seront intégrés à l'annotation.",
-      icon: Activity,
-      color: "emerald",
     },
     {
       number: "4",
