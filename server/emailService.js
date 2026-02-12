@@ -47,7 +47,7 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
       background-color: #ffffff;
     }
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0891b2 0%, #14b8a6 100%);
       padding: 40px 30px;
       text-align: center;
     }
@@ -57,18 +57,20 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
       color: #ffffff;
       margin: 0;
       letter-spacing: -0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .logo-subtitle {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
       font-size: 14px;
       margin-top: 8px;
+      font-weight: 500;
     }
     .content {
       padding: 40px 30px;
       color: #333333;
     }
     .content h1 {
-      color: #667eea;
+      color: #0891b2;
       font-size: 24px;
       margin-top: 0;
       margin-bottom: 20px;
@@ -80,20 +82,17 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
     .button {
       display: inline-block;
       padding: 14px 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0891b2 0%, #14b8a6 100%);
       color: #ffffff !important;
       text-decoration: none;
       border-radius: 8px;
       font-weight: 600;
       margin: 24px 0;
-      transition: transform 0.2s;
-    }
-    .button:hover {
-      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(8, 145, 178, 0.2);
     }
     .info-box {
-      background-color: #f8f9fa;
-      border-left: 4px solid #667eea;
+      background-color: #f0fdfa;
+      border-left: 4px solid #14b8a6;
       padding: 20px;
       margin: 24px 0;
       border-radius: 4px;
@@ -112,7 +111,7 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
     .feature-icon {
       width: 24px;
       height: 24px;
-      background-color: #667eea;
+      background: linear-gradient(135deg, #0891b2 0%, #14b8a6 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -121,6 +120,7 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
       font-weight: bold;
       margin-right: 12px;
       flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(8, 145, 178, 0.2);
     }
     .footer {
       background-color: #f8f9fa;
@@ -130,7 +130,7 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
       font-size: 13px;
     }
     .footer a {
-      color: #667eea;
+      color: #0891b2;
       text-decoration: none;
     }
     .divider {
@@ -150,13 +150,13 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
       ${content}
     </div>
     <div class="footer">
-      <p>MedAnnot - Annotations médicales par IA</p>
+      <p><strong>MedAnnot</strong> - Annotations médicales intelligentes par IA</p>
       <p>
-        <a href="https://medannot.ch">medannot.ch</a> |
-        <a href="https://medannot.ch/support">Support</a>
+        <a href="https://medannot.ch">Site web</a> |
+        <a href="mailto:contact.medannot@gmail.com">Contactez-nous</a>
       </p>
       <p style="margin-top: 20px; font-size: 12px; color: #999;">
-        Cet email a été envoyé automatiquement. Pour toute question, contactez-nous via notre site.
+        Cet email a été envoyé automatiquement. Pour toute question, répondez à <a href="mailto:contact.medannot@gmail.com" style="color: #0891b2;">contact.medannot@gmail.com</a>
       </p>
     </div>
   </div>
@@ -169,67 +169,67 @@ const getEmailTemplate = (content, title = 'MedAnnot') => `
  */
 const sendWelcomeEmail = async (email, fullName) => {
   const content = `
-    <h1>Bienvenue sur MedAnnot ! 👋</h1>
+    <h1>Bienvenue sur MedAnnot ! 🎉</h1>
     <p>Bonjour <strong>${fullName}</strong>,</p>
-    <p>Merci d'avoir rejoint MedAnnot. Votre compte a été créé avec succès et vous pouvez dès maintenant commencer à utiliser notre plateforme d'annotations médicales intelligentes.</p>
+    <p>Félicitations ! Votre compte MedAnnot a été créé avec succès. Vous faites désormais partie d'une communauté de professionnels de santé qui transforment leurs consultations en annotations structurées grâce à l'intelligence artificielle.</p>
 
     <div class="info-box">
-      <p><strong>✅ Votre compte est activé</strong></p>
-      <p>Vous pouvez vous connecter immédiatement et commencer à créer vos premières annotations.</p>
+      <p><strong>✅ Votre compte est prêt</strong></p>
+      <p>Connectez-vous dès maintenant et commencez à gagner du temps sur vos annotations médicales.</p>
     </div>
 
-    <a href="https://medannot.ch/?login=true" class="button">Accéder à mon compte</a>
+    <a href="https://medannot.ch" class="button">Accéder à mon compte</a>
 
     <div class="divider"></div>
 
-    <h2 style="color: #667eea; font-size: 20px;">🚀 Pour bien démarrer</h2>
+    <h2 style="color: #0891b2; font-size: 20px;">🚀 Premiers pas avec MedAnnot</h2>
     <div class="features">
       <div class="feature-item">
         <div class="feature-icon">1</div>
         <div>
-          <strong>Ajoutez vos premiers patients</strong><br>
-          <span style="color: #777; font-size: 14px;">Créez un dossier patient pour organiser vos annotations</span>
+          <strong>Configurez votre structure d'annotation</strong><br>
+          <span style="color: #777; font-size: 14px;">Choisissez parmi nos modèles (LAMal, OPAS) ou créez le vôtre</span>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon">2</div>
         <div>
-          <strong>Enregistrez vos notes vocales</strong><br>
-          <span style="color: #777; font-size: 14px;">Utilisez le micro pour dicter vos observations</span>
+          <strong>Ajoutez vos patients</strong><br>
+          <span style="color: #777; font-size: 14px;">Créez les dossiers pour une meilleure organisation</span>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon">3</div>
         <div>
-          <strong>Générez vos annotations</strong><br>
-          <span style="color: #777; font-size: 14px;">L'IA transforme vos notes en annotations professionnelles</span>
+          <strong>Dictez ou transcrivez vos consultations</strong><br>
+          <span style="color: #777; font-size: 14px;">Utilisez l'enregistrement vocal ou la saisie manuelle</span>
         </div>
       </div>
       <div class="feature-item">
         <div class="feature-icon">4</div>
         <div>
-          <strong>Personnalisez vos templates</strong><br>
-          <span style="color: #777; font-size: 14px;">Créez des phrases types pour gagner du temps</span>
+          <strong>Laissez l'IA générer l'annotation</strong><br>
+          <span style="color: #777; font-size: 14px;">Annotations structurées et professionnelles en un clic</span>
         </div>
       </div>
     </div>
 
     <div class="divider"></div>
 
-    <h2 style="color: #667eea; font-size: 20px;">🔒 Sécurité et confidentialité</h2>
-    <p>Vos données sont chiffrées de bout en bout et hébergées en Suisse. Nous prenons la confidentialité médicale très au sérieux.</p>
+    <h2 style="color: #0891b2; font-size: 20px;">🔒 Sécurité et conformité</h2>
+    <p>La confidentialité de vos données médicales est notre priorité absolue. MedAnnot respecte les standards les plus stricts de sécurité et de conformité.</p>
 
-    <div class="info-box" style="border-left-color: #28a745; background-color: #f0f8f4;">
-      <p style="margin: 0;"><strong>✓ Données chiffrées</strong> - AES-256</p>
-      <p style="margin: 0;"><strong>✓ Hébergement Suisse</strong> - Conformité HIPAA</p>
-      <p style="margin: 0;"><strong>✓ Accès sécurisé</strong> - Authentification renforcée</p>
+    <div class="info-box" style="border-left-color: #10b981; background-color: #f0fdf4;">
+      <p style="margin: 8px 0;"><strong>✓ Hébergement Suisse</strong> - Conformité totale avec la législation suisse sur les données de santé</p>
+      <p style="margin: 8px 0;"><strong>✓ Chiffrement de bout en bout</strong> - Toutes vos données sont cryptées (AES-256)</p>
+      <p style="margin: 8px 0;"><strong>✓ Anonymisation IA</strong> - Les données sensibles sont anonymisées avant traitement</p>
     </div>
 
     <div class="divider"></div>
 
-    <p>Besoin d'aide pour démarrer ? Connectez-vous et suivez le <a href="https://medannot.ch/app" style="color: #667eea; text-decoration: none;">guide de démarrage</a> sur votre tableau de bord, ou contactez-nous.</p>
+    <p>Des questions ? Notre équipe est là pour vous accompagner. Contactez-nous à <a href="mailto:contact.medannot@gmail.com" style="color: #0891b2; text-decoration: none;">contact.medannot@gmail.com</a></p>
 
-    <p style="margin-top: 32px;">À bientôt sur MedAnnot !</p>
+    <p style="margin-top: 32px;">Excellente journée,</p>
     <p><strong>L'équipe MedAnnot</strong></p>
   `;
 
@@ -259,26 +259,26 @@ const sendPasswordResetEmail = async (email, fullName, resetToken) => {
   const content = `
     <h1>Réinitialisation de votre mot de passe</h1>
     <p>Bonjour <strong>${fullName}</strong>,</p>
-    <p>Vous avez demandé la réinitialisation de votre mot de passe MedAnnot.</p>
+    <p>Nous avons reçu une demande de réinitialisation du mot de passe de votre compte MedAnnot.</p>
 
-    <div class="info-box" style="border-left-color: #ffc107; background-color: #fff9e6;">
+    <div class="info-box" style="border-left-color: #f59e0b; background-color: #fffbeb;">
       <p><strong>⚠️ Action requise</strong></p>
-      <p>Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe. Ce lien est valide pendant <strong>1 heure</strong>.</p>
+      <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe sécurisé. Ce lien est valide pendant <strong>1 heure</strong> uniquement.</p>
     </div>
 
     <a href="${resetUrl}" class="button">Réinitialiser mon mot de passe</a>
 
     <p style="margin-top: 24px; font-size: 14px; color: #777;">
-      Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
-      <a href="${resetUrl}" style="color: #667eea; word-break: break-all;">${resetUrl}</a>
+      Le bouton ne fonctionne pas ? Copiez et collez ce lien dans votre navigateur :<br>
+      <a href="${resetUrl}" style="color: #0891b2; word-break: break-all;">${resetUrl}</a>
     </p>
 
     <div class="divider"></div>
 
-    <div class="info-box" style="border-left-color: #dc3545; background-color: #fff0f0;">
-      <p><strong>🔒 Sécurité</strong></p>
-      <p style="margin: 8px 0;">Si vous n'avez pas demandé cette réinitialisation, ignorez cet email. Votre mot de passe actuel reste inchangé.</p>
-      <p style="margin: 8px 0;">Pour toute question de sécurité, contactez-nous immédiatement.</p>
+    <div class="info-box" style="border-left-color: #ef4444; background-color: #fef2f2;">
+      <p><strong>🔒 Note de sécurité</strong></p>
+      <p style="margin: 8px 0;">Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email en toute sécurité. Votre mot de passe actuel restera inchangé.</p>
+      <p style="margin: 8px 0;">En cas d'activité suspecte, contactez-nous immédiatement à <a href="mailto:contact.medannot@gmail.com" style="color: #ef4444;">contact.medannot@gmail.com</a></p>
     </div>
 
     <p style="margin-top: 32px;">Cordialement,</p>
@@ -307,22 +307,22 @@ const sendPasswordResetEmail = async (email, fullName, resetToken) => {
  */
 const sendPasswordChangedEmail = async (email, fullName) => {
   const content = `
-    <h1>Mot de passe modifié avec succès</h1>
+    <h1>✅ Mot de passe modifié avec succès</h1>
     <p>Bonjour <strong>${fullName}</strong>,</p>
-    <p>Nous vous confirmons que votre mot de passe MedAnnot a été modifié avec succès.</p>
+    <p>Votre mot de passe MedAnnot a été modifié avec succès. Vous pouvez dès maintenant vous connecter avec votre nouveau mot de passe.</p>
 
-    <div class="info-box" style="border-left-color: #28a745; background-color: #f0f8f4;">
-      <p><strong>✅ Changement confirmé</strong></p>
-      <p>Date et heure : ${new Date().toLocaleString('fr-CH', { timeZone: 'Europe/Zurich' })}</p>
+    <div class="info-box" style="border-left-color: #10b981; background-color: #f0fdf4;">
+      <p><strong>✅ Changement effectué</strong></p>
+      <p>Date et heure : ${new Date().toLocaleString('fr-CH', { timeZone: 'Europe/Zurich', dateStyle: 'full', timeStyle: 'short' })}</p>
     </div>
 
-    <a href="https://medannot.ch/login" class="button">Se connecter</a>
+    <a href="https://medannot.ch" class="button">Se connecter maintenant</a>
 
     <div class="divider"></div>
 
-    <div class="info-box" style="border-left-color: #dc3545; background-color: #fff0f0;">
-      <p><strong>⚠️ Activité suspecte ?</strong></p>
-      <p>Si vous n'êtes pas à l'origine de ce changement, contactez-nous <strong>immédiatement</strong> pour sécuriser votre compte.</p>
+    <div class="info-box" style="border-left-color: #ef4444; background-color: #fef2f2;">
+      <p><strong>⚠️ Vous ne reconnaissez pas cette action ?</strong></p>
+      <p>Si vous n'avez pas modifié votre mot de passe, votre compte pourrait être compromis. Contactez-nous <strong>immédiatement</strong> à <a href="mailto:contact.medannot@gmail.com" style="color: #ef4444;">contact.medannot@gmail.com</a></p>
     </div>
 
     <p style="margin-top: 32px;">Cordialement,</p>

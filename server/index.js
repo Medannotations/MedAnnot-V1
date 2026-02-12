@@ -2070,6 +2070,26 @@ async function runMigrations() {
       UPDATE profiles SET is_admin = TRUE WHERE email = 'contact.medannot@gmail.com'
     `);
 
+    // Créer la table password_reset_tokens si elle n'existe pas
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS password_reset_tokens_user_id_idx ON password_reset_tokens(user_id)
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS password_reset_tokens_token_idx ON password_reset_tokens(token)
+    `);
+
     console.log('✅ Migrations OK');
   } catch (error) {
     console.error('Migration error:', error.message);
