@@ -270,6 +270,11 @@ export function useCreateAnnotation() {
       if (newAnnotation.patient_id || newAnnotation.patientId) {
         const patientId = newAnnotation.patient_id || newAnnotation.patientId;
         queryClient.invalidateQueries({ queryKey: ["annotations", "patient", patientId] });
+        // Invalider les signes vitaux du patient (pour qu'ils s'affichent correctement après sauvegarde)
+        if (newAnnotation.visit_date) {
+          queryClient.invalidateQueries({ queryKey: ["vital-signs", patientId, newAnnotation.visit_date] });
+        }
+        queryClient.invalidateQueries({ queryKey: ["vital-signs-history", patientId] });
       }
       // Invalider aussi les stats
       queryClient.invalidateQueries({ queryKey: ["annotation-stats"] });
@@ -297,6 +302,15 @@ export function useUpdateAnnotation() {
       queryClient.invalidateQueries({ queryKey: ["annotations"] });
       queryClient.invalidateQueries({ queryKey: ["annotation", data.id] });
       queryClient.invalidateQueries({ queryKey: ["annotation-stats"] });
+      // Invalider les signes vitaux du patient si l'annotation a été modifiée
+      if (data.patient_id || data.patientId) {
+        const patientId = data.patient_id || data.patientId;
+        queryClient.invalidateQueries({ queryKey: ["annotations", "patient", patientId] });
+        if (data.visit_date) {
+          queryClient.invalidateQueries({ queryKey: ["vital-signs", patientId, data.visit_date] });
+        }
+        queryClient.invalidateQueries({ queryKey: ["vital-signs-history", patientId] });
+      }
     },
   });
 }

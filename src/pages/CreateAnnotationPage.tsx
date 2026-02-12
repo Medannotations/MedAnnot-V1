@@ -318,7 +318,7 @@ export default function CreateAnnotationPage() {
         audio_duration: audioDuration || 0,
         was_transcription_edited: false,
         was_content_edited: false,
-        vital_signs: null,
+        vital_signs: todayVitalSigns || null,
       } as any);
       clearState(); // Clear persisted state on successful save
       toast({
